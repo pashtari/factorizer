@@ -1,0 +1,207 @@
+import torch
+import torch.nn.functional as F
+from torch import nn, optim
+from pytorch_lightning.core import LightningModule
+from monai.data.utils import decollate_batch
+
+from .helpers import (
+    wrap_class,
+    collate,
+    decollate_channels,
+    reduce_channels,
+    reduce_batch,
+)
+
+
+class Model(LightningModule):
+    def __init__(
+        self,
+        network,
+        loss=F.cross_entropy,
+        metrics=[F.cross_entropy],
+        optimizer=optim.SGD,
+        scheduler=None,
+        scheduler_config=None,
+        inferer=nn.Identity,
+        **kwargs,
+    ):
+        super().__init__()
+
+        # init network
+        network = wrap_class(network)
+        self.net = network()
+
+        # loss
+        self.loss = wrap_class(loss)
+
+        # metric
+        self.metrics = {k: wrap_class(v) for k, v in metrics.items()}
+
+        # optimizar
+        self.optimizer = wrap_class(optimizer)
+
+        # learning rate scheduler
+        if scheduler is not None:
+            self.scheduler = wrap_class(scheduler)
+            self.scheduler_config = (
+                {} if scheduler_config is None else scheduler_config
+            )
+
+        # inference
+        self.inferer = wrap_class(inferer)
+
+        # Validation results (scores)
+        self.val_results = None
+
+        # save hyperparameters
+        self.save_hyperparameters()
+
+    @property
+    def num_parameters(self):
+        return sum(p.numel() for p in self.net.parameters() if p.requires_grad)
+
+    def forward(self, x):
+        return self.net(x)
+
+    def configure_optimizers(self):
+        optimizer = self.optimizer(self.net.parameters())
+        if hasattr(self, "scheduler"):
+            scheduler = self.scheduler(optimizer)
+            config = (
+                [optimizer],
+                [{"scheduler": scheduler, **self.scheduler_config}],
+            )
+        else:
+            config = [optimizer]
+
+        return config
+
+    def training_step(self, batch, batch_idx):
+        x, y = batch["input"], batch["target"]
+
+        # forward
+        y_hat = self(x)
+
+        # calculate loss
+        loss = self.loss(y_hat, y)
+
+        # add logging and calculate metrics
+        self.log("train_loss", loss, prog_bar=True)
+        return loss
+
+    def validation_step(self, batch, batch_idx):
+        y, id_ = batch["target"], batch["id"]
+
+        # inference
+        y_hat = self.inferer(batch, lambda x: self.forward(x)[0])
+
+        y = y.to(device="cpu", dtype=torch.float32)
+        y_hat = y_hat.to(device="cpu", dtype=torch.float32)
+
+        # calculate metrics
+        epoch = [self.current_epoch for _ in range(len(id_))]
+        out = {"id": id_, "epoch": epoch}
+        for metric_name, metric in self.metrics.items():
+            out[f"val_{metric_name}"] = metric(y_hat, y)
+
+        del y, y_hat
+        return out
+
+    def validation_epoch_end(self, val_outputs):
+        # collate batches
+        val_outputs = collate(val_outputs)
+
+        # average over channels
+        reduced_channels = reduce_channels(val_outputs)
+        val_outputs = {**val_outputs, **reduced_channels}
+
+        # decollate channels
+        val_outputs = decollate_channels(val_outputs)
+        self.val_results = val_outputs
+
+        # average over batch
+        avg_scores = reduce_batch(val_outputs)
+        for key, value in avg_scores.items():
+            self.log(key, value, prog_bar=True)
+
+        # # decollate batch
+        # val_outputs = decollate_batch(val_outputs)
+
+        # # individual scores
+        # for sample in val_outputs:
+        #     for key, value in sample.items():
+        #         if isinstance(value, torch.Tensor):
+        #             self.log(f'{sample["id"]}_{key}', value)
+
+    def test_step(self, batch, batch_idx):
+        # inference
+        y_hat = self.inferer(batch, lambda x: self(x)[0])
+
+    def test_epoch_end(self, outputs):
+        return None
+
+    def on_load_checkpoint(self, checkpoint):
+        state_dict = checkpoint["state_dict"]
+        model_state_dict = self.state_dict()
+        is_changed = False
+        for k in state_dict:
+            if k in model_state_dict:
+                if state_dict[k].shape != model_state_dict[k].shape:
+                    print(
+                        f"Skip loading parameter: {k}, "
+                        f"required shape: {model_state_dict[k].shape}, "
+                        f"loaded shape: {state_dict[k].shape}"
+                    )
+                    state_dict[k] = model_state_dict[k]
+                    is_changed = True
+            else:
+                print(f"Dropping parameter {k}")
+                is_changed = True
+
+        if is_changed:
+            checkpoint.pop("optimizer_states", None)
+
+    # def on_after_backward(self):
+    #     print(
+    #         "\nweight mean abs: "
+    #         + str(
+    #             torch.mean(
+    #                 torch.cat(
+    #                     [
+    #                         torch.flatten(torch.abs(w))
+    #                         for k, w in self.named_parameters()
+    #                     ]
+    #                 )
+    #             ).item()
+    #         )
+    #     )
+    #     print(
+    #         "gradient mean abs: "
+    #         + str(
+    #             torch.mean(
+    #                 torch.cat(
+    #                     [
+    #                         torch.flatten(torch.abs(w.grad))
+    #                         for k, w in self.named_parameters()
+    #                         if w.grad is not None
+    #                     ]
+    #                 )
+    #             ).item()
+    #         )
+    #     )
+
+    #     print(
+    #         "gradient norm: "
+    #         + str(
+    #             torch.sum(
+    #                 torch.stack(
+    #                     [
+    #                         torch.norm(w.grad)
+    #                         for k, w in self.named_parameters()
+    #                         if w.grad is not None
+    #                     ]
+    #                 )
+    #             ).item()
+    #         )
+    #     )
+

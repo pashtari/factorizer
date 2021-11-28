@@ -1,0 +1,100 @@
+data:
+    !ft.ISLESDataModule {
+        data_properties: ~/ISLES2022/dataset-dwi&adc.json,
+        spacing: [2.0, 2.0, 2.0],
+        spatial_size: [64, 64, 64],
+        num_splits: 5,
+        split: 2,
+        batch_size: 2,
+        num_workers: 4,
+        cache_num: 4,
+        cache_rate: 1.0,
+        seed: 42,
+    }
+
+task:
+    - !ft.SemanticSegmentation
+    - network:
+          - !ft.UNet
+          - in_channels: 2
+            out_channels: 1
+            spatial_dims: 3
+            encoder_depth: [1, 1, 1, 1, 1]
+            encoder_width: [32, 64, 128, 256, 512]
+            strides: [1, 2, 2, 2, 2]
+            decoder_depth: [1, 1, 1, 1]
+            stem: [!nn.Conv3d , { kernel_size: 3, padding: 1, bias: false }]
+            downsample: [!nn.Conv3d , { kernel_size: 2, bias: false }]
+            upsample: [!nn.ConvTranspose3d , { kernel_size: 2 }]
+            head: [!nn.Conv3d , { kernel_size: 1 }]
+            num_deep_supr: 3
+            block: !ft.Same
+                - - !ft.DoubleConv
+                  - conv: [!nn.Conv3d , { kernel_size: 3, padding: 1 }]
+                    norm: [!nn.GroupNorm , [8]]
+                    act: !nn.LeakyReLU
+      inferer:
+          !ft.ISLESInferer {
+              spacing: [2.0, 2.0, 2.0],
+              spatial_size: [64, 64, 64],
+              overlap: 0.5,
+              post: class,
+          }
+      loss:
+          !ft.DeepSuprLoss {
+              loss: !monai.DiceCELoss ,
+              include_background: true,
+              sigmoid: true,
+              squared_pred: true,
+          }
+      metrics:
+          dice:
+              !ft.DiceMetric {
+                  include_background: true,
+                  include_zero_masks: true,
+              }
+          hd:
+              !ft.HausdorffDistanceMetric {
+                  include_background: true,
+                  include_zero_masks: true,
+                  percentile: 95,
+              }
+      optimizer:
+          - !optim.AdamW
+          - { lr: 0.0001, weight_decay: 0.01 }
+      scheduler:
+          - !ft.WarmupCosineSchedule
+          - { warmup_steps: 2000, total_steps: 100000 }
+      scheduler_config:
+          interval: step
+
+training:
+    max_steps: 100000
+    max_epochs: 9223372036854775807
+    gpus: 2
+    num_nodes: 1
+    accelerator: ddp
+    check_val_every_n_epoch: 10
+    callbacks:
+        - !pl.LearningRateMonitor { logging_interval: step }
+        - !pl.ModelCheckpoint { every_n_train_steps: 50 }
+        - !ft.SaveValResults {
+              save_path: logs/isles2022-dwi&adc/fold2/unet/version_0/results.csv,
+          }
+    logger:
+        !pl.TensorBoardLogger {
+            save_dir: logs/isles2022-dwi&adc/fold2,
+            name: unet,
+        }
+
+test:
+    checkpoint:
+        checkpoint_path: logs/isles2022-dwi&adc/fold2/unet/version_0/checkpoints/epoch=1999-step=99999.ckpt
+    inferer:
+        !ft.ISLESInferer {
+            spacing: [2.0, 2.0, 2.0],
+            spatial_size: [64, 64, 64],
+            overlap: 0.5,
+            post: class,
+            write_dir: logs/isles2022-dwi&adc/fold2/unet/version_0/predictions,
+        }

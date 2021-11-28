@@ -1,0 +1,91 @@
+data:
+    !ft.BraTSDataModule {
+        data_properties: ~/Decathlon/Task01_BrainTumour/dataset.json,
+        spacing: [1.0, 1.0, 1.0],
+        spatial_size: [128, 128, 128],
+        num_splits: 5,
+        split: 2,
+        batch_size: 1,
+        num_workers: 4,
+        cache_num: 4,
+        cache_rate: 1.0,
+        seed: 42,
+    }
+
+task:
+    - !ft.SemanticSegmentation
+    - network:
+          - !nnformer.nnFormer
+          - crop_size: [128, 128, 128]
+            embedding_dim: 192
+            input_channels: 4
+            num_classes: 3
+            conv_op: !nn.Conv3d
+            depths: [2, 2, 2, 2]
+            num_heads: [3, 6, 12, 24]
+            patch_size: [4, 4, 4]
+            window_size: [4, 4, 4, 4]
+            deep_supervision: True
+
+      inferer:
+          !ft.BraTSInferer {
+              spacing: [1.0, 1.0, 1.0],
+              spatial_size: [128, 128, 128],
+              overlap: 0.5,
+              post: one-hot-nested,
+          }
+      loss:
+          !ft.DeepSuprLoss {
+              loss: !monai.DiceCELoss ,
+              include_background: true,
+              sigmoid: true,
+              squared_pred: true,
+          }
+      metrics:
+          dice:
+              !ft.DiceMetric {
+                  include_background: true,
+                  include_zero_masks: true,
+              }
+          hd:
+              !ft.HausdorffDistanceMetric {
+                  include_background: true,
+                  include_zero_masks: true,
+                  percentile: 95,
+              }
+      optimizer:
+          - !optim.AdamW
+          - { lr: 0.0001, weight_decay: 0.01 }
+      scheduler:
+          - !ft.WarmupCosineSchedule
+          - { warmup_steps: 2000, total_steps: 100000 }
+      scheduler_config:
+          interval: step
+
+training:
+    resume_from_checkpoint: /data/leuven/336/vsc33647/scripts/factorizer/bin/logs/brats/fold2/nnformer/version_0/checkpoints/epoch=410-step=79649.ckpt
+    max_steps: 100000
+    max_epochs: 9223372036854775807
+    gpus: 2
+    num_nodes: 1
+    accelerator: ddp
+    check_val_every_n_epoch: 50
+    callbacks:
+        - !pl.LearningRateMonitor { logging_interval: step }
+        - !pl.ModelCheckpoint { every_n_train_steps: 50 }
+        - !ft.SaveValResults {
+              save_path: logs/brats/fold2/nnformer/version_0/results.csv,
+          }
+    logger: !pl.TensorBoardLogger { save_dir: logs/brats/fold2, name: nnformer }
+
+test:
+    checkpoint:
+        checkpoint_path: logs/brats/fold2/nnformer/version_0/checkpoints/epoch=515-step=99999.ckpt
+    inferer:
+        !ft.BraTSInferer {
+            spacing: [1.0, 1.0, 1.0],
+            spatial_size: [128, 128, 128],
+            overlap: 0.5,
+            post: class,
+            write_dir: logs/brats/fold2/nnformer/version_0/predictions,
+        }

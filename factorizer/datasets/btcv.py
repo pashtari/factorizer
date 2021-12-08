@@ -213,7 +213,7 @@ def get_vis_transform(spacing=(1.0, 1.0, 1.0)):
 ###################################
 
 
-class SynapseDataModule(LightningDataModule):
+class BTCVDataModule(LightningDataModule):
     def __init__(
         self,
         root_dir,
@@ -329,7 +329,7 @@ class SynapseDataModule(LightningDataModule):
 
 
 # alias
-Synapse = SynapseDataModule
+BTCV = BTCVDataModule
 
 ###################################
 # Inference

@@ -196,12 +196,6 @@ class TF(nn.Module):
         self.compression = self.tensor_network.compression
         self.verbose = verbose
 
-        self.reset_parameters()
-
-    def reset_parameters(self) -> None:
-        for k, _ in self.named_parameters():
-            nn.init.kaiming_uniform_(getattr(self, k), a=math.sqrt(5))
-
     def context(self, it):
         # get context at each iteration it
         if it < self.num_iters - self.num_grad_steps + 1:

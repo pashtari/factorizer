@@ -64,7 +64,14 @@ def khatri_rao(factor_matrices):
 
 class Reshape(nn.Module):
     def __init__(
-        self, input_size, equation=None, position=None, dropout=0.0, **kwargs
+        self,
+        input_size,
+        equation=None,
+        position=None,
+        shifts=None,
+        dims=None,
+        dropout=0.0,
+        **kwargs,
     ):
         super().__init__()
         self.input_size = input_size
@@ -96,6 +103,11 @@ class Reshape(nn.Module):
             self.position = nn.Parameter(torch.randn(1, *shape))
             self.dropout = nn.Dropout(dropout)
 
+        if shifts is not None:
+            self.shifts = shifts
+            self.shifts_inv = tuple(-s for s in self.shifts)
+            self.dims = dims
+
     def update_shape(self, shape, pattern):
         expr = einops.parsing.ParsedExpression(pattern)
         new_shape = []
@@ -108,6 +120,9 @@ class Reshape(nn.Module):
         return new_shape
 
     def forward(self, x):
+        if hasattr(self, "shifts"):
+            x = torch.roll(x, self.shifts, self.dims)
+
         out = self.rearrange(x)
         if hasattr(self, "position"):
             out = out + self.position
@@ -116,11 +131,15 @@ class Reshape(nn.Module):
         return out
 
     def inverse_forward(self, x):
-        return self.rearrange_inv(x)
+        out = self.rearrange_inv(x)
+        if hasattr(self, "shifts"):
+            out = torch.roll(out, self.shifts_inv, self.dims)
+
+        return out
 
 
 class Matricize(Reshape):
-    """Matricize, e.g. 'b (c d) (h ph) (w pw) -> (b c h w) d (ph pw)'."""
+    """Matricize, e.g. 'b (c1 c2) (h1 h2) (w1 w2) -> (b c1 h1 w1) c2 (h2 w2)'."""
 
     def __init__(
         self,
@@ -129,6 +148,7 @@ class Matricize(Reshape):
         head_dim=None,
         grid_size=None,
         patch_size=None,
+        shifts=None,
         **kwargs,
     ):
         assert (num_heads, head_dim) != (
@@ -165,11 +185,23 @@ class Matricize(Reshape):
             if p is not None:
                 dims_lengths[f"p{j}"] = max(p, 1)
 
-        super().__init__(input_size, equation, **dims_lengths, **kwargs)
+        if shifts is not None:
+            dims = tuple(j + 2 for j in range(spatial_dim))
+        else:
+            dims = None
+
+        super().__init__(
+            input_size,
+            equation=equation,
+            shifts=shifts,
+            dims=dims,
+            **dims_lengths,
+            **kwargs,
+        )
 
 
 class Tensorize(Reshape):
-    """Tensorize, e.g. 'b (c d) (h kh) (w kw) -> (b c h w) d kh kw'."""
+    """Tensorize, e.g. 'b (c1 c2) (h1 h2) (w1 w2) -> (b c1 h1 w1) c2 h2 w2'."""
 
     def __init__(
         self,
@@ -178,6 +210,7 @@ class Tensorize(Reshape):
         head_dim=None,
         grid_size=None,
         patch_size=None,
+        shifts=None,
         **kwargs,
     ):
         assert (num_heads, head_dim) != (
@@ -214,5 +247,115 @@ class Tensorize(Reshape):
             if p is not None:
                 dims_lengths[f"p{j}"] = max(p, 1)
 
-        super().__init__(input_size, equation, **dims_lengths, **kwargs)
+        if shifts is not None:
+            dims = tuple(j + 2 for j in range(spatial_dim))
+        else:
+            dims = None
+
+        super().__init__(
+            input_size,
+            equation=equation,
+            shifts=shifts,
+            dims=dims,
+            **dims_lengths,
+            **kwargs,
+        )
+
+
+class SwinMetricize(nn.Module):
+    def __init__(
+        self,
+        input_size,
+        num_heads=None,
+        head_dim=None,
+        grid_size=None,
+        patch_size=None,
+        **kwargs,
+    ) -> None:
+        super().__init__()
+        self.regular_window = Matricize(
+            input_size,
+            num_heads=num_heads,
+            head_dim=head_dim,
+            grid_size=grid_size,
+            patch_size=patch_size,
+            **kwargs,
+        )
+        spatial_dim = len(input_size) - 2
+        to_ntuple = _ntuple(spatial_dim)
+        shifts = tuple(s // 2 for s in to_ntuple(patch_size))
+        self.shifted_window = Matricize(
+            input_size,
+            num_heads=num_heads,
+            head_dim=head_dim,
+            grid_size=grid_size,
+            patch_size=patch_size,
+            shifts=shifts,
+            **kwargs,
+        )
+        self.output_size = self.regular_window.output_size
+
+    def forward(self, x):
+        out1 = self.regular_window(x)
+        out2 = self.shifted_window(x)
+        return torch.cat((out1, out2))
+
+    def inverse_forward(self, x):
+        b = x.shape[0]
+        out1 = x[: (b // 2), ...]
+        out2 = x[(b // 2) :, ...]
+        out = 0.5 * (
+            self.regular_window.inverse_forward(out1)
+            + self.shifted_window.inverse_forward(out2)
+        )
+        return out
+
+
+class SwinTensorize(nn.Module):
+    def __init__(
+        self,
+        input_size,
+        num_heads=None,
+        head_dim=None,
+        grid_size=None,
+        patch_size=None,
+        **kwargs,
+    ) -> None:
+        super().__init__()
+        self.regular_window = Tensorize(
+            input_size,
+            num_heads=num_heads,
+            head_dim=head_dim,
+            grid_size=grid_size,
+            patch_size=patch_size,
+            **kwargs,
+        )
+        spatial_dim = len(input_size) - 2
+        to_ntuple = _ntuple(spatial_dim)
+        shifts = tuple(s // 2 for s in to_ntuple(patch_size))
+        self.shifted_window = Tensorize(
+            input_size,
+            num_heads=num_heads,
+            head_dim=head_dim,
+            grid_size=grid_size,
+            patch_size=patch_size,
+            shifts=shifts,
+            **kwargs,
+        )
+        self.output_size = self.regular_window.output_size
+
+    def forward(self, x):
+        out1 = self.regular_window(x)
+        out2 = self.shifted_window(x)
+        return torch.cat((out1, out2))
+
+    def inverse_forward(self, x):
+        b = x.shape[0]
+        out1 = x[: (b // 2), ...]
+        out2 = x[(b // 2) :, ...]
+        out = 0.5 * (
+            self.regular_window.inverse_forward(out1)
+            + self.shifted_window.inverse_forward(out2)
+        )
+        return out
 

@@ -41,7 +41,7 @@ def main(args):
     dm.setup("validate")
 
     # validation
-    config["training"]["gpus"] = 0
+    config["training"]["gpus"] = 1
     config["training"]["logger"] = False
     trainer = Trainer(**config["training"])
     trainer.validate(
@@ -67,14 +67,14 @@ def get_args() -> Namespace:
     return args
 
 
-class Arg(object):
-    config = os.path.join(
-        os.getcwd(), "configs/ablations/config_brats_fold0_senmf_iters2.py",
-    )
+# class Arg(object):
+#     config = os.path.join(
+#         os.getcwd(), "configs/ablations/config_brats_fold0_senmf_iters2.py",
+#     )
 
 
 if __name__ == "__main__":
-    # args = get_args()
-    args = Arg()
+    args = get_args()
+    # args = Arg()
     main(args)
 

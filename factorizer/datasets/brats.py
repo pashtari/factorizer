@@ -190,11 +190,11 @@ def get_test_transform():
 
 def get_vis_transform():
     transforms = [
-        LoadImaged(["image", "label"]),
+        LoadImaged(["image", "label"], allow_missing_keys=True),
         AsChannelFirstd("image"),
-        OneHotEncoderd("label", nested=False),
-        NormalizeIntensityd("image", nonzero=True, channel_wise=True),
-        ToTensord(["image", "label"]),
+        OneHotEncoderd("label", nested=False, allow_missing_keys=True),
+        NormalizeIntensityd("image", channel_wise=True),
+        ToTensord(["image", "label"], allow_missing_keys=True),
         Renamed(),
     ]
     vis_transform = Compose(transforms)

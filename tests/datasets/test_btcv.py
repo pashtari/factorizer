@@ -7,7 +7,7 @@ from matplotlib.colors import ListedColormap
 from factorizer import datasets
 
 # %% Sample
-dm = datasets.Synapse(
+dm = datasets.BTCV(
     root_dir="/Users/pooya/Data/Synapse/RawData",
     spacing=(1, 1, 1),
     spatial_size=(128, 128, 128),

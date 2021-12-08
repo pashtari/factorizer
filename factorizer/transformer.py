@@ -125,7 +125,9 @@ class MLP(nn.Module):
     ):
         super().__init__()
         output_dim = input_dim if output_dim is None else output_dim
-        hidden_dim = ratio * input_dim if hidden_dim is None else hidden_dim
+        hidden_dim = (
+            int(ratio * input_dim) if hidden_dim is None else hidden_dim
+        )
 
         self.block = nn.Sequential(
             nn.Linear(input_dim, hidden_dim),

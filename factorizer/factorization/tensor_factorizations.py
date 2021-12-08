@@ -158,11 +158,11 @@ class GeneralizedMultiplicativeUpdate(nn.Module):
 
 class CPMultiplicativeUpdate(GeneralizedMultiplicativeUpdate):
     def __init__(
-        self, size, rank=None, axis=None, **kwargs,
+        self, size, rank=None, factor=None, **kwargs,
     ):
         canonical_polyadic = CanonicalPolyadic(size, rank)
         node_names = list(canonical_polyadic.nodes.keys())
-        nodes = [node_names[j] for j in as_tuple(axis)]
+        nodes = [node_names[j] for j in as_tuple(factor)]
         super().__init__(canonical_polyadic, nodes, **kwargs)
 
     def forward(self, x, tensors):

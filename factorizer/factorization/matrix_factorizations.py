@@ -114,9 +114,9 @@ class NNDSVDInit(nn.Module):
 class AlternatingLeastSquares(nn.Module):
     "Alternating Least Squares."
 
-    def __init__(self, axis=(0, 1), eps=1e-8, project=None, **kwargs):
+    def __init__(self, factor=(0, 1), eps=1e-8, project=None, **kwargs):
         super().__init__()
-        self.axis = as_tuple(axis)
+        self.factor = as_tuple(factor)
         self.eps = eps
         project = nn.Identity if project is None else project
         project = wrap_class(project)
@@ -127,11 +127,11 @@ class AlternatingLeastSquares(nn.Module):
             M, N = self.size
             R = self.rank
             self.flops = 0
-            if 0 in self.axis:
+            if 0 in self.factor:
                 self.flops += math.ceil(
                     2 * N * (R ** 2) * M - (2 / 3) * (R ** 3) * M
                 )
-            if 1 in self.axis:
+            if 1 in self.factor:
                 self.flops += math.ceil(
                     2 * M * (R ** 2) * N - (2 / 3) * (R ** 3) * N
                 )
@@ -148,15 +148,16 @@ class AlternatingLeastSquares(nn.Module):
             vtv = t(v) @ v
             u_new = torch.linalg.solve(vtv, t(xv))
             u_new = t(u_new)
+
         return self.project(u_new)
 
     def forward(self, x, factor_matrices):
         u, v = factor_matrices
 
-        if 0 in self.axis:
+        if 0 in self.factor:
             u = self.single_update(x, u, v)
 
-        if 1 in self.axis:
+        if 1 in self.factor:
             v = self.single_update(t(x), v, u)
 
         return u, v
@@ -165,9 +166,9 @@ class AlternatingLeastSquares(nn.Module):
 class ProjectedGradient(nn.Module):
     "Projected gradient descent with line search for linear least squares."
 
-    def __init__(self, axis=(0, 1), project=None, eps=1e-8, **kwargs):
+    def __init__(self, factor=(0, 1), project=None, eps=1e-8, **kwargs):
         super().__init__()
-        self.axis = axis
+        self.factor = factor
         self.eps = eps
         project = nn.Identity if project is None else project
         project = wrap_class(project)
@@ -179,12 +180,12 @@ class ProjectedGradient(nn.Module):
             M, N = self.size
             R = self.rank
             self.flops = 0
-            if 0 in self.axis:
+            if 0 in self.factor:
                 self.flops += (
                     4 * M * N * R + 4 * M * R * R + 2 * N * R * R + 6 * M * R
                 )
 
-            if 1 in self.axis:
+            if 1 in self.factor:
                 self.flops += (
                     4 * N * M * R + 4 * N * R * R + 2 * M * R * R + 6 * N * R
                 )
@@ -205,10 +206,10 @@ class ProjectedGradient(nn.Module):
     def forward(self, x, factor_matrices):
         u, v = factor_matrices
 
-        if 0 in self.axis:
+        if 0 in self.factor:
             u = self.single_update(x, u, v)
 
-        if 1 in self.axis:
+        if 1 in self.factor:
             v = self.single_update(t(x), v, u)
 
         return u, v
@@ -217,9 +218,9 @@ class ProjectedGradient(nn.Module):
 class CoordinateDescent(nn.Module):
     "Block coordinate descent update for linear least squares."
 
-    def __init__(self, axis=(0, 1), eps=1e-8, project=None, **kwargs):
+    def __init__(self, factor=(0, 1), eps=1e-8, project=None, **kwargs):
         super().__init__()
-        self.axis = as_tuple(axis)
+        self.factor = as_tuple(factor)
         self.eps = eps
         project = nn.Identity if project is None else project
         project = wrap_class(project)
@@ -230,7 +231,7 @@ class CoordinateDescent(nn.Module):
             M, N = self.size
             R = self.rank
             self.flops = 0
-            if 0 in self.axis:
+            if 0 in self.factor:
                 self.flops += (
                     2 * M * (R - 1) * N
                     + 3 * M * N
@@ -238,7 +239,7 @@ class CoordinateDescent(nn.Module):
                     + 2 * N
                     + (R - 1) * (6 * M * N + 2 * M + 2 * N)
                 )
-            if 1 in self.axis:
+            if 1 in self.factor:
                 self.flops += (
                     2 * N * (R - 1) * M
                     + 3 * N * M
@@ -288,19 +289,19 @@ class CoordinateDescent(nn.Module):
     def forward(self, x, factor_matrices):
         u, v = factor_matrices
 
-        if 0 in self.axis:
+        if 0 in self.factor:
             u = self.single_update(x, u, v)
 
-        if 1 in self.axis:
+        if 1 in self.factor:
             v = self.single_update(t(x), v, u)
 
         return u, v
 
 
 class MultiplicativeUpdate(nn.Module):
-    def __init__(self, axis=(0, 1), eps=1e-8, **kwargs):
+    def __init__(self, factor=(0, 1), eps=1e-8, **kwargs):
         super().__init__()
-        self.axis = as_tuple(axis)
+        self.factor = as_tuple(factor)
         self.eps = eps
 
     def single_update(self, x, u, v):
@@ -313,21 +314,21 @@ class MultiplicativeUpdate(nn.Module):
     def forward(self, x, factor_matrices):
         u, v = factor_matrices
 
-        if 0 in self.axis:
+        if 0 in self.factor:
             u = self.single_update(x, u, v)
 
-        if 1 in self.axis:
+        if 1 in self.factor:
             v = self.single_update(t(x), v, u)
 
         return u, v
 
 
 class FastMultiplicativeUpdate(nn.Module):
-    def __init__(self, size, rank, axis=(0, 1), eps=1e-8, **kwargs):
+    def __init__(self, size, rank, factor=(0, 1), eps=1e-8, **kwargs):
         super().__init__()
         self.size = M, N = size
         self.rank = R = rank
-        self.axis = as_tuple(axis)
+        self.factor = as_tuple(factor)
         self.eps = eps
 
         x_size = (1, M, N)
@@ -337,7 +338,7 @@ class FastMultiplicativeUpdate(nn.Module):
         self.numerator_expr = {}
         self.denominator_expr = {}
         self.flops = 0
-        if 0 in self.axis:
+        if 0 in self.factor:
             numerator_eq = "bij, bir, bjr -> bir"
             _, con_info = oe.contract_path(
                 numerator_eq,
@@ -368,7 +369,7 @@ class FastMultiplicativeUpdate(nn.Module):
             self.denominator_expr[0] = (expr, con_info)
             self.flops += con_info.opt_cost
 
-        if 1 in self.axis:
+        if 1 in self.factor:
             numerator_eq = "bij, bir, bjr -> bjr"
             _, con_info = oe.contract_path(
                 numerator_eq,
@@ -402,12 +403,12 @@ class FastMultiplicativeUpdate(nn.Module):
     def forward(self, x, factor_matrices):
         u, v = factor_matrices
 
-        if 0 in self.axis:
+        if 0 in self.factor:
             numerator = self.numerator_expr[0][0](x, u, v) + self.eps
             denominator = self.denominator_expr[0][0](u, v, v) + self.eps
             u = numerator / denominator
 
-        if 1 in self.axis:
+        if 1 in self.factor:
             numerator = self.numerator_expr[1][0](x, u, v) + self.eps
             denominator = self.denominator_expr[1][0](u, u, v) + self.eps
             v = numerator / denominator
@@ -422,9 +423,9 @@ class WeightedMultiplicativeUpdate(nn.Module):
         s.t. U, V ≥ 0
     """
 
-    def __init__(self, axis=(0, 1), eps=1e-8, **kwargs):
+    def __init__(self, factor=(0, 1), eps=1e-8, **kwargs):
         super().__init__()
-        self.axis = axis
+        self.factor = factor
         self.eps = eps
 
     def single_update(self, x, u, v, w):
@@ -438,10 +439,10 @@ class WeightedMultiplicativeUpdate(nn.Module):
         u, v = factor_matrices
         weight = torch.ones_like(x) if weight is None else weight
 
-        if 0 in self.axis:
+        if 0 in self.factor:
             u = self.single_update(x, u, v, weight)
 
-        if 1 in self.axis:
+        if 1 in self.factor:
             v = self.single_update(t(x), v, u, t(weight))
 
         return u, v
@@ -824,3 +825,4 @@ class NMF(MF):
             verbose=verbose,
             **kwargs,
         )
+

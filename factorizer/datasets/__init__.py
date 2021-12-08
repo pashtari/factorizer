@@ -1,4 +1,4 @@
 from .brats import BRATS
-from .synapse import Synapse
+from .btcv import BTCV
 from .msseg import MSSEG
 from .utils import *

@@ -7,7 +7,6 @@ from monai.losses import DiceCELoss
 
 import factorizer as ft
 from factorizer import datasets
-from factorizer.utils.helpers import channels_first
 from factorizer.utils.losses import DeepSuprLoss
 from factorizer.utils.metrics import DiceMetric, HausdorffDistanceMetric
 from factorizer.utils.schedulers import WarmupCosineSchedule
@@ -16,11 +15,10 @@ from factorizer.utils.schedulers import WarmupCosineSchedule
 CONFIG = {
     "data": {
         "datamodule": (
-            datasets.Synapse,
+            datasets.BRATS,
             {
-                "root_dir": "/data/leuven/336/vsc33647/data/Synapse/RawData",
-                "spacing": (1.5, 1.5, 2.0),
-                "spatial_size": (96, 96, 96),
+                "root_dir": "/data/leuven/336/vsc33647/data/Decathlon/Task01_BrainTumour",
+                "spatial_size": (128, 128, 128),
                 "num_splits": 5,
                 "split": 0,
                 "batch_size": 1,
@@ -35,9 +33,9 @@ CONFIG = {
         "network": (
             ft.SegmentationFactorizer,
             {
-                "in_channels": 1,
-                "out_channels": 14,
-                "spatial_size": (96, 96, 96),
+                "in_channels": 4,
+                "out_channels": 3,
+                "spatial_size": (128, 128, 128),
                 "encoder_depth": (1, 1, 1, 1, 1),
                 "encoder_width": (32, 64, 128, 256, 512),
                 "strides": (1, 2, 2, 2, 2),
@@ -51,35 +49,44 @@ CONFIG = {
                 "head": (nn.Conv3d, {"kernel_size": 1}),
                 "num_deep_supr": 3,
                 "dropout": 0.1,
-                "attention": (
-                    channels_first(ft.FastAttention),
-                    {"head_dim": 32, "dropout": 0.1, "kernel_fun": nn.ReLU()},
+                "nmf": (
+                    ft.FactorizerSubblock,
+                    {
+                        "ratio": 1,
+                        "tensorize": (
+                            ft.Matricize,
+                            {"head_dim": 8, "patch_size": 8},
+                        ),
+                        "act": nn.ReLU,
+                        "factorize": ft.NMF,
+                        "compression": 10,
+                        "num_iters": 5,
+                        "num_grad_steps": None,
+                        "init": "uniform",
+                        "solver": "cd",
+                        "dropout": 0.1,
+                    },
                 ),
                 "mlp": (ft.MLP, {"ratio": 2, "dropout": 0.1}),
             },
         ),
-        "inferer": datasets.synapse.Inferer(
-            spacing=(1.5, 1.5, 2.0),
-            spatial_size=(96, 96, 96),
-            overlap=0.5,
-            post="one-hot",
+        "inferer": datasets.brats.Inferer(
+            spatial_size=(128, 128, 128), overlap=0.5, post="one-hot-nested",
         ),
     },
     "optimization": {
         "loss": DeepSuprLoss(
             DiceCELoss,
-            include_background=False,
-            softmax=True,
+            include_background=True,
+            sigmoid=True,
             squared_pred=True,
         ),
         "metrics": {
             "dice": DiceMetric(
-                include_background=False, include_zero_masks=False
+                include_background=True, include_zero_masks=True
             ),
             "hd": HausdorffDistanceMetric(
-                include_background=False,
-                include_zero_masks=False,
-                percentile=95,
+                include_background=True, include_zero_masks=True, percentile=95
             ),
         },
         "optimizer": (optim.AdamW, {"lr": 1e-4, "weight_decay": 1e-2}),
@@ -95,26 +102,23 @@ CONFIG = {
         "gpus": 2,
         "num_nodes": 1,
         "accelerator": "ddp",
-        "check_val_every_n_epoch": 800,
+        "check_val_every_n_epoch": 50,
         "callbacks": [
             LearningRateMonitor(logging_interval="step"),
             ModelCheckpoint(every_n_train_steps=50),
         ],
-        "logger": TensorBoardLogger(
-            save_dir="logs/synapse/fold0", name="seper"
-        ),
+        "logger": TensorBoardLogger(save_dir="logs/brats/fold0", name="senmf"),
     },
     "test": {
         "checkpoint": {
-            "checkpoint_path": "logs/synapse/fold0/seper/version_0/checkpoints/epoch=257-step=99999.ckpt",
+            "checkpoint_path": "logs/brats/fold0/senmf/version_0/checkpoints/epoch=515-step=99999.ckpt",
         },
-        "inferer": datasets.synapse.Inferer(
-            spacing=(1.5, 1.5, 2.0),
-            spatial_size=(96, 96, 96),
+        "inferer": datasets.brats.Inferer(
+            spatial_size=(128, 128, 128),
             overlap=0.5,
             post="class",
-            write_dir="logs/synapse/fold0/seper/version_0/predictions",
+            write_dir="logs/brats/fold0/senmf/version_0/predictions",
         ),
-        "save_path": "logs/synapse/fold0/seper/version_0/results.csv",
+        "save_path": "logs/brats/fold0/senmf/version_0/results.csv",
     },
 }

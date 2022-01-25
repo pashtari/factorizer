@@ -10,7 +10,7 @@ from monai.data import Dataset, DataLoader
 from monai.transforms import Compose, LoadImaged, ToTensord, Spacingd
 from monai.utils.misc import first
 
-from factorizer.datasets import msseg
+from factorizer.data import msseg
 
 # %%
 test = [
@@ -26,7 +26,7 @@ dm = msseg.MSSEG(
     data=None,
     test=test,
     spacing=(0.6, 0.6, 0.6),
-    spatial_size=(128, 128, 128),
+    spatial_size=(96, 96, 96),
     num_workers=0,
     num_splits=5,
     split=0,
@@ -41,7 +41,7 @@ dm = msseg.MSSEG(
     data="/Users/pooya/Data/MSSEG-2/training",
     test=None,
     spacing=(0.6, 0.6, 0.6),
-    spatial_size=(128, 128, 128),
+    spatial_size=(96, 96, 96),
     num_workers=0,
     num_splits=5,
     split=0,

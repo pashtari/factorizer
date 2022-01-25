@@ -8,14 +8,20 @@ from factorizer import datasets
 
 # %% Sample
 dm = datasets.BTCV(
-    root_dir="/Users/pooya/Data/Synapse/RawData",
-    spacing=(1, 1, 1),
-    spatial_size=(128, 128, 128),
+    data_properties="/Users/pooya/Data/BTCV/RawData/dataset.json",
+    spacing=(1.5, 1.5, 2.0),
+    spatial_size=(96, 96, 96),
     num_splits=5,
     split=0,
-    num_workers=0,
     batch_size=1,
-    cache_num=0,
+    num_workers=0,
+    num_init_workers=0,
+    num_replace_workers=0,
+    cache_num=5,
+    cache_rate=1.0,
+    replace_rate=0.2,
+    progress=True,
+    copy_cache=True,
     seed=42,
 )
 dm.setup("fit")

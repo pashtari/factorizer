@@ -131,6 +131,7 @@ class AlternatingLeastSquares(nn.Module):
                 self.flops += math.ceil(
                     2 * N * (R ** 2) * M - (2 / 3) * (R ** 3) * M
                 )
+
             if 1 in self.factor:
                 self.flops += math.ceil(
                     2 * M * (R ** 2) * N - (2 / 3) * (R ** 3) * N
@@ -144,9 +145,8 @@ class AlternatingLeastSquares(nn.Module):
         if M >= N:
             u_new = x @ t(torch.linalg.pinv(v))
         else:
-            xv = x @ v
-            vtv = t(v) @ v
-            u_new = torch.linalg.solve(vtv, t(xv))
+            a, b = x @ v, t(v) @ v
+            u_new = torch.linalg.solve(b, t(a))
             u_new = t(u_new)
 
         return self.project(u_new)
@@ -181,26 +181,23 @@ class ProjectedGradient(nn.Module):
             R = self.rank
             self.flops = 0
             if 0 in self.factor:
-                self.flops += (
-                    4 * M * N * R + 4 * M * R * R + 2 * N * R * R + 6 * M * R
-                )
+                self.flops += 2 * M * N * R + 4 * M * R + 2 * N * R + 7 * M * R
 
             if 1 in self.factor:
-                self.flops += (
-                    4 * N * M * R + 4 * N * R * R + 2 * M * R * R + 6 * N * R
-                )
+                self.flops += 2 * N * M * R + 4 * N * R + 2 * M * R + 7 * N * R
+
         else:
             self.flops = None
 
     def single_update(self, x, u, v):
         # x ≈ u @ t(v)
-        vtv = t(v) @ v  # FLOPS = 2RNR
-        g = x @ v - u @ vtv  # gradient; FLOPS = 2MNR + 2MRR + MR
+        a, b = x @ v, t(v) @ v  # FLOPS = 2MNR + 2RNR
+        g = a - u @ b  # gradient; FLOPS = MR + 2MRR
         η = (dot(g, g) + self.eps) / (
-            dot(g, g @ vtv) + self.eps
-        )  # FLOPS = 2MR + MR + 2MR + 2MRR = 5MR + 2MRR
+            dot(g, g @ b) + self.eps
+        )  # FLOPS = 2MR + 2MR + 2MRR
         η = η.unsqueeze(-1)
-        u_new = self.project(u + η * g)  # FLOPS = 2MNR
+        u_new = self.project(u + η * g)  # FLOPS = 2MR
         return u_new
 
     def forward(self, x, factor_matrices):
@@ -225,6 +222,7 @@ class CoordinateDescent(nn.Module):
         project = nn.Identity if project is None else project
         project = wrap_class(project)
         self.project = project()
+
         self.size = kwargs.get("size")  # size and rank used to count flops
         self.rank = kwargs.get("rank")
         if None not in (self.size, self.rank):
@@ -232,57 +230,33 @@ class CoordinateDescent(nn.Module):
             R = self.rank
             self.flops = 0
             if 0 in self.factor:
-                self.flops += (
-                    2 * M * (R - 1) * N
-                    + 3 * M * N
-                    + 2 * M
-                    + 2 * N
-                    + (R - 1) * (6 * M * N + 2 * M + 2 * N)
-                )
+                self.flops += 2 * R * (M * N + N * R + M * R + M)
+
             if 1 in self.factor:
-                self.flops += (
-                    2 * N * (R - 1) * M
-                    + 3 * N * M
-                    + 2 * N
-                    + 2 * M
-                    + (R - 1) * (6 * N * M + 2 * N + 2 * M)
-                )
+                self.flops += 2 * R * (N * M + M * R + N * R + N)
         else:
             self.flops = None
-
-    def rank1_update(self, x, v):
-        # x ≈ u @ t(v) --> u = ?
-        # u, v are vectors, i.e., u @ t(v) is rank-1.
-        numerator = x @ v + self.eps  # FLOPS = 2MN
-        denominator = t(v) @ v + self.eps  # FLOPS = 2N
-        return self.project(numerator / denominator)  # FLOPS = 2M
 
     def single_update(self, x, u, v):
         # x ≈ u @ t(v) --> u = ?
         R = u.shape[-1]
+        a, b = x @ v, t(v) @ v  # FLOPS = 2MNR + 2RNR
         if R > 1:
             u_new = u.clone()
-            f = u[:, :, 1:].clone()
-            g = v[:, :, 1:].clone()
-            e = x - f @ t(g)  # FLOPS = 2M(R-1)N + MN
-            b = v[:, :, 0:1].clone()
-
-            a = self.rank1_update(e, b)  # FLOPS = 2MN + 2M + 2N
-            u_new[:, :, 0:1] = a.clone()
+            for r in range(R):
+                indices = [j for j in range(R) if j != r]
+                term1 = a[:, :, r : (r + 1)].clone()
+                term2 = u_new[:, :, indices].clone()
+                term3 = b[:, indices, r : (r + 1)].clone()
+                numerator = term1 - term2 @ term3 + self.eps  # FLOPS = 2MR
+                denominator = b[:, r : (r + 1), r : (r + 1)].clone() + self.eps
+                u_new[:, :, r : (r + 1)] = self.project(
+                    numerator / denominator
+                ).clone()  # FLOPS = 2M
         else:
-            u_new = self.rank1_update(x, v)  # FLOPS = 2MN + 2M + 2N
-
-        for r in range(1, R):
-            a = u_new[:, :, (r - 1) : r].clone()
-            b = v[:, :, (r - 1) : r].clone()
-            e = e - a @ t(b)  # FLOPS = 2MN
-
-            a = u_new[:, :, r : (r + 1)].clone()
-            b = v[:, :, r : (r + 1)].clone()
-            e = e + a @ t(b)  # FLOPS = 2MN
-
-            a = self.rank1_update(e, b)  # FLOPS = 2MN + 2M + 2N
-            u_new[:, :, r : (r + 1)] = a.clone()
+            numerator = a + self.eps
+            denominator = b + self.eps
+            u_new = self.project(numerator / denominator)
 
         return u_new
 
@@ -304,11 +278,26 @@ class MultiplicativeUpdate(nn.Module):
         self.factor = as_tuple(factor)
         self.eps = eps
 
+        self.size = kwargs.get("size")  # size and rank used to count flops
+        self.rank = kwargs.get("rank")
+        if None not in (self.size, self.rank):
+            M, N = self.size
+            R = self.rank
+            self.flops = 0
+            if 0 in self.factor:
+                self.flops += 2 * R * (M * N + N * R + M * R + 2 * M)
+
+            if 0 in self.factor:
+                self.flops += 2 * R * (N * M + M * R + N * R + 2 * N)
+        else:
+            self.flops = None
+
     def single_update(self, x, u, v):
         # x ≈ u @ t(v)
-        numerator = u * (x @ v) + self.eps
-        denominator = u @ (t(v) @ v) + self.eps
-        u_new = numerator / denominator
+        a, b = x @ v, t(v) @ v  # FLOPS = 2MNR + 2RNR
+        numerator = u * a + self.eps  # FLOPS = 2MR
+        denominator = u @ b + self.eps  # FLOPS = 2MRR + MR
+        u_new = numerator / denominator  # FLOPS = MR
         return u_new
 
     def forward(self, x, factor_matrices):
@@ -319,6 +308,55 @@ class MultiplicativeUpdate(nn.Module):
 
         if 1 in self.factor:
             v = self.single_update(t(x), v, u)
+
+        return u, v
+
+
+class WeightedMultiplicativeUpdate(nn.Module):
+    """Weighted multiplicative update for weighted NMF:
+
+        min || W * (X - U t(V)) ||^2
+        s.t. U, V ≥ 0
+    """
+
+    def __init__(self, factor=(0, 1), eps=1e-8, **kwargs):
+        super().__init__()
+        self.factor = factor
+        self.eps = eps
+
+        self.size = kwargs.get("size")  # size and rank used to count flops
+        self.rank = kwargs.get("rank")
+        if None not in (self.size, self.rank):
+            M, N = self.size
+            R = self.rank
+            self.flops = 0
+            if 0 in self.factor:
+                self.flops += 2 * (3 * M * N * R + M * N + 2 * M * R)
+
+            if 0 in self.factor:
+                self.flops += 2 * (3 * N * M * R + N * M + 2 * N * R)
+        else:
+            self.flops = None
+
+    def single_update(self, x, u, v, w):
+        # x ≈ u @ t(v)
+        a = (w * x) @ v  # FLOPS = MN + 2MNR
+        numerator = u * a + self.eps  # FLOPS = 2MR
+        denominator = (
+            w * (u @ t(v))
+        ) @ v + self.eps  # FLOPS = 2MRN + MN + 2MNR + MR
+        u_new = numerator / denominator  # FLOPS = MR
+        return u_new
+
+    def forward(self, x, factor_matrices, weight=None):
+        u, v = factor_matrices
+        weight = torch.ones_like(x) if weight is None else weight
+
+        if 0 in self.factor:
+            u = self.single_update(x, u, v, weight)
+
+        if 1 in self.factor:
+            v = self.single_update(t(x), v, u, t(weight))
 
         return u, v
 
@@ -412,38 +450,6 @@ class FastMultiplicativeUpdate(nn.Module):
             numerator = self.numerator_expr[1][0](x, u, v) + self.eps
             denominator = self.denominator_expr[1][0](u, u, v) + self.eps
             v = numerator / denominator
-
-        return u, v
-
-
-class WeightedMultiplicativeUpdate(nn.Module):
-    """Weighted multiplicative update for weighted NMF:
-
-        min || W * (X - U t(V)) ||^2
-        s.t. U, V ≥ 0
-    """
-
-    def __init__(self, factor=(0, 1), eps=1e-8, **kwargs):
-        super().__init__()
-        self.factor = factor
-        self.eps = eps
-
-    def single_update(self, x, u, v, w):
-        # x ≈ u @ t(v)
-        numerator = u * ((w * x) @ v) + self.eps
-        denominator = (w * (u @ t(v))) @ v + self.eps
-        u_new = numerator / denominator
-        return u_new
-
-    def forward(self, x, factor_matrices, weight=None):
-        u, v = factor_matrices
-        weight = torch.ones_like(x) if weight is None else weight
-
-        if 0 in self.factor:
-            u = self.single_update(x, u, v, weight)
-
-        if 1 in self.factor:
-            v = self.single_update(t(x), v, u, t(weight))
 
         return u, v
 
@@ -784,7 +790,7 @@ class NMF(MF):
         num_iters=5,
         num_grad_steps=None,
         init="uniform",
-        solver="cd",
+        solver="hals",
         verbose=False,
         **kwargs,
     ):
@@ -802,10 +808,10 @@ class NMF(MF):
 
         # set solver
         if solver == "mu":
-            solver = FastMultiplicativeUpdate
+            solver = MultiplicativeUpdate
         elif solver == "wmu":
             solver = WeightedMultiplicativeUpdate
-        elif solver == "cd":
+        elif solver in ("cd", "hals"):
             solver = (CoordinateDescent, {"project": nn.ReLU})
         elif solver == "gd":
             solver = (ProjectedGradient, {"project": nn.ReLU})

@@ -17,10 +17,11 @@ CONFIG = {
         "datamodule": (
             datasets.BRATS,
             {
-                "root_dir": "/data/leuven/336/vsc33647/data/Decathlon/Task01_BrainTumour",
+                "data_properties": "/data/leuven/336/vsc33647/data/Decathlon/Task01_BrainTumour/dataset.json",
+                "spacing": (1.0, 1.0, 1.0),
                 "spatial_size": (128, 128, 128),
                 "num_splits": 5,
-                "split": 0,
+                "split": 3,
                 "batch_size": 1,
                 "num_workers": 4,
                 "cache_num": 4,
@@ -59,19 +60,22 @@ CONFIG = {
                         ),
                         "act": nn.ReLU,
                         "factorize": ft.NMF,
-                        "compression": 10,
+                        "rank": 1,
                         "num_iters": 5,
                         "num_grad_steps": None,
                         "init": "uniform",
-                        "solver": "cd",
+                        "solver": "hals",
                         "dropout": 0.1,
                     },
                 ),
                 "mlp": (ft.MLP, {"ratio": 2, "dropout": 0.1}),
             },
         ),
-        "inferer": datasets.brats.Inferer(
-            spatial_size=(128, 128, 128), overlap=0.5, post="one-hot-nested",
+        "inferer": datasets.BraTSInferer(
+            spacing=(1.0, 1.0, 1.0),
+            spatial_size=(128, 128, 128),
+            overlap=0.5,
+            post="one-hot-nested",
         ),
     },
     "optimization": {
@@ -107,18 +111,21 @@ CONFIG = {
             LearningRateMonitor(logging_interval="step"),
             ModelCheckpoint(every_n_train_steps=50),
         ],
-        "logger": TensorBoardLogger(save_dir="logs/brats/fold0", name="senmf"),
+        "logger": TensorBoardLogger(
+            save_dir="logs/brats/fold3", name="local-factorizer"
+        ),
     },
     "test": {
         "checkpoint": {
-            "checkpoint_path": "logs/brats/fold0/senmf/version_0/checkpoints/epoch=515-step=99999.ckpt",
+            "checkpoint_path": "logs/brats/fold3/local-factorizer/version_0/checkpoints/epoch=515-step=99999.ckpt",
         },
-        "inferer": datasets.brats.Inferer(
+        "inferer": datasets.BraTSInferer(
+            spacing=(1.0, 1.0, 1.0),
             spatial_size=(128, 128, 128),
             overlap=0.5,
             post="class",
-            write_dir="logs/brats/fold0/senmf/version_0/predictions",
+            write_dir="logs/brats/fold3/local-factorizer/version_0/predictions",
         ),
-        "save_path": "logs/brats/fold0/senmf/version_0/results.csv",
+        "save_path": "logs/brats/fold3/local-factorizer/version_0/results.csv",
     },
 }

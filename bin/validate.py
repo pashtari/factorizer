@@ -49,6 +49,10 @@ def main(args):
     )
     results = move_to(model.val_results, device="cpu")
 
+    for k, v in results.items():
+        if isinstance(v, torch.Tensor):
+            results[k] = v.flatten()
+
     # convert to dataframe
     results = pd.DataFrame(results)
     results = results.replace([np.inf, -np.inf], np.nan)

@@ -87,110 +87,110 @@ from factorizer.factorization.tensor_factorizations import RandomTensorInit
 # loss.backward()
 
 
-# # %% NMF
-# torch.manual_seed(42)
-# size = (8, 8, 8, 8)
-# x = torch.randn(5, *size, requires_grad=True).relu()
-# x = x.flatten(2, -1)  # .transpose(1, -1)
-# _, *size = x.shape
+# %% NMF
+torch.manual_seed(42)
+size = (8, 8, 8, 8)
+x = torch.rand(4, *size, requires_grad=True).relu()
+x = x.flatten(2, -1)  # .transpose(1, -1)
+_, *size = x.shape
 
-# nmf = ft.NMF(
-#     size=size,
-#     compression=10,
-#     num_iters=5,
-#     init="uniform",
-#     solver="mu",
-#     num_grad_steps=None,
-#     verbose=True,
-# )
-# u, v = nmf.decompose(x)
-# print(f"NMF: FLOPS = {nmf.flops}")
-# loss = u.sum()
-# loss.backward()
+nmf = ft.NMF(
+    size=size,
+    compression=3,
+    num_iters=100,
+    init="uniform",
+    solver="hals",
+    num_grad_steps=None,
+    verbose=True,
+)
+u, v = nmf.decompose(x)
+print(f"NMF: FLOPS = {nmf.flops}")
+loss = u.sum()
+loss.backward()
 
-# # %% WNMF
-# torch.manual_seed(42)
-# size = (8, 8, 8, 8)
-# x = torch.rand(1, *size, requires_grad=True)
-# x = x.flatten(2, -1)  # .transpose(1, -1)
-# _, *size = x.shape
+# %% WNMF
+torch.manual_seed(42)
+size = (8, 8, 8, 8)
+x = torch.rand(1, *size, requires_grad=True)
+x = x.flatten(2, -1)  # .transpose(1, -1)
+_, *size = x.shape
 
-# nmf = ft.NMF(
-#     size=size,
-#     compression=10,
-#     num_iters=5,
-#     init="uniform",
-#     solver="wmu",
-#     num_grad_steps=None,
-#     verbose=True,
-# )
-# u, v = nmf.decompose(x)
-# print(f"WNMF: FLOPS = {nmf.flops}")
-# loss = u.sum()
-# loss.backward()
+nmf = ft.NMF(
+    size=size,
+    compression=10,
+    num_iters=5,
+    init="uniform",
+    solver="wmu",
+    num_grad_steps=None,
+    verbose=True,
+)
+u, v = nmf.decompose(x)
+print(f"WNMF: FLOPS = {nmf.flops}")
+loss = u.sum()
+loss.backward()
 
-# #%% MLSVD
-# torch.manual_seed(42)
-# size = (8, 8, 8)
-# x = torch.rand(1, *size, requires_grad=True)
+#%% MLSVD
+torch.manual_seed(42)
+size = (8, 8, 8)
+x = torch.rand(1, *size, requires_grad=True)
 
-# mlsvd = ft.MLSVD(size=size, compression=10, no_grad=False, verbose=True)
-# y = mlsvd(x)
-# print(y.shape)
-# print(f"MLSVD: FLOPS = {mlsvd.flops}")
-# loss = y.sum()
-# loss.backward()
+mlsvd = ft.MLSVD(size=size, compression=10, no_grad=False, verbose=True)
+y = mlsvd(x)
+print(y.shape)
+print(f"MLSVD: FLOPS = {mlsvd.flops}")
+loss = y.sum()
+loss.backward()
 
 
-# # %% NCPD (NTF)
-# torch.manual_seed(42)
-# size = (8, 8, 8)
-# x = torch.rand(1, *size, requires_grad=True)
+# %% NCPD (NTF)
+torch.manual_seed(42)
+size = (8, 8, 8)
+x = torch.rand(1, *size, requires_grad=True)
 
-# ncpd = ft.NCPD(
-#     size=size,
-#     compression=10,
-#     num_iters=5,
-#     init="uniform",
-#     solver="mu",
-#     verbose=True,
-# )
-# y = ncpd(x)
-# print(y.shape)
-# print(f"NTF: FLOPS = {ncpd.flops}")
-# loss = y.sum()
-# loss.backward()
+ncpd = ft.NCPD(
+    size=size,
+    compression=10,
+    num_iters=5,
+    init="uniform",
+    solver="mu",
+    verbose=True,
+)
+y = ncpd(x)
+print(y.shape)
+print(f"NTF: FLOPS = {ncpd.flops}")
+loss = y.sum()
+loss.backward()
 
-# # %% NTD
-# torch.manual_seed(42)
-# size = (8, 8, 8)
-# x = torch.randn(1, *size, requires_grad=True).relu()
+# %% NTD
+torch.manual_seed(42)
+size = (8, 8, 8)
+x = torch.randn(1, *size, requires_grad=True).relu()
 
-# ntd = ft.NTD(
-#     size=size,
-#     compression=10,
-#     num_iters=5,
-#     init="uniform",
-#     solver="mu",
-#     verbose=True,
-# )
-# y = ntd(x)
-# print(y.shape)
-# print(f"NTD: FLOPS = {ntd.flops}")
-# loss = y.sum()
-# loss.backward()
+ntd = ft.NTD(
+    size=size,
+    compression=10,
+    num_iters=5,
+    init="uniform",
+    solver="mu",
+    verbose=True,
+)
+y = ntd(x)
+print(y.shape)
+print(f"NTD: FLOPS = {ntd.flops}")
+loss = y.sum()
+loss.backward()
 
-# # %% NTTD
-# torch.manual_seed(42)
-# size = (8, 8, 8)
-# x = torch.rand(1, *size, requires_grad=True)
+# %% NTTD
+torch.manual_seed(42)
+size = (8, 8, 8)
+x = torch.rand(1, *size, requires_grad=True)
 
-# nttd = ft.NTTD(size=size, compression=10, num_iters=5, verbose=True)
-# y = nttd(x)
-# print(y.shape)
-# print(f"NTTD: FLOPS = {nttd.flops}")
-# loss = y.sum()
-# loss.backward()
+nttd = ft.NTTD(size=size, compression=10, num_iters=5, verbose=True)
+y = nttd(x)
+print(y.shape)
+print(f"NTTD: FLOPS = {nttd.flops}")
+loss = y.sum()
+loss.backward()
 
 # # %% Joint NMF
 # torch.manual_seed(42)
@@ -222,22 +222,22 @@ from factorizer.factorization.tensor_factorizations import RandomTensorInit
 # print(y.shape)
 
 
-# # %% FactorizerSubblock (local matricization)
-# torch.manual_seed(42)
-# input_dim = output_dim = 64
-# spatial_size = (64, 64, 64)
-# x = torch.rand(1, input_dim, *spatial_size)
+# %% FactorizerSubblock (local matricization)
+torch.manual_seed(42)
+input_dim = output_dim = 64
+spatial_size = (64, 64, 64)
+x = torch.rand(1, input_dim, *spatial_size)
 
-# factorizer_subblock = ft.FactorizerSubblock(
-#     input_dim,
-#     output_dim,
-#     spatial_size,
-#     tensorize=(ft.Matricize, {"head_dim": 8, "patch_size": 8}),
-#     act=nn.ReLU,
-#     factorize=(ft.NMF, {"compression": 5, "init": "uniform", "solver": "mu"}),
-# )
-# y = factorizer_subblock(x)
-# print(factorizer_subblock.factorize.flops["decompose"] * (8 * (8 ** 3)))
+factorizer_subblock = ft.FactorizerSubblock(
+    input_dim,
+    output_dim,
+    spatial_size,
+    tensorize=(ft.Matricize, {"head_dim": 8, "patch_size": 8}),
+    act=nn.ReLU,
+    factorize=(ft.NMF, {"compression": 10, "init": "uniform", "solver": "mu"}),
+)
+y = factorizer_subblock(x)
+print(factorizer_subblock.factorize.flops["decompose"] * (8 * (8 ** 3)))
 
 
 # %% FactorizerSubblock (local swin matricization)
@@ -250,9 +250,9 @@ factorizer_subblock = ft.FactorizerSubblock(
     input_dim,
     output_dim,
     spatial_size,
-    tensorize=(ft.SwinMetricize, {"head_dim": 8, "patch_size": 8}),
+    tensorize=(ft.SWMatricize, {"head_dim": 8, "patch_size": 8}),
     act=nn.ReLU,
-    factorize=(ft.NMF, {"compression": 5, "init": "uniform", "solver": "mu"}),
+    factorize=(ft.NMF, {"compression": 10, "init": "uniform", "solver": "mu"}),
 )
 y = factorizer_subblock(x)
 print(factorizer_subblock.factorize.flops["decompose"] * (2 * 8 * (8 ** 3)))
@@ -270,7 +270,10 @@ factorizer_subblock = ft.FactorizerSubblock(
     spatial_size,
     tensorize=(ft.Matricize, {"head_dim": 8, "grid_size": 1}),
     act=nn.ReLU,
-    factorize=(ft.NMF, {"compression": 5, "init": "uniform", "solver": "mu"},),
+    factorize=(
+        ft.NMF,
+        {"compression": 10, "init": "uniform", "solver": "mu"},
+    ),
 )
 y = factorizer_subblock(x)
 print(factorizer_subblock.factorize.flops["decompose"] * (8))
@@ -307,7 +310,7 @@ factorizer_subblock = ft.FactorizerSubblock(
     input_dim,
     output_dim,
     spatial_size,
-    tensorize=(ft.SwinTensorize, {"head_dim": 1, "patch_size": 8}),
+    tensorize=(ft.SWTensorize, {"head_dim": 1, "patch_size": 8}),
     act=nn.ReLU,
     factorize=(
         ft.NTF,

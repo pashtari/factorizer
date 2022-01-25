@@ -17,10 +17,11 @@ CONFIG = {
         "datamodule": (
             datasets.BRATS,
             {
-                "root_dir": "/data/leuven/336/vsc33647/data/Decathlon/Task01_BrainTumour",
+                "data_properties": "/data/leuven/336/vsc33647/data/Decathlon/Task01_BrainTumour/dataset.json",
+                "spacing": (1.0, 1.0, 1.0),
                 "spatial_size": (128, 128, 128),
                 "num_splits": 5,
-                "split": 0,
+                "split": 1,
                 "batch_size": 1,
                 "num_workers": 4,
                 "cache_num": 4,
@@ -31,11 +32,11 @@ CONFIG = {
     },
     "model": {
         "network": (
-            ft.UNet,
+            ft.SegmentationFactorizer,
             {
                 "in_channels": 4,
                 "out_channels": 3,
-                "spatial_dims": 3,
+                "spatial_size": (128, 128, 128),
                 "encoder_depth": (1, 1, 1, 1, 1),
                 "encoder_width": (32, 64, 128, 256, 512),
                 "strides": (1, 2, 2, 2, 2),
@@ -48,23 +49,33 @@ CONFIG = {
                 "upsample": (nn.ConvTranspose3d, {"kernel_size": 2}),
                 "head": (nn.Conv3d, {"kernel_size": 1}),
                 "num_deep_supr": 3,
-                "block": ft.Same(
-                    (
-                        ft.PreActivationBlock,
-                        {
-                            "conv": (
-                                nn.Conv3d,
-                                {"kernel_size": 3, "padding": 1},
-                            ),
-                            "norm": (nn.GroupNorm, (8,)),
-                            "act": nn.LeakyReLU,
-                        },
-                    )
+                "dropout": 0.1,
+                "nmf": (
+                    ft.FactorizerSubblock,
+                    {
+                        "ratio": 1,
+                        "tensorize": (
+                            ft.Matricize,
+                            {"head_dim": 8, "grid_size": 1},
+                        ),
+                        "act": nn.ReLU,
+                        "factorize": ft.NMF,
+                        "rank": 1,
+                        "num_iters": 5,
+                        "num_grad_steps": None,
+                        "init": "uniform",
+                        "solver": "hals",
+                        "dropout": 0.1,
+                    },
                 ),
+                "mlp": (ft.MLP, {"ratio": 2, "dropout": 0.1}),
             },
         ),
-        "inferer": datasets.brats.Inferer(
-            spatial_size=(128, 128, 128), overlap=0.5, post="one-hot-nested",
+        "inferer": datasets.BraTSInferer(
+            spacing=(1.0, 1.0, 1.0),
+            spatial_size=(128, 128, 128),
+            overlap=0.5,
+            post="one-hot-nested",
         ),
     },
     "optimization": {
@@ -101,19 +112,20 @@ CONFIG = {
             ModelCheckpoint(every_n_train_steps=50),
         ],
         "logger": TensorBoardLogger(
-            save_dir="logs/brats/fold0", name="preunet"
+            save_dir="logs/brats/fold1", name="global-factorizer"
         ),
     },
     "test": {
         "checkpoint": {
-            "checkpoint_path": "logs/brats/fold0/preunet/version_0/checkpoints/epoch=515-step=99999.ckpt",
+            "checkpoint_path": "logs/brats/fold1/global-factorizer/version_0/checkpoints/epoch=515-step=99999.ckpt",
         },
-        "inferer": datasets.brats.Inferer(
+        "inferer": datasets.BraTSInferer(
+            spacing=(1.0, 1.0, 1.0),
             spatial_size=(128, 128, 128),
             overlap=0.5,
             post="class",
-            write_dir="logs/brats/fold0/preunet/version_0/predictions",
+            write_dir="logs/brats/fold1/global-factorizer/version_0/predictions",
         ),
-        "save_path": "logs/brats/fold0/preunet/version_0/results.csv",
+        "save_path": "logs/brats/fold1/global-factorizer/version_0/results.csv",
     },
 }

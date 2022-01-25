@@ -1,7 +1,7 @@
 # %%
 import torch
 
-from factorizer.transformer import (
+from factorizer.layers.attention import (
     MLP,
     MultiheadAttention,
     FastAttention,

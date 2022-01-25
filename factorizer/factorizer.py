@@ -2,51 +2,11 @@ import copy
 
 import torch
 from torch import nn
-from torch.nn.modules.utils import _pair
 
 from .utils.helpers import wrap_class, cumprod
+from .layers import LayerNorm, Linear
 from .factorization import Reshape, MLSVD
 from .unet import UNet
-
-
-class LayerNorm(nn.Module):
-    """"Layer norm for channels-first inputs."""
-
-    def __init__(self, dim, **kwargs):
-        super().__init__()
-        self.norm = nn.LayerNorm(dim, **kwargs)
-
-    def forward(self, x):
-        # x: B × C × S1 × S2 × ... × Sp
-        out = torch.einsum("b c ... -> b ... c", x)
-        out = self.norm(out)
-        out = torch.einsum("b ... c -> b c ...", out)
-        return out
-
-
-class Linear(nn.Module):
-    """"Linear layer for channels-first inputs."""
-
-    def __init__(
-        self, in_features, out_features, bias=True, device=None, dtype=None,
-    ):
-        super().__init__()
-        self.flatten = nn.Flatten(start_dim=2)
-        self.linear = nn.Conv1d(
-            in_features,
-            out_features,
-            kernel_size=1,
-            bias=bias,
-            device=device,
-            dtype=dtype,
-        )
-
-    def forward(self, x):
-        shape = x.shape
-        out = self.flatten(x)
-        out = self.linear(out)
-        out = out.reshape(shape[0], -1, *shape[2:])
-        return out
 
 
 class PosEmbed(nn.Module):
@@ -72,49 +32,6 @@ class Residual(nn.Module):
 
     def forward(self, x, **kwargs):
         return self.fn(x, **kwargs) + x
-
-
-class MLP(nn.Module):
-    def __init__(
-        self,
-        input_dim,
-        output_dim=None,
-        hidden_dim=None,
-        ratio=2,
-        dropout=0.0,
-        **kwargs,
-    ):
-        super().__init__()
-        output_dim = input_dim if output_dim is None else output_dim
-        hidden_dim = (
-            int(ratio * input_dim) if hidden_dim is None else hidden_dim
-        )
-        dropout = _pair(dropout)
-
-        self.block = nn.Sequential(
-            Linear(input_dim, hidden_dim),
-            nn.GELU(),
-            nn.Dropout(dropout[0]),
-            Linear(hidden_dim, output_dim),
-            nn.Dropout(dropout[1]),
-        )
-
-    def forward(self, x):
-        return self.block(x)
-
-
-class DepthWiseP2P(nn.Module):
-    "Depth-wise patch-to-patch transform."
-
-    def __init__(self, size):
-        super().__init__()
-        # patches already flattened in the matricization step
-        num_pixels = size[-1]  # last dim is #pixels in a patch
-        self.linear = nn.Linear(num_pixels, num_pixels)
-
-    def forward(self, x):
-        # x: (batch × channels × patches) × pixels
-        return self.linear(x)
 
 
 class FactorizerSubblock(nn.Module):
@@ -258,6 +175,7 @@ class SegmentationFactorizer(UNet):
         downsample=None,
         upsample=None,
         head=None,
+        pos_embed=True,
         num_deep_supr=1,
         **kwargs,
     ):
@@ -265,7 +183,12 @@ class SegmentationFactorizer(UNet):
         self.spatial_size = spatial_size
         spatial_dims = len(spatial_size)
         blocks = self._get_blocks(
-            spatial_size, encoder_depth, decoder_depth, strides, **kwargs
+            spatial_size,
+            encoder_depth,
+            decoder_depth,
+            strides,
+            pos_embed,
+            **kwargs,
         )
         super().__init__(
             in_channels,
@@ -285,7 +208,13 @@ class SegmentationFactorizer(UNet):
         )
 
     def _get_blocks(
-        self, spatial_size, encoder_depth, decoder_depth, strides, **kwargs
+        self,
+        spatial_size,
+        encoder_depth,
+        decoder_depth,
+        strides,
+        pos_embed,
+        **kwargs,
     ):
         net_depth = encoder_depth + decoder_depth
         num_layers = len(net_depth)
@@ -299,9 +228,10 @@ class SegmentationFactorizer(UNet):
                     s // cumstrides[level] for s in spatial_size
                 )
 
+                bridge = (layer, sublayer) == (num_layers // 2, 0)
                 params = {
                     "spatial_size": current_spatial_size,
-                    "pos_embed": (layer, sublayer) == (num_layers // 2, 0),
+                    "pos_embed": pos_embed and bridge,
                     **kwargs,
                 }
                 blocks[(layer, sublayer)] = (FactorizerBlock, params)

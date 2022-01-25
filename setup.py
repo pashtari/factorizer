@@ -49,5 +49,6 @@ setup(
         "itk",
         "nibabel",
         "monai>=0.7.0",
+        "performer-pytorch",
     ],
 )

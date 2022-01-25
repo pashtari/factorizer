@@ -55,7 +55,7 @@ def get_args() -> Namespace:
 
 
 class Arg(object):
-    config = "configs/ablations/config_brats_fold0_lnmf-hals.py"
+    config = "configs/config_brats_fold0_factorizer.py"
 
 
 if __name__ == "__main__":

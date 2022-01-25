@@ -1,4 +1,4 @@
-from typing import Any, Dict, Text, Tuple, Union, Sequence, Callable
+from typing import Any, Text, Tuple, Union, Sequence, Callable
 from numbers import Number
 import os
 import sys
@@ -58,26 +58,34 @@ def has_args(obj, keywords: Union[str, Sequence[str]]) -> bool:
     return all(key in sig.parameters for key in as_tuple(keywords))
 
 
-def wrap_class(inp: Union[Sequence, Callable]):
-    assert isinstance(
-        inp, (Sequence, Callable)
-    ), f"{inp} should be a sequence or callable."
+def partialclass(cls, *args, **kwds):
+    new_cls = type(
+        cls.__name__,
+        (cls,),
+        {"__init__": partialmethod(cls.__init__, *args, **kwds)},
+    )
+    return new_cls
 
-    if isinstance(inp, Sequence) and isinstance(inp[0], Callable):
+
+def wrap_class(obj: Union[Sequence, Callable]):
+    assert isinstance(
+        obj, (Sequence, Callable)
+    ), f"{obj} should be a sequence or callable."
+
+    if isinstance(obj, Sequence) and isinstance(obj[0], Callable):
         args = []
         kwargs = {}
-        for i, a in enumerate(inp):
+        for i, a in enumerate(obj):
             if i == 0:
-                cls = a
+                callable_obj = a
             elif isinstance(a, Sequence):
                 args.extend(a)
-            elif isinstance(a, Dict):
+            elif isinstance(a, dict):
                 kwargs.update(a)
 
-        return partial(cls, *args, **kwargs)
-
+        return partial(callable_obj, *args, **kwargs)
     else:
-        return inp
+        return obj
 
 
 def dispatcher(func):
@@ -107,13 +115,6 @@ def read_config(path):
     module = import_module(file_name, directory)
     config = getattr(module, "CONFIG")
     return config
-
-
-def partialclass(cls, *args, **kwargs):
-    class NewCls(cls):
-        __init__ = partialmethod(cls.__init__, *args, **kwargs)
-
-    return NewCls
 
 
 def channels_first(obj):

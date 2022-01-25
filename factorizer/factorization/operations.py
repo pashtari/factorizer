@@ -262,7 +262,7 @@ class Tensorize(Reshape):
         )
 
 
-class SwinMetricize(nn.Module):
+class SWMatricize(nn.Module):
     def __init__(
         self,
         input_size,
@@ -311,7 +311,7 @@ class SwinMetricize(nn.Module):
         return out
 
 
-class SwinTensorize(nn.Module):
+class SWTensorize(nn.Module):
     def __init__(
         self,
         input_size,

@@ -17,7 +17,8 @@ CONFIG = {
         "datamodule": (
             datasets.BRATS,
             {
-                "root_dir": "/data/leuven/336/vsc33647/data/Decathlon/Task01_BrainTumour",
+                "data_properties": "/data/leuven/336/vsc33647/data/Decathlon/Task01_BrainTumour/dataset.json",
+                "spacing": (1.0, 1.0, 1.0),
                 "spatial_size": (128, 128, 128),
                 "num_splits": 5,
                 "split": 0,
@@ -63,8 +64,11 @@ CONFIG = {
                 ),
             },
         ),
-        "inferer": datasets.brats.Inferer(
-            spatial_size=(128, 128, 128), overlap=0.5, post="one-hot-nested",
+        "inferer": datasets.BraTSInferer(
+            spacing=(1.0, 1.0, 1.0),
+            spatial_size=(128, 128, 128),
+            overlap=0.5,
+            post="one-hot-nested",
         ),
     },
     "optimization": {
@@ -106,7 +110,8 @@ CONFIG = {
         "checkpoint": {
             "checkpoint_path": "logs/brats/fold0/unet/version_0/checkpoints/epoch=515-step=99999.ckpt",
         },
-        "inferer": datasets.brats.Inferer(
+        "inferer": datasets.BraTSInferer(
+            spacing=(1.0, 1.0, 1.0),
             spatial_size=(128, 128, 128),
             overlap=0.5,
             post="class",

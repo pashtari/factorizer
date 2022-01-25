@@ -1,13 +1,8 @@
-import os
 import sys
 
 import numpy as np
 import torch
-from pytorch_lightning import LightningDataModule
-from monai.apps import CrossValidation
-from monai.data import DataLoader
 from monai.transforms import (
-    Transform,
     MapTransform,
     Compose,
     LoadImaged,
@@ -21,13 +16,14 @@ from monai.transforms import (
     RandGaussianSmoothd,
     RandScaleIntensityd,
     RandAdjustContrastd,
-    # RandBiasFieldd,
     RandShiftIntensityd,
+    AsDiscreted,
     ToTensord,
     Lambdad,
 )
-from monai.inferers import SlidingWindowInferer
-from .utils import StandardDataset, SaveImaged
+from monai.data import CacheDataset
+
+from ..data import DataModule, Renamed, Inferer
 
 
 ###################################
@@ -35,7 +31,7 @@ from .utils import StandardDataset, SaveImaged
 ###################################
 
 
-class OneHotEncoderd(MapTransform):
+class BraTSOneHotEncoderd(MapTransform):
     """
     Convert labels to multi channels based on brats classes:
     label 0: background, 
@@ -87,53 +83,11 @@ class OneHotEncoderd(MapTransform):
         return d
 
 
-class Binarized(MapTransform):
-    """Discretize a probability map with a threshold."""
-
-    def __init__(self, keys, threshold=0.5, allow_missing_keys=False):
-        super().__init__(keys, allow_missing_keys)
-        self.threshold = threshold
-
-    def __call__(self, data):
-        data = dict(data)
-        for key in self.key_iterator(data):
-            data[key] = np.where(data[key] >= self.threshold, 1.0, 0.0)
-
-        return data
-
-
-class Renamed(Transform):
-    def __call__(self, data):
-        if "image" in data:
-            data["input"] = data.pop("image")
-
-        if "image_transforms" in data:
-            data["input_transforms"] = data.pop("image_transforms")
-
-        if "image_meta_dict" in data:
-            data["input_meta_dict"] = data.pop("image_meta_dict")
-
-        if "label" in data:
-            data["target"] = data.pop("label")
-
-        if "label_transforms" in data:
-            data["target_transforms"] = data.pop("label_transforms")
-
-        if "label_meta_dict" in data:
-            data["target_meta_dict"] = data.pop("label_meta_dict")
-
-        data["id"] = os.path.basename(
-            data["input_meta_dict"]["filename_or_obj"]
-        ).split(".")[0]
-
-        return data
-
-
-def get_train_transform(spatial_size=(128, 128, 128)):
+def brats_train_transform(spatial_size=(128, 128, 128)):
     transforms = [
         LoadImaged(["image", "label"]),
         AsChannelFirstd("image"),
-        OneHotEncoderd("label", nested=True),
+        BraTSOneHotEncoderd("label", nested=True),
         CropForegroundd(["image", "label"], source_key="image"),
         NormalizeIntensityd("image", nonzero=True, channel_wise=True),
         RandSpatialCropd(
@@ -161,9 +115,8 @@ def get_train_transform(spatial_size=(128, 128, 128)):
         ),
         RandScaleIntensityd("image", prob=0.15, factors=0.3),
         RandShiftIntensityd("image", prob=0.15, offsets=0.1),
-        # RandBiasFieldd("image", prob=0.15, degree=3, coeff_range=(0.0, 0.1)),
         RandAdjustContrastd("image", prob=0.15, gamma=(0.7, 1.5)),
-        Binarized("label", threshold=0.5),
+        AsDiscreted("label", threshold=0.5),
         ToTensord(["image", "label"]),
         Renamed(),
     ]
@@ -171,11 +124,11 @@ def get_train_transform(spatial_size=(128, 128, 128)):
     return train_transform
 
 
-def get_val_transform():
+def brats_val_transform():
     transforms = [
         LoadImaged(["image", "label"], allow_missing_keys=True),
         AsChannelFirstd("image"),
-        OneHotEncoderd("label", nested=True, allow_missing_keys=True),
+        BraTSOneHotEncoderd("label", nested=True, allow_missing_keys=True),
         NormalizeIntensityd("image", nonzero=True, channel_wise=True),
         ToTensord(["image", "label"], allow_missing_keys=True),
         Renamed(),
@@ -184,15 +137,15 @@ def get_val_transform():
     return val_transform
 
 
-def get_test_transform():
-    return get_val_transform()
+def brats_test_transform():
+    return brats_val_transform()
 
 
-def get_vis_transform():
+def brats_vis_transform():
     transforms = [
         LoadImaged(["image", "label"], allow_missing_keys=True),
         AsChannelFirstd("image"),
-        OneHotEncoderd("label", nested=False, allow_missing_keys=True),
+        BraTSOneHotEncoderd("label", nested=False, allow_missing_keys=True),
         NormalizeIntensityd("image", channel_wise=True),
         ToTensord(["image", "label"], allow_missing_keys=True),
         Renamed(),
@@ -202,170 +155,85 @@ def get_vis_transform():
 
 
 ###################################
-# Dataset
+# Data module
 ###################################
 
 
-class BraTSDataModule(LightningDataModule):
+class BraTSDataModule(DataModule):
     def __init__(
         self,
-        root_dir,
+        data_properties,
+        spacing=(1.0, 1.0, 1.0),
         spatial_size=(128, 128, 128),
         num_splits=5,
         split=0,
         batch_size=2,
-        num_workers=None,
+        num_workers=0,
         cache_num=sys.maxsize,
         cache_rate=1.0,
         progress=True,
         copy_cache=True,
         seed=42,
     ):
-        super().__init__()
-        self.root_dir = root_dir
-        self.num_splits = num_splits
-        self.split = split
-        self.batch_size = batch_size
-        self.num_workers = num_workers
-        self.cache_num = cache_num
-        self.cache_rate = cache_rate
-        self.progress = progress
-        self.copy_cache = copy_cache
-        self.seed = seed
+        dataset_cls_params = {
+            "cache_num": cache_num,
+            "cache_rate": cache_rate,
+            "num_workers": num_workers,
+            "progress": progress,
+            "copy_cache": copy_cache,
+        }
+        dataset_cls = (CacheDataset, dataset_cls_params)
 
-        # get training transform
-        self.train_transform = get_train_transform(spatial_size=spatial_size)
-        # get validation transform
-        self.val_transform = get_val_transform()
-        # get test transform
-        self.test_transform = get_test_transform()
-        # get visualization transform
-        self.vis_transform = get_vis_transform()
-
-        self.train_set = self.val_set = self.test_set = None
-
-    def setup(self, stage):
-        if stage in ("fit", "validate", None):
-            # make training set
-            train_cv = CrossValidation(
-                dataset_cls=StandardDataset,
-                nfolds=self.num_splits,
-                seed=self.seed,
-                root_dir=self.root_dir,
-                section="training",
-                transform=self.train_transform,
-                cache_num=self.cache_num,
-                cache_rate=self.cache_rate,
-                num_workers=self.num_workers,
-                progress=self.progress,
-                copy_cache=self.copy_cache,
-            )
-            train_folds = [
-                k for k in range(self.num_splits) if k != self.split
-            ]
-            self.train_set = train_cv.get_dataset(train_folds)
-
-            # make validation set
-            val_cv = CrossValidation(
-                dataset_cls=StandardDataset,
-                nfolds=self.num_splits,
-                seed=self.seed,
-                root_dir=self.root_dir,
-                section="validation",
-                transform=self.val_transform,
-                cache_num=self.cache_num,
-                cache_rate=self.cache_rate,
-                num_workers=self.num_workers,
-                progress=self.progress,
-                copy_cache=self.copy_cache,
-            )
-            self.val_set = val_cv.get_dataset([self.split])
-
-        if stage in ("test", "predict", None):
-            # make test set
-            self.test_set = StandardDataset(
-                self.root_dir,
-                section="test",
-                transform=self.test_transform,
-                cache_num=self.cache_num,
-                cache_rate=self.cache_rate,
-                num_workers=self.num_workers,
-                progress=self.progress,
-                copy_cache=self.copy_cache,
-            )
-
-    def train_dataloader(self):
-        train_loader = DataLoader(
-            self.train_set,
-            batch_size=self.batch_size,
-            shuffle=True,
-            num_workers=self.num_workers,
-            pin_memory=torch.cuda.is_available(),
+        train_transform = brats_train_transform(spatial_size)
+        val_transform = brats_val_transform()
+        test_transform = brats_test_transform()
+        vis_transform = brats_vis_transform()
+        super().__init__(
+            data_properties,
+            train_dataset_cls=dataset_cls,
+            val_dataset_cls=dataset_cls,
+            test_dataset_cls=dataset_cls,
+            train_transform=train_transform,
+            val_transform=val_transform,
+            test_transform=test_transform,
+            vis_transform=vis_transform,
+            num_splits=num_splits,
+            split=split,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            seed=seed,
         )
-        return train_loader
-
-    def val_dataloader(self):
-        val_loader = DataLoader(
-            self.val_set,
-            batch_size=self.batch_size,
-            num_workers=self.num_workers,
-        )
-        return val_loader
-
-    def test_dataloader(self):
-        test_loader = DataLoader(
-            self.test_set,
-            batch_size=self.batch_size,
-            num_workers=self.num_workers,
-        )
-        return test_loader
 
 
 # alias
 BRATS = BraTSDataModule
+
 
 ###################################
 # Inference
 ###################################
 
 
-class OneHotDecoder(Transform):
-    def __call__(self, mask):
-        et = mask[:, 0, ...]
-        tc = mask[:, 1, ...]
-        wt = mask[:, 2, ...]
-        out = torch.zeros_like(wt)
-        out[et == 1] = 3
-        out[torch.logical_and(tc == 1, et == 0)] = 2
-        out[torch.logical_and(wt == 1, tc == 0)] = 1
-        return out
-
-
-class Inferer(object):
+class BraTSInferer(Inferer):
     def __init__(
         self,
+        spacing=(1.0, 1.0, 1.0),
         spatial_size=(128, 128, 128),
-        post="logit-nested",
+        post=None,
         write_dir=None,
         output_dtype=None,
         **kwargs,
     ) -> None:
-        super().__init__()
-
-        # inference method
-        self.inferer = SlidingWindowInferer(roi_size=spatial_size, **kwargs)
 
         # postprocessing transforms
         if post == "logit-nested":
-            self.post = Lambdad("input", lambda x: x)
+            post = Lambdad("input", lambda x: x)
             output_dtype = np.float32 if output_dtype is None else output_dtype
         elif post == "prob-nested":
-            self.post = Lambdad("input", lambda x: x.sigmoid(dim=1))
+            post = Lambdad("input", lambda x: x.sigmoid(dim=1))
             output_dtype = np.float32 if output_dtype is None else output_dtype
         elif post == "one-hot-nested":
-            self.post = Lambdad(
-                "input", lambda x: torch.where(x >= 0, 1.0, 0.0)
-            )
+            post = Lambdad("input", lambda x: torch.where(x >= 0, 1.0, 0.0))
             output_dtype = np.uint8 if output_dtype is None else output_dtype
         elif post == "class":
 
@@ -394,37 +262,17 @@ class Inferer(object):
                 ed = torch.logical_and(wt == 1, tc == 0).float()
                 return torch.cat((bg, ed, nt, et), dim=1)
 
-            self.post = Lambdad("input", func)
+            post = Lambdad("input", func)
             output_dtype = np.uint8 if output_dtype is None else output_dtype
         else:
-            self.post = post
+            post = post
 
-        # write to file
-        self.output_dtype = output_dtype
-        self.write_dir = write_dir
+        super().__init__(
+            spacing=spacing,
+            spatial_size=spatial_size,
+            post=post,
+            write_dir=write_dir,
+            output_dtype=output_dtype,
+            **kwargs,
+        )
 
-    def get_inferred(self, batch, model):
-        batch["input"] = self.inferer(batch["input"], model)
-        return batch
-
-    def get_postprocessed(self, batch, model):
-        batch = self.get_inferred(batch, model)
-        batch = self.post(batch)
-        return batch
-
-    def write(self, batch, write_dir):
-        if write_dir is not None:
-            save = SaveImaged(
-                "input",
-                output_dir=write_dir,
-                output_dtype=self.output_dtype,
-                output_postfix="",
-                save_batch=True,
-                print_log=True,
-            )
-            save(batch)
-
-    def __call__(self, batch, model):
-        batch = self.get_postprocessed(batch, model)
-        self.write(batch, self.write_dir)
-        return batch["input"]

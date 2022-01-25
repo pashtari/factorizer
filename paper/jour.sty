@@ -1,0 +1,55 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                               PAGE SIZE
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\RequirePackage[a4paper, top=1in, bottom=1in, right=1in, left=1in]{geometry}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                               SECTIONS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\titleformat{\section}{\large\bf}{\thesection.}{0.5em}{}
+\titlespacing*{\section}{0ex}{0.24in}{.10in}
+\titleformat{\subsection}{\normalsize\bf}{\thesubsection.}{0.5em}{}
+\titlespacing*{\subsection}{0ex}{0.20in}{0.08in}
+\titleformat{\subsubsection}{\normalsize\bf}{\thesubsubsection.}{0.5em}{}
+\titlespacing*{\subsubsection}{0ex}{0.18in}{0.08in}
+%\titleformat{\paragraph}{\normalsize\bf}{\thesubsubsection.}{0.5em}{}
+\titlespacing*{\paragraph}{0ex}{1.5ex plus 0.5ex minus 0.2ex}{1em}
+%\def\paragraph{\@startsection{paragraph}{4}{\z@}{1.5ex plus 0.5ex minus 0.2ex}{-1em}{\normalsize\bf}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                               ABSTRACT
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% use \begin{abstract} .. \end{abstract} for abstracts.
+\renewenvironment{abstract}
+{\centerline{\large\bf Abstract}\vspace{0.7ex}%
+  \bgroup\leftskip 20pt\rightskip 20pt\small\noindent\ignorespaces}%
+{\par\egroup\vskip 0.25ex}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                               KEYWORDS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% use \begin{keywords} .. \end{keywords} for keywordss.
+\newenvironment{keywords}
+{\bgroup\leftskip 20pt\rightskip 20pt \small\noindent{\bf Keywords:} }%
+{\par\egroup\vskip 0.25ex}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                        PROOF, THEOREM, and FRIENDS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\BlackBox}{\rule{1.5ex}{1.5ex}}  % end of proof
+\newenvironment{proof}{\par\noindent{\bf Proof\ }}{\hfill\BlackBox\\[2mm]}
+\newtheorem{example}{Example} 
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma} 
+\newtheorem{proposition}[theorem]{Proposition} 
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{conjecture}[theorem]{Conjecture}
+\newtheorem{axiom}[theorem]{Axiom}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                               MISCELLANY
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}

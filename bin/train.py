@@ -54,12 +54,12 @@ def get_args() -> Namespace:
     return args
 
 
-class Arg(object):
-    config = "configs/config_brats_fold0_factorizer.py"
+# class Arg(object):
+#     config = "configs/config_brats_fold0_factorizer.py"
 
 
 if __name__ == "__main__":
-    # args = get_args()  # for running from terminal
-    args = Arg()
+    args = get_args()  # for running from terminal
+    # args = Arg()
     main(args)
 

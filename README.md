@@ -6,7 +6,7 @@ This repo is the official implementation of ["Factorizer: A Scalable Interpretab
 
 **Factorizer** leverages the power of low-rank matrix approximation to construct end-to-end deep models for medical image segmentation. Built upon nonnegative matrix factorization and shifted window idea, Swin Factorizer competes favorably with CNN and Transformer baselines in terms of accuracy, scalability, and interpretability, achieving state-of-the-art results on the task of brain tumor segmentation. The method is described in detail in the [paper](https://arxiv.org/abs/2202.12295).
 
-![teaser](figures/graphical_abstract.pdf)
+![teaser](figures/graphical_abstract.png)
 
 
 ## Install

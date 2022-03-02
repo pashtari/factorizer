@@ -1,5 +1,6 @@
 from typing import Any, Text, Tuple, Union, Sequence, Callable
 from numbers import Number
+import math
 import os
 import sys
 import inspect
@@ -10,10 +11,15 @@ from functools import partialmethod, partial, reduce
 from operator import mul
 
 import numpy as np
+import pandas as pd
 from scipy import ndimage as ndi
 import torch
 from torch import nn
 from pytorch_lightning.callbacks import Callback
+from monai.utils.dist import (
+    evenly_divisible_all_gather,
+    string_list_all_gather,
+)
 
 
 @contextmanager
@@ -24,6 +30,26 @@ def null_context():
 class UniversalTuple(tuple):
     def __contains__(self, other):
         return True
+
+
+class EncodeStrings(object):
+    def __init__(self, embed_length=50) -> None:
+        self.embed_length = embed_length
+
+    def encode(self, strings):
+        unicodes = []
+        for s in strings:
+            padded_s = "".join(["!"] * (self.embed_length - len(s))) + s
+            unicodes.append(list(padded_s.encode("utf8")))
+
+        return unicodes
+
+    def decode(self, unicodes):
+        strings = []
+        for x in unicodes:
+            strings.append(bytes(x).decode("utf8").lstrip("!"))
+
+        return strings
 
 
 def as_tuple(obj: Any) -> Tuple[Any, ...]:
@@ -144,6 +170,17 @@ def local_norm(x, kernel_size):
     return out
 
 
+def all_gather(data):
+    results = {}
+    for k, v in data.items():
+        if isinstance(v, torch.Tensor):
+            results[k] = evenly_divisible_all_gather(v.contiguous())
+        else:
+            results[k] = string_list_all_gather(v)
+
+    return results
+
+
 def move_to(d, *args, **kwargs):
     if isinstance(d, (list, tuple, set, frozenset)):
         d = [move_to(v, *args, **kwargs) for v in d]
@@ -169,42 +206,63 @@ def collate(batch):
     return out
 
 
-def decollate_channels(batch):
+def decollate_channels(batch, keys=None):
+    keys = batch.keys() if keys is None else keys
     out = {}
-    for key, value in batch.items():
+    for k, v in batch.items():
         if (
-            isinstance(value, torch.Tensor)
-            and value.ndim == 2
-            and value.shape[1] > 1
+            k in keys
+            and isinstance(v, torch.Tensor)
+            and v.ndim == 2
+            and v.shape[1] > 1
         ):
-            for c in range(value.shape[1]):
-                out[f"{key}_{c}"] = value[:, c : (c + 1)]
+            for c in range(v.shape[1]):
+                out[f"{k}_{c}"] = v[:, c : (c + 1)]
         else:
-            out[key] = value
+            out[k] = v
 
     return out
 
 
-def reduce_channels(batch):
+def reduce_channels(batch, keys=None):
+    keys = batch.keys() if keys is None else keys
     out = {}
-    for key, value in batch.items():
+    for k, v in batch.items():
         if (
-            isinstance(value, torch.Tensor)
-            and value.ndim == 2
-            and value.shape[1] > 1
+            k in keys
+            and isinstance(v, torch.Tensor)
+            and v.ndim == 2
+            and v.shape[1] > 1
         ):
-            out[f"{key}_avg"] = torch.nanmean(value, dim=1, keepdim=True)
+            out[f"{k}_avg"] = torch.nanmean(batch[k], dim=1, keepdim=True)
 
     return out
 
 
-def reduce_batch(batch):
+def reduce_batch(batch, keys=None):
+    keys = batch.keys() if keys is None else keys
     out = {}
-    for key, value in batch.items():
-        if isinstance(value, torch.Tensor):
-            out[key] = torch.nanmean(value)
+    for k, v in batch.items():
+        if k in keys and isinstance(v, torch.Tensor):
+            out[k] = torch.nanmean(v)
 
     return out
+
+
+def remove_dublicates(data, key=None):
+    seen_ids = {}  # {id: index}
+    for i, s in enumerate(data[key]):
+        if s not in seen_ids:
+            seen_ids[s] = i
+
+    result = {}
+    for k, v in data.items():
+        if isinstance(v, torch.Tensor):
+            result[k] = v[list(seen_ids.values())]
+        else:
+            result[k] = [v[i] for i in seen_ids.values()]
+
+    return result
 
 
 class ValEveryNSteps(Callback):
@@ -217,6 +275,26 @@ class ValEveryNSteps(Callback):
             and trainer.global_step != 0
         ):
             trainer.validate(pl_module, trainer.datamodule.val_dataloader)
+
+
+class SaveValResults(Callback):
+    def __init__(self, save_path=None):
+        self.save_path = save_path
+
+    def on_validation_end(self, trainer, pl_module):
+        if self.save_path is None:
+            self.save_path = os.path.join(
+                trainer.logger.log_dir, "results.csv"
+            )
+
+        val_results = move_to(pl_module.val_results, device="cpu")
+        for k, v in val_results.items():
+            if isinstance(v, torch.Tensor):
+                val_results[k] = v.flatten()
+
+        val_results = pd.DataFrame(val_results)
+        val_results = val_results.replace([np.inf, -np.inf], np.nan)
+        val_results.to_csv(self.save_path)
 
 
 class TakeSnapshot(Callback):

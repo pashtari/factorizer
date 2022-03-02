@@ -3,8 +3,7 @@ from argparse import ArgumentParser, Namespace
 import torch
 from pytorch_lightning import Trainer, seed_everything
 
-from factorizer.utils.helpers import wrap_class, read_config
-from factorizer.utils.lightning import Model
+import registry
 
 
 seed_everything(42, workers=True)
@@ -16,29 +15,17 @@ print("cuda" if torch.cuda.is_available() else "cpu")
 
 def main(args: Namespace):
     # get config
-    config = read_config(args.config)
+    config = registry.read_config(args.config)
+
+    # data
+    dm = config["data"]
 
     # init model
-    if "checkpoint_path" in config["model"]:
-        model = Model.load_from_checkpoint(
-            strict=False, **config["model"], **config["optimization"]
-        )
+    task_cls, task_params = config["task"]
+    if "checkpoint_path" in task_params:
+        model = task_cls.load_from_checkpoint(strict=False, **task_params)
     else:
-        model = Model(**config["model"], **config["optimization"])
-
-    # init data
-    datamodule = wrap_class(config["data"]["datamodule"])
-    dm = datamodule()
-
-    from torch import autograd
-
-    with autograd.detect_anomaly():
-        x = torch.rand(1, 4, 128, 128, 128)
-        y = model(x)
-        print(f"shape: {y[0].shape}")
-
-        loss = y[0].sum()
-        loss.backward()
+        model = task_cls(**task_params)
 
     # init trainer
     trainer = Trainer(**config["training"])
@@ -54,12 +41,7 @@ def get_args() -> Namespace:
     return args
 
 
-# class Arg(object):
-#     config = "configs/config_brats_fold0_factorizer.py"
-
-
 if __name__ == "__main__":
-    args = get_args()  # for running from terminal
-    # args = Arg()
+    args = get_args()
     main(args)
 

@@ -2,25 +2,7 @@ import sys
 
 import numpy as np
 import torch
-from monai.transforms import (
-    Compose,
-    AddChanneld,
-    CropForegroundd,
-    NormalizeIntensityd,
-    Spacingd,
-    SpatialPadd,
-    RandCropByPosNegLabeld,
-    RandAffined,
-    RandFlipd,
-    RandGaussianNoised,
-    RandGaussianSmoothd,
-    RandScaleIntensityd,
-    RandAdjustContrastd,
-    RandShiftIntensityd,
-    ToTensord,
-    Lambdad,
-)
-from monai.data import CacheDataset
+from monai import transforms, data
 
 from ..data import DataModule, ReadImaged, Renamed, Inferer
 
@@ -33,17 +15,17 @@ from ..data import DataModule, ReadImaged, Renamed, Inferer
 def wmh_train_transform(
     spacing=(1.0, 1.0, 1.0), spatial_size=(128, 128, 128), num_patches=1
 ):
-    transforms = [
+    train_transform = [
         ReadImaged(["image", "label"]),
-        Lambdad("label", lambda x: (x == 1).astype(np.float32)),
-        AddChanneld("label"),
-        CropForegroundd(["image", "label"], source_key="image"),
-        NormalizeIntensityd("image", channel_wise=True),
-        Spacingd(
+        transforms.Lambdad("label", lambda x: (x == 1).astype(np.float32)),
+        transforms.AddChanneld("label"),
+        transforms.CropForegroundd(["image", "label"], source_key="image"),
+        transforms.NormalizeIntensityd("image", channel_wise=True),
+        transforms.Spacingd(
             ["image", "label"], pixdim=spacing, mode=("bilinear", "nearest"),
         ),
-        SpatialPadd(["image", "label"], spatial_size=spatial_size),
-        RandCropByPosNegLabeld(
+        transforms.SpatialPadd(["image", "label"], spatial_size=spatial_size),
+        transforms.RandCropByPosNegLabeld(
             ["image", "label"],
             label_key="label",
             spatial_size=spatial_size,
@@ -53,7 +35,7 @@ def wmh_train_transform(
             image_key="image",
             image_threshold=0,
         ),
-        RandAffined(
+        transforms.RandAffined(
             ["image", "label"],
             prob=0.15,
             spatial_size=spatial_size,
@@ -62,41 +44,43 @@ def wmh_train_transform(
             mode=("bilinear", "nearest"),
             as_tensor_output=False,
         ),
-        RandFlipd(["image", "label"], prob=0.5, spatial_axis=0),
-        RandFlipd(["image", "label"], prob=0.5, spatial_axis=1),
-        RandFlipd(["image", "label"], prob=0.5, spatial_axis=2),
-        RandGaussianNoised("image", prob=0.15, std=0.1),
-        RandGaussianSmoothd(
+        transforms.RandFlipd(["image", "label"], prob=0.5, spatial_axis=0),
+        transforms.RandFlipd(["image", "label"], prob=0.5, spatial_axis=1),
+        transforms.RandFlipd(["image", "label"], prob=0.5, spatial_axis=2),
+        transforms.RandGaussianNoised("image", prob=0.15, std=0.1),
+        transforms.RandGaussianSmoothd(
             "image",
             prob=0.15,
             sigma_x=(0.5, 1.5),
             sigma_y=(0.5, 1.5),
             sigma_z=(0.5, 1.5),
         ),
-        RandScaleIntensityd("image", prob=0.15, factors=0.3),
-        RandShiftIntensityd("image", prob=0.15, offsets=0.1),
-        RandAdjustContrastd("image", prob=0.15, gamma=(0.7, 1.5)),
-        ToTensord(["image", "label"]),
+        transforms.RandScaleIntensityd("image", prob=0.15, factors=0.3),
+        transforms.RandShiftIntensityd("image", prob=0.15, offsets=0.1),
+        transforms.RandAdjustContrastd("image", prob=0.15, gamma=(0.7, 1.5)),
+        transforms.ToTensord(["image", "label"]),
         Renamed(),
     ]
-    train_transform = Compose(transforms)
+    train_transform = transforms.Compose(train_transform)
     return train_transform
 
 
 def wmh_val_transform():
-    transforms = [
+    val_transform = [
         ReadImaged(["image", "label"], allow_missing_keys=True),
-        Lambdad(
+        transforms.Lambdad(
             "label",
             lambda x: (x == 1).astype(np.float32),
             allow_missing_keys=True,
         ),
-        AddChanneld("label", allow_missing_keys=True),
-        NormalizeIntensityd("image", nonzero=True, channel_wise=True),
-        ToTensord(["image", "label"], allow_missing_keys=True),
+        transforms.AddChanneld("label", allow_missing_keys=True),
+        transforms.NormalizeIntensityd(
+            "image", nonzero=True, channel_wise=True
+        ),
+        transforms.ToTensord(["image", "label"], allow_missing_keys=True),
         Renamed(),
     ]
-    val_transform = Compose(transforms)
+    val_transform = transforms.Compose(val_transform)
     return val_transform
 
 
@@ -105,24 +89,24 @@ def wmh_test_transform():
 
 
 def wmh_vis_transform(spacing=(1.0, 1.0, 1.0)):
-    transforms = [
+    vis_transform = [
         ReadImaged(["image", "label"], allow_missing_keys=True),
-        Lambdad(
+        transforms.Lambdad(
             "label",
             lambda x: (x == 1).astype(np.float32),
             allow_missing_keys=True,
         ),
-        AddChanneld("label", allow_missing_keys=True),
-        NormalizeIntensityd("image", channel_wise=True),
-        Spacingd(
+        transforms.AddChanneld("label", allow_missing_keys=True),
+        transforms.NormalizeIntensityd("image", channel_wise=True),
+        transforms.Spacingd(
             keys=["image", "label"],
             pixdim=spacing,
             mode=("bilinear", "bilinear"),
         ),
-        ToTensord(["image", "label"], allow_missing_keys=True),
+        transforms.ToTensord(["image", "label"], allow_missing_keys=True),
         Renamed(),
     ]
-    vis_transform = Compose(transforms)
+    vis_transform = transforms.Compose(vis_transform)
     return vis_transform
 
 
@@ -141,7 +125,7 @@ class WMHDataModule(DataModule):
         num_splits=5,
         split=0,
         batch_size=2,
-        num_workers=0,
+        num_workers=None,
         cache_num=sys.maxsize,
         cache_rate=1.0,
         progress=True,
@@ -155,7 +139,7 @@ class WMHDataModule(DataModule):
             "progress": progress,
             "copy_cache": copy_cache,
         }
-        dataset_cls = (CacheDataset, dataset_cls_params)
+        dataset_cls = (data.CacheDataset, dataset_cls_params)
 
         train_transform = wmh_train_transform(
             spacing, spatial_size, num_patches
@@ -202,13 +186,13 @@ class WMHInferer(Inferer):
 
         # postprocessing transforms
         if post == "logit":
-            post = Lambdad("input", lambda x: x)
+            post = transforms.Lambdad("input", lambda x: x)
             output_dtype = np.float32 if output_dtype is None else output_dtype
         elif post == "prob":
-            post = Lambdad("input", torch.sigmoid)
+            post = transforms.Lambdad("input", torch.sigmoid)
             output_dtype = np.float32 if output_dtype is None else output_dtype
         elif post == "class":
-            post = Lambdad("input", lambda x: x >= 0)
+            post = transforms.Lambdad("input", lambda x: x >= 0)
             output_dtype = np.uint8 if output_dtype is None else output_dtype
         else:
             post = post

@@ -2,26 +2,7 @@ import sys
 
 import numpy as np
 import torch
-from monai.transforms import (
-    MapTransform,
-    Compose,
-    LoadImaged,
-    AsChannelFirstd,
-    CropForegroundd,
-    NormalizeIntensityd,
-    RandSpatialCropd,
-    RandAffined,
-    RandFlipd,
-    RandGaussianNoised,
-    RandGaussianSmoothd,
-    RandScaleIntensityd,
-    RandAdjustContrastd,
-    RandShiftIntensityd,
-    AsDiscreted,
-    ToTensord,
-    Lambdad,
-)
-from monai.data import CacheDataset
+from monai import transforms, data
 
 from ..data import DataModule, Renamed, Inferer
 
@@ -31,7 +12,7 @@ from ..data import DataModule, Renamed, Inferer
 ###################################
 
 
-class BraTSOneHotEncoderd(MapTransform):
+class BraTSOneHotEncoderd(transforms.MapTransform):
     """
     Convert labels to multi channels based on brats classes:
     label 0: background, 
@@ -84,16 +65,18 @@ class BraTSOneHotEncoderd(MapTransform):
 
 
 def brats_train_transform(spatial_size=(128, 128, 128)):
-    transforms = [
-        LoadImaged(["image", "label"]),
-        AsChannelFirstd("image"),
+    train_transform = [
+        transforms.LoadImaged(["image", "label"]),
+        transforms.AsChannelFirstd("image"),
         BraTSOneHotEncoderd("label", nested=True),
-        CropForegroundd(["image", "label"], source_key="image"),
-        NormalizeIntensityd("image", nonzero=True, channel_wise=True),
-        RandSpatialCropd(
+        transforms.CropForegroundd(["image", "label"], source_key="image"),
+        transforms.NormalizeIntensityd(
+            "image", nonzero=True, channel_wise=True
+        ),
+        transforms.RandSpatialCropd(
             ["image", "label"], roi_size=spatial_size, random_size=False
         ),
-        RandAffined(
+        transforms.RandAffined(
             ["image", "label"],
             prob=0.15,
             spatial_size=spatial_size,
@@ -102,38 +85,40 @@ def brats_train_transform(spatial_size=(128, 128, 128)):
             mode=("bilinear", "bilinear"),
             as_tensor_output=False,
         ),
-        RandFlipd(["image", "label"], prob=0.5, spatial_axis=0),
-        RandFlipd(["image", "label"], prob=0.5, spatial_axis=1),
-        RandFlipd(["image", "label"], prob=0.5, spatial_axis=2),
-        RandGaussianNoised("image", prob=0.15, std=0.1),
-        RandGaussianSmoothd(
+        transforms.RandFlipd(["image", "label"], prob=0.5, spatial_axis=0),
+        transforms.RandFlipd(["image", "label"], prob=0.5, spatial_axis=1),
+        transforms.RandFlipd(["image", "label"], prob=0.5, spatial_axis=2),
+        transforms.RandGaussianNoised("image", prob=0.15, std=0.1),
+        transforms.RandGaussianSmoothd(
             "image",
             prob=0.15,
             sigma_x=(0.5, 1.5),
             sigma_y=(0.5, 1.5),
             sigma_z=(0.5, 1.5),
         ),
-        RandScaleIntensityd("image", prob=0.15, factors=0.3),
-        RandShiftIntensityd("image", prob=0.15, offsets=0.1),
-        RandAdjustContrastd("image", prob=0.15, gamma=(0.7, 1.5)),
-        AsDiscreted("label", threshold=0.5),
-        ToTensord(["image", "label"]),
+        transforms.RandScaleIntensityd("image", prob=0.15, factors=0.3),
+        transforms.RandShiftIntensityd("image", prob=0.15, offsets=0.1),
+        transforms.RandAdjustContrastd("image", prob=0.15, gamma=(0.7, 1.5)),
+        transforms.AsDiscreted("label", threshold=0.5),
+        transforms.ToTensord(["image", "label"]),
         Renamed(),
     ]
-    train_transform = Compose(transforms)
+    train_transform = transforms.Compose(train_transform)
     return train_transform
 
 
 def brats_val_transform():
-    transforms = [
-        LoadImaged(["image", "label"], allow_missing_keys=True),
-        AsChannelFirstd("image"),
+    val_transform = [
+        transforms.LoadImaged(["image", "label"], allow_missing_keys=True),
+        transforms.AsChannelFirstd("image"),
         BraTSOneHotEncoderd("label", nested=True, allow_missing_keys=True),
-        NormalizeIntensityd("image", nonzero=True, channel_wise=True),
-        ToTensord(["image", "label"], allow_missing_keys=True),
+        transforms.NormalizeIntensityd(
+            "image", nonzero=True, channel_wise=True
+        ),
+        transforms.ToTensord(["image", "label"], allow_missing_keys=True),
         Renamed(),
     ]
-    val_transform = Compose(transforms)
+    val_transform = transforms.Compose(val_transform)
     return val_transform
 
 
@@ -142,15 +127,15 @@ def brats_test_transform():
 
 
 def brats_vis_transform():
-    transforms = [
-        LoadImaged(["image", "label"], allow_missing_keys=True),
-        AsChannelFirstd("image"),
+    vis_transform = [
+        transforms.LoadImaged(["image", "label"], allow_missing_keys=True),
+        transforms.AsChannelFirstd("image"),
         BraTSOneHotEncoderd("label", nested=False, allow_missing_keys=True),
-        NormalizeIntensityd("image", channel_wise=True),
-        ToTensord(["image", "label"], allow_missing_keys=True),
+        transforms.NormalizeIntensityd("image", channel_wise=True),
+        transforms.ToTensord(["image", "label"], allow_missing_keys=True),
         Renamed(),
     ]
-    vis_transform = Compose(transforms)
+    vis_transform = transforms.Compose(vis_transform)
     return vis_transform
 
 
@@ -168,7 +153,7 @@ class BraTSDataModule(DataModule):
         num_splits=5,
         split=0,
         batch_size=2,
-        num_workers=0,
+        num_workers=None,
         cache_num=sys.maxsize,
         cache_rate=1.0,
         progress=True,
@@ -182,7 +167,7 @@ class BraTSDataModule(DataModule):
             "progress": progress,
             "copy_cache": copy_cache,
         }
-        dataset_cls = (CacheDataset, dataset_cls_params)
+        dataset_cls = (data.CacheDataset, dataset_cls_params)
 
         train_transform = brats_train_transform(spatial_size)
         val_transform = brats_val_transform()
@@ -227,13 +212,15 @@ class BraTSInferer(Inferer):
 
         # postprocessing transforms
         if post == "logit-nested":
-            post = Lambdad("input", lambda x: x)
+            post = transforms.Lambdad("input", lambda x: x)
             output_dtype = np.float32 if output_dtype is None else output_dtype
         elif post == "prob-nested":
-            post = Lambdad("input", lambda x: x.sigmoid(dim=1))
+            post = transforms.Lambdad("input", lambda x: x.sigmoid(dim=1))
             output_dtype = np.float32 if output_dtype is None else output_dtype
         elif post == "one-hot-nested":
-            post = Lambdad("input", lambda x: torch.where(x >= 0, 1.0, 0.0))
+            post = transforms.Lambdad(
+                "input", lambda x: torch.where(x >= 0, 1.0, 0.0)
+            )
             output_dtype = np.uint8 if output_dtype is None else output_dtype
         elif post == "class":
 
@@ -248,7 +235,7 @@ class BraTSInferer(Inferer):
                 out[torch.logical_and(wt == 1, tc == 0)] = 1
                 return out
 
-            self.post = Lambdad("input", func)
+            self.post = transforms.Lambdad("input", func)
             output_dtype = np.uint8 if output_dtype is None else output_dtype
         elif post == "one-hot":
 
@@ -262,10 +249,8 @@ class BraTSInferer(Inferer):
                 ed = torch.logical_and(wt == 1, tc == 0).float()
                 return torch.cat((bg, ed, nt, et), dim=1)
 
-            post = Lambdad("input", func)
+            post = transforms.Lambdad("input", func)
             output_dtype = np.uint8 if output_dtype is None else output_dtype
-        else:
-            post = post
 
         super().__init__(
             spacing=spacing,

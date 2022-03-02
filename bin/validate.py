@@ -2,12 +2,9 @@ import os
 from argparse import ArgumentParser, Namespace
 
 import torch
-import numpy as np
-import pandas as pd
 from pytorch_lightning import Trainer, seed_everything
 
-from factorizer.utils.helpers import wrap_class, read_config, move_to
-from factorizer.utils.lightning import Model
+import registry
 
 
 seed_everything(42, workers=True)
@@ -19,47 +16,30 @@ print("cuda" if torch.cuda.is_available() else "cpu")
 
 def main(args):
     # get config
-    config = read_config(args.config)
+    config = registry.read_config(args.config)
+
+    # setup data
+    dm = config["data"]
+    dm.setup("validate")
 
     # load model
+    task_cls, task_params = config["task"]
     if (
         "checkpoint" in config["test"]
         and "checkpoint_path" in config["test"]["checkpoint"]
     ):
-        model = Model.load_from_checkpoint(
-            **config["test"]["checkpoint"],
-            strict=False,
-            **config["model"],
-            **config["optimization"]
+        model = task_cls.load_from_checkpoint(
+            **config["test"]["checkpoint"], strict=False, **task_params
         )
     else:
-        model = Model(**config["model"], **config["optimization"])
-
-    # load data
-    datamodule = wrap_class(config["data"]["datamodule"])
-    dm = datamodule()
-    dm.setup("validate")
+        model = task_cls(**task_params)
 
     # validation
-    config["training"]["gpus"] = 1
     config["training"]["logger"] = False
     trainer = Trainer(**config["training"])
     trainer.validate(
         model=model, val_dataloaders=dm.val_dataloader(), ckpt_path=None
     )
-    results = move_to(model.val_results, device="cpu")
-
-    for k, v in results.items():
-        if isinstance(v, torch.Tensor):
-            results[k] = v.flatten()
-
-    # convert to dataframe
-    results = pd.DataFrame(results)
-    results = results.replace([np.inf, -np.inf], np.nan)
-    # results = pd.concat((results, results.describe()))
-
-    # save results
-    results.to_csv(config["test"]["save_path"])
 
 
 def get_args() -> Namespace:
@@ -71,14 +51,7 @@ def get_args() -> Namespace:
     return args
 
 
-# class Arg(object):
-#     config = os.path.join(
-#         os.getcwd(), "configs/ablations/config_brats_fold0_senmf_iters2.py",
-#     )
-
-
 if __name__ == "__main__":
     args = get_args()
-    # args = Arg()
     main(args)
 

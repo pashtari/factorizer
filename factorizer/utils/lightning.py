@@ -1,24 +1,27 @@
+import numpy as np
+import pandas as pd
 import torch
 import torch.nn.functional as F
 from torch import nn, optim
 from pytorch_lightning.core import LightningModule
-from monai.data.utils import decollate_batch
 
 from .helpers import (
     wrap_class,
+    all_gather,
     collate,
     decollate_channels,
     reduce_channels,
+    remove_dublicates,
     reduce_batch,
 )
 
 
-class Model(LightningModule):
+class SemanticSegmentation(LightningModule):
     def __init__(
         self,
         network,
-        loss=F.cross_entropy,
-        metrics=[F.cross_entropy],
+        loss=None,
+        metrics=None,
         optimizer=optim.SGD,
         scheduler=None,
         scheduler_config=None,
@@ -95,43 +98,35 @@ class Model(LightningModule):
         # inference
         y_hat = self.inferer(batch, lambda x: self.forward(x)[0])
 
-        y = y.to(device="cpu", dtype=torch.float32)
-        y_hat = y_hat.to(device="cpu", dtype=torch.float32)
-
         # calculate metrics
-        epoch = [self.current_epoch for _ in range(len(id_))]
-        out = {"id": id_, "epoch": epoch}
+        out = {"id": id_}
         for metric_name, metric in self.metrics.items():
             out[f"val_{metric_name}"] = metric(y_hat, y)
 
-        del y, y_hat
         return out
 
     def validation_epoch_end(self, val_outputs):
+        metrics = [f"val_{m}" for m in self.metrics]
         # collate batches
         val_outputs = collate(val_outputs)
 
-        # average over channels
-        reduced_channels = reduce_channels(val_outputs)
+        # add average scores over channels
+        reduced_channels = reduce_channels(val_outputs, metrics)
         val_outputs = {**val_outputs, **reduced_channels}
 
         # decollate channels
-        val_outputs = decollate_channels(val_outputs)
-        self.val_results = val_outputs
+        val_outputs = decollate_channels(val_outputs, metrics)
+
+        # gather tensors from all distributed processes
+        self.val_results = all_gather(val_outputs)
+
+        # drop duplicate ids
+        self.val_results = remove_dublicates(self.val_results, "id")
 
         # average over batch
-        avg_scores = reduce_batch(val_outputs)
+        avg_scores = reduce_batch(self.val_results)
         for key, value in avg_scores.items():
             self.log(key, value, prog_bar=True)
-
-        # # decollate batch
-        # val_outputs = decollate_batch(val_outputs)
-
-        # # individual scores
-        # for sample in val_outputs:
-        #     for key, value in sample.items():
-        #         if isinstance(value, torch.Tensor):
-        #             self.log(f'{sample["id"]}_{key}', value)
 
     def test_step(self, batch, batch_idx):
         # inference

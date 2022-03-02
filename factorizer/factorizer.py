@@ -4,7 +4,7 @@ import torch
 from torch import nn
 
 from .utils.helpers import wrap_class, cumprod
-from .layers import LayerNorm, Linear
+from .layers import LayerNorm, Linear, MLP
 from .factorization import Reshape, MLSVD
 from .unet import UNet
 
@@ -42,8 +42,6 @@ class FactorizerSubblock(nn.Module):
         input_dim,
         output_dim,
         spatial_size,
-        inner_dim=None,
-        ratio=1,
         tensorize=Reshape,
         act=nn.GELU,
         factorize=MLSVD,
@@ -51,14 +49,13 @@ class FactorizerSubblock(nn.Module):
         **kwargs,
     ):
         super().__init__()
-        inner_dim = int(ratio * input_dim) if inner_dim is None else inner_dim
         tensorize = wrap_class(tensorize)
         act = wrap_class(act)
         factorize = wrap_class(factorize)
 
-        self.in_proj = Linear(input_dim, inner_dim, bias=False)
+        self.in_proj = Linear(input_dim, output_dim, bias=False)
 
-        self.tensorize = tensorize((None, inner_dim, *spatial_size))
+        self.tensorize = tensorize((None, output_dim, *spatial_size))
 
         self.act = act()
 
@@ -69,7 +66,7 @@ class FactorizerSubblock(nn.Module):
         self.tensorized_size = tensorized_size
         self.factorize = factorize(tensorized_size, **kwargs)
 
-        self.out_proj = Linear(inner_dim, output_dim)
+        self.out_proj = Linear(output_dim, output_dim)
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, x):
@@ -104,6 +101,68 @@ class FactorizerSubblock(nn.Module):
 
         # dropout
         out = self.dropout(out)
+        return out
+
+
+class FactorizerSubblockV2(nn.Module):
+    """Generic Factorizer Sublock V2."""
+
+    def __init__(
+        self,
+        input_dim,
+        output_dim,
+        spatial_size,
+        inner_dim=None,
+        ratio=2,
+        tensorize=Reshape,
+        act=nn.GELU,
+        factorize=MLSVD,
+        dropout=0.0,
+        **kwargs,
+    ):
+        super().__init__()
+        inner_dim = int(ratio * input_dim) if inner_dim is None else inner_dim
+        tensorize = wrap_class(tensorize)
+        act = wrap_class(act)
+        factorize = wrap_class(factorize)
+
+        self.tensorize = tensorize((None, input_dim, *spatial_size))
+        self.act = act()
+        tensorized_size = self.tensorize.output_size[1:]
+        tensorized_size = tuple(
+            s for s in tensorized_size if s != 1
+        )  # squeeze size
+        self.tensorized_size = tensorized_size
+        self.factorize = factorize(tensorized_size, **kwargs)
+
+        self.mlp = MLP(input_dim, output_dim, inner_dim, ratio, dropout)
+
+    def forward(self, x):
+        # x: B × C × S1 × S2 × ... × Sp
+
+        # tensorize (fold/unfold)
+        out = self.tensorize(x)
+
+        # apply activation function
+        out = self.act(out)
+
+        # save the size
+        shape = out.shape
+
+        # remove 1-dim modes (squeeze)
+        out = out.reshape(shape[0], *self.tensorized_size)
+
+        # tensor factorization)
+        out = self.factorize(out)
+
+        # back to the original size (unsqueeze)
+        out = out.reshape(shape)
+
+        # detensorize (unfold/fold)
+        out = self.tensorize.inverse_forward(out)
+
+        # MLP
+        out = self.mlp(out)
         return out
 
 

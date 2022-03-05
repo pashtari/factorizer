@@ -10,8 +10,6 @@ seed_everything(42, workers=True)
 torch.set_default_dtype(torch.float32)
 print("cuda" if torch.cuda.is_available() else "cpu")
 
-# os.chdir(os.path.dirname(__file__))
-
 
 def main(args: Namespace):
     # get config
@@ -44,4 +42,3 @@ def get_args() -> Namespace:
 if __name__ == "__main__":
     args = get_args()
     main(args)
-

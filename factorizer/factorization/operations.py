@@ -20,7 +20,7 @@ def norm2(x, w=None):
     w = torch.ones_like(x) if w is None else w
     x = x.flatten(1)
     w = w.flatten(1)
-    out = torch.sum(w * (x ** 2), dim=1).sqrt()
+    out = torch.sum(w * (x**2), dim=1).sqrt()
     return out
 
 
@@ -87,8 +87,11 @@ class Reshape(nn.Module):
             self.rearrange = Rearrange(equation, **kwargs)
 
             input_size_ = tuple(s if s else 0 for s in input_size)
-            recipe = self.rearrange.recipe().reconstruct_from_shape(
-                input_size_
+            # recipe = self.rearrange.recipe().reconstruct_from_shape(
+            #     input_size_
+            # ) # the older versions of einops
+            recipe = einops.einops._reconstruct_from_shape_uncached(
+                self.rearrange.recipe(), input_size_
             )
             expr = einops.parsing.ParsedExpression(left)
             axes = expr.flat_axes_order()
@@ -358,4 +361,3 @@ class SWTensorize(nn.Module):
             + self.shifted_window.inverse_forward(out2)
         )
         return out
-

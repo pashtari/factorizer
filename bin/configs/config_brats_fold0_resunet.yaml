@@ -1,6 +1,6 @@
 data:
     !BraTSDataModule {
-        data_properties: /data/leuven/336/vsc33647/data/Decathlon/Task01_BrainTumour/dataset.json,
+        data_properties: ~/Decathlon/Task01_BrainTumour/dataset.json,
         spacing: [1.0, 1.0, 1.0],
         spatial_size: [128, 128, 128],
         num_splits: 5,
@@ -58,7 +58,7 @@ task:
               }
       optimizer:
           - !AdamW
-          - { lr: 1e-4, weight_decay: 1e-2 }
+          - { lr: 0.0001, weight_decay: 0.01 }
       scheduler:
           - !WarmupCosineSchedule
           - { warmup_steps: 2000, total_steps: 100000 }

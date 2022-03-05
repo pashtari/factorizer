@@ -1,4 +1,3 @@
-import os
 from argparse import ArgumentParser, Namespace
 
 import torch
@@ -10,8 +9,6 @@ import registry
 seed_everything(42, workers=True)
 torch.set_default_dtype(torch.float32)
 print("cuda" if torch.cuda.is_available() else "cpu")
-
-# os.chdir(os.path.dirname(__file__))
 
 
 def main(args):
@@ -54,4 +51,3 @@ def get_args() -> Namespace:
 if __name__ == "__main__":
     args = get_args()
     main(args)
-

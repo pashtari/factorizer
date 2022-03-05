@@ -11,8 +11,8 @@ from ..tensor_network import SingleTensor
 class MF(nn.Module):
     """Base module for matrix factorization.
 
-        X ≈ U t(V),
-        U, V ∈ S
+    X ≈ U t(V),
+    U, V ∈ S
     """
 
     def __init__(
@@ -114,8 +114,8 @@ class MF(nn.Module):
 class TF(nn.Module):
     """Base module for tensor factorization.
 
-        Decompose a tensor X into an arbitrary tensor network, i.e.,
-        X ≈ TensorNework(U1, ..., UM)
+    Decompose a tensor X into an arbitrary tensor network, i.e.,
+    X ≈ TensorNework(U1, ..., UM)
     """
 
     def __init__(

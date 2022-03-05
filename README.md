@@ -219,4 +219,4 @@ If you use this code for a paper, please cite:
 
 ## Contact
 
-This repo is currently maintained by Pooya Ashtari ([@pashtari](https://github.com/pashtari))
+This repo is currently maintained by Pooya Ashtari ([@pashtari](https://github.com/pashtari)).

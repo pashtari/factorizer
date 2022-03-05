@@ -131,7 +131,7 @@ data
 
 
 ## Train
-To train a model from terminal:
+To train a model from the terminal:
 
 ```bash
 cd ./bin
@@ -148,7 +148,7 @@ The model checkpoints will then be saved in `./bin/logs/brats/fold0/swin-factori
 
 ## Validate
 
-**Example.** The first fold of a 5-fold cross-validation to validate Swin Factorizer on the BraTS dataset using two GPUs is done by
+**Example.** The first fold of 5-fold cross-validation to validate Swin Factorizer on the BraTS dataset using two GPUs is done by
 
 ```bash
 cd ./bin

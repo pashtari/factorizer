@@ -19,7 +19,7 @@ $ pip install -e factorizer
 
 ## Usage
 
-**Nonnegative matrix factorization layer**
+**Nonnegative Matrix Factorization Layer**
 ```python
 import torch
 from torch import nn
@@ -35,7 +35,7 @@ print(f"FLOPS = {nmf.flops}")
 ```
     FLOPS = {'init': 0, 'decompose': 226240, 'reconstruct': 16384}
 
-**Swin Matricize**
+**Shifted Window Matricize**
 ```python
 sw_matricize = ft.SWMatricize((32, 128, 128, 128), head_dim=8, patch_size=8)
 
@@ -48,7 +48,7 @@ z = sw_matricize.inverse_forward(y)
 torch.equal(x, z) # True
 ```
 
-**Swin Factorizer subblock (Wrapped NMF)**
+**Swin Factorizer Subblock (Wrapped NMF)**
 ```python
 swin_factorizer_subblock = ft.FactorizerSubblock(
     input_dim = 32,

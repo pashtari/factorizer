@@ -1,6 +1,6 @@
 data:
     !BraTSDataModule {
-        data_properties: /data/leuven/336/vsc33647/data/Decathlon/Task01_BrainTumour/dataset.json,
+        data_properties: ~/Decathlon/Task01_BrainTumour/dataset.json,
         spacing: [1.0, 1.0, 1.0],
         spatial_size: [128, 128, 128],
         num_splits: 5,

@@ -111,7 +111,7 @@ y[0].shape, y[1].shape, y[2].shape
 
 ## Prepare Data
 
-To reproduce the results in the [paper](https://arxiv.org/abs/2202.12295), please download [Task01_BrainTumour](https://drive.google.com/file/d/1A2IU8Sgea1h3fYLpYtFb2v7NYdMjvEhU/view) (BraTS) from the [Decathlon database](http://medicaldecathlon.com/). In general, the folders structure of the used dataset must be the same way as that of Decathlon, as exemplified below. Our data module requires the path of a JSON file (or a python dictionary) containing the data properties, including the paths of the training images, training labels, and test images.
+To reproduce the results in the [paper](https://arxiv.org/abs/2202.12295), please download [Task01_BrainTumour](https://drive.google.com/file/d/1A2IU8Sgea1h3fYLpYtFb2v7NYdMjvEhU/view) (BraTS) from the [Decathlon database](http://medicaldecathlon.com/). In general, the folders structure of the used dataset must be the same as that of Decathlon, as exemplified below. Our data module requires the path of a JSON file (or a python dictionary) containing the data properties, including the paths of the training images, training labels, and test images.
 
 ```bash
 data
@@ -146,6 +146,7 @@ python train.py --config configs/config_brats_fold0_swin-factorizer.yaml
 ```
 The model checkpoints will then be saved in `./bin/logs/brats/fold0/swin-factorizer/version_0/checkpoints`.
 
+
 ## Validate
 
 **Example.** The first fold of 5-fold cross-validation to validate Swin Factorizer on the BraTS dataset using two GPUs is done by
@@ -155,6 +156,7 @@ cd ./bin
 python validate.py --config configs/config_brats_fold0_swin-factorizer.yaml
 ```
 The results will then be saved as `results.csv` in `./bin/logs/brats/fold0/swin-factorizer/version_0`.
+
 
 ## Models
 

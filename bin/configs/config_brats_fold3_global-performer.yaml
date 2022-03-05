@@ -4,7 +4,7 @@ data:
         spacing: [1.0, 1.0, 1.0],
         spatial_size: [128, 128, 128],
         num_splits: 5,
-        split: 0,
+        split: 3,
         batch_size: 1,
         num_workers: 4,
         cache_num: 4,
@@ -30,17 +30,10 @@ task:
             pos_embed: True
             num_deep_supr: 3
             dropout: 0.1
-            nmf:
-                - !FactorizerSubblock
-                - ratio: 1
-                  tensorize: [!SWMatricize , { head_dim: 8, patch_size: 8 }]
-                  act: !ReLU
-                  factorize: !NMF
-                  rank: 1
-                  num_iters: 5
-                  num_grad_steps: Null
-                  init: uniform
-                  solver: hals
+            attention:
+                - !FastSelfAttention
+                - head_dim: 8
+                  kernel_fn: !ReLU []
                   dropout: 0.1
             mlp:
                 - !MLP
@@ -89,20 +82,23 @@ training:
         - !LearningRateMonitor { logging_interval: step }
         - !ModelCheckpoint { every_n_train_steps: 50 }
         - !SaveValResults {
-              save_path: logs/brats/fold0/swin-factorizer/version_0/results.csv,
+              save_path: logs/brats/fold3/global-performer/version_0/results.csv,
           }
     logger:
-        !TensorBoardLogger { save_dir: logs/brats/fold0, name: swin-factorizer }
+        !TensorBoardLogger {
+            save_dir: logs/brats/fold3,
+            name: global-performer,
+        }
 
 test:
     checkpoint:
-        checkpoint_path: logs/brats/fold0/swin-factorizer/version_0/checkpoints/epoch=515-step=99999.ckpt
+        checkpoint_path: logs/brats/fold3/global-performer/version_0/checkpoints/epoch=515-step=99999.ckpt
     inferer:
         !BraTSInferer {
             spacing: [1.0, 1.0, 1.0],
             spatial_size: [128, 128, 128],
             overlap: 0.5,
             post: class,
-            write_dir: logs/brats/fold0/swin-factorizer/version_0/predictions,
+            write_dir: logs/brats/fold3/global-performer/version_0/predictions,
         }
-    save_path: logs/brats/fold0/swin-factorizer/version_0/results.csv
+    save_path: logs/brats/fold3/global-performer/version_0/results.csv

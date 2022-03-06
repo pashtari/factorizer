@@ -13,7 +13,7 @@ This repo is the official implementation of ["Factorizer: A Scalable Interpretab
 ## Install
 
 ```bash
-$ pip install -e factorizer
+$ pip install git+https://github.com/pashtari/factorizer.git
 ```
 
 

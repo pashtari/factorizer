@@ -31,7 +31,7 @@ setup(
         "Factorizer",
     ],
     packages=find_packages(),
-    python_requires=">=3.9",
+    python_requires=">=3.8",
     install_requires=[
         "numpy",
         "sympy",
@@ -49,7 +49,7 @@ setup(
         "plotly",
         "itk",
         "nibabel",
-        "monai>=0.7.0",
+        "monai",
         "performer-pytorch",
     ],
 )

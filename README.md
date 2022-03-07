@@ -31,7 +31,7 @@ x = torch.rand((1, 8, 512), requires_grad=True)
 
 y = nmf(x) # (1, 8, 512)
 
-print(f"FLOPS = {nmf.flops}") # FLOPS per batch
+print(f"FLOPS = {nmf.flops}") # FLOPS per sample
 ```
     FLOPS = {'init': 0, 'decompose': 226240, 'reconstruct': 16384}
 

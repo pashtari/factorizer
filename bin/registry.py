@@ -45,6 +45,7 @@ Loader = yaml.SafeLoader
 Loader.add_constructor("!eval", get_constructor(eval))
 Loader.add_constructor("!lambda", lambda_constructor)
 
+
 # data modules
 Loader.add_constructor(
     "!BraTSDataModule", get_constructor(datasets.BraTSDataModule)

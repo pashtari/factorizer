@@ -34,7 +34,7 @@ def main(args):
     # validation
     config["training"]["logger"] = False
     trainer = Trainer(**config["training"])
-    trainer.validate(model=model, val_dataloaders=dm.test_dataloader())
+    trainer.validate(model=model, dataloaders=dm.test_dataloader())
 
 
 def get_args() -> Namespace:

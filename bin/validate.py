@@ -35,7 +35,7 @@ def main(args):
     config["training"]["logger"] = False
     trainer = Trainer(**config["training"])
     trainer.validate(
-        model=model, val_dataloaders=dm.val_dataloader(), ckpt_path=None
+        model=model, dataloaders=dm.val_dataloader(), ckpt_path=None
     )
 
 

@@ -79,7 +79,7 @@ class SemanticSegmentation(LightningModule):
         x, y = batch["input"], batch["target"]
 
         # forward
-        y_hat = self(x)
+        y_hat = self.net(x)
 
         # calculate loss
         loss = self.loss(y_hat, y)
@@ -92,7 +92,7 @@ class SemanticSegmentation(LightningModule):
         y, id_ = batch["target"], batch["id"]
 
         # inference
-        y_hat = self.inferer(batch, lambda x: self.forward(x)[0])
+        y_hat = self.inferer(batch, lambda x: self.net(x)[0])
 
         # calculate metrics
         out = {"id": id_}
@@ -126,7 +126,7 @@ class SemanticSegmentation(LightningModule):
 
     def test_step(self, batch, batch_idx):
         # inference
-        y_hat = self.inferer(batch, lambda x: self(x)[0])
+        y_hat = self.inferer(batch, lambda x: self.net(x)[0])
 
     def test_epoch_end(self, outputs):
         return None
@@ -152,46 +152,3 @@ class SemanticSegmentation(LightningModule):
         if is_changed:
             checkpoint.pop("optimizer_states", None)
 
-    # def on_after_backward(self):
-    #     print(
-    #         "\nweight mean abs: "
-    #         + str(
-    #             torch.mean(
-    #                 torch.cat(
-    #                     [
-    #                         torch.flatten(torch.abs(w))
-    #                         for k, w in self.named_parameters()
-    #                     ]
-    #                 )
-    #             ).item()
-    #         )
-    #     )
-    #     print(
-    #         "gradient mean abs: "
-    #         + str(
-    #             torch.mean(
-    #                 torch.cat(
-    #                     [
-    #                         torch.flatten(torch.abs(w.grad))
-    #                         for k, w in self.named_parameters()
-    #                         if w.grad is not None
-    #                     ]
-    #                 )
-    #             ).item()
-    #         )
-    #     )
-
-    #     print(
-    #         "gradient norm: "
-    #         + str(
-    #             torch.sum(
-    #                 torch.stack(
-    #                     [
-    #                         torch.norm(w.grad)
-    #                         for k, w in self.named_parameters()
-    #                         if w.grad is not None
-    #                     ]
-    #                 )
-    #             ).item()
-    #         )
-    #     )

@@ -22,7 +22,7 @@ def wmh_train_transform(
         transforms.CropForegroundd(["image", "label"], source_key="image"),
         transforms.NormalizeIntensityd("image", channel_wise=True),
         transforms.Spacingd(
-            ["image", "label"], pixdim=spacing, mode=("bilinear", "nearest"),
+            ["image", "label"], pixdim=spacing, mode=("bilinear", "bilinear"),
         ),
         transforms.SpatialPadd(["image", "label"], spatial_size=spatial_size),
         transforms.RandCropByPosNegLabeld(
@@ -41,7 +41,7 @@ def wmh_train_transform(
             spatial_size=spatial_size,
             rotate_range=[30 * np.pi / 180] * 3,
             scale_range=[0.3] * 3,
-            mode=("bilinear", "nearest"),
+            mode=("bilinear", "bilinear"),
             as_tensor_output=False,
         ),
         transforms.RandFlipd(["image", "label"], prob=0.5, spatial_axis=0),
@@ -58,6 +58,7 @@ def wmh_train_transform(
         transforms.RandScaleIntensityd("image", prob=0.15, factors=0.3),
         transforms.RandShiftIntensityd("image", prob=0.15, offsets=0.1),
         transforms.RandAdjustContrastd("image", prob=0.15, gamma=(0.7, 1.5)),
+        transforms.AsDiscreted("label", threshold=0.5),
         transforms.ToTensord(["image", "label"]),
         Renamed(),
     ]
@@ -101,7 +102,7 @@ def wmh_vis_transform(spacing=(1.0, 1.0, 1.0)):
         transforms.Spacingd(
             keys=["image", "label"],
             pixdim=spacing,
-            mode=("bilinear", "bilinear"),
+            mode=("bilinear", "nearest"),
         ),
         transforms.ToTensord(["image", "label"], allow_missing_keys=True),
         Renamed(),
@@ -205,4 +206,3 @@ class WMHInferer(Inferer):
             output_dtype=output_dtype,
             **kwargs,
         )
-

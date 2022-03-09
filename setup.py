@@ -33,6 +33,7 @@ setup(
     packages=find_packages(),
     python_requires=">=3.8",
     install_requires=[
+        "pyyaml",
         "numpy",
         "sympy",
         "scipy",

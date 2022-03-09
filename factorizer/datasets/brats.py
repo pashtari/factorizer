@@ -15,17 +15,17 @@ from ..data import DataModule, Renamed, Inferer
 class BraTSOneHotEncoderd(transforms.MapTransform):
     """
     Convert labels to multi channels based on brats classes:
-    label 0: background, 
-    label 1: edema (ED) 
-    label 2: necrotic and non-enhancing tumor (NCR&NET) 
+    label 0: background,
+    label 1: edema (ED)
+    label 2: necrotic and non-enhancing tumor (NCR&NET)
     label 3: enhancing tumor (ET)
-    
-    If nested = True, the classes are enhancing tumor (ET), tumor core (TC), 
+
+    If nested = True, the classes are enhancing tumor (ET), tumor core (TC),
     and whole tumor (WT):
 
     ET: label 3
     TC: NCR&NET (label 2) + ET (label 3)
-    WT: ET (label 3) + ED (label 1) + NCR&NET (label 2) 
+    WT: ET (label 3) + ED (label 1) + NCR&NET (label 2)
 
     """
 
@@ -260,4 +260,3 @@ class BraTSInferer(Inferer):
             output_dtype=output_dtype,
             **kwargs,
         )
-

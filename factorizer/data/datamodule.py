@@ -3,9 +3,8 @@ import sys
 import torch
 from pytorch_lightning import LightningDataModule
 from pytorch_lightning.callbacks import Callback
-from monai.data import CacheDataset
+from monai.data import CacheDataset, DataLoader
 from monai.apps import CrossValidation
-from monai.data import DataLoader
 
 from .utils import wrap_class
 from .dataset import wrap_dataset

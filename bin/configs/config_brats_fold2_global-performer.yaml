@@ -101,4 +101,3 @@ test:
             post: class,
             write_dir: logs/brats/fold2/global-performer/version_0/predictions,
         }
-    save_path: logs/brats/fold2/global-performer/version_0/results.csv

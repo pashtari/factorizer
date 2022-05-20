@@ -20,7 +20,9 @@ def wmh_train_transform(
         transforms.Lambdad("label", lambda x: (x == 1).astype(np.float32)),
         transforms.AddChanneld("label"),
         transforms.CropForegroundd(["image", "label"], source_key="image"),
-        transforms.NormalizeIntensityd("image", channel_wise=True),
+        transforms.NormalizeIntensityd(
+            "image", nonzero=True, channel_wise=True
+        ),
         transforms.Spacingd(
             ["image", "label"], pixdim=spacing, mode=("bilinear", "bilinear"),
         ),
@@ -29,11 +31,9 @@ def wmh_train_transform(
             ["image", "label"],
             label_key="label",
             spatial_size=spatial_size,
-            pos=1,
+            pos=2,
             neg=1,
             num_samples=num_patches,
-            image_key="image",
-            image_threshold=0,
         ),
         transforms.RandAffined(
             ["image", "label"],

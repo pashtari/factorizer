@@ -14,3 +14,4 @@ from .unet import (
     UNetDecoder,
     UNet,
 )
+from .registry import read_config

@@ -3,7 +3,7 @@ from argparse import ArgumentParser, Namespace
 import torch
 from pytorch_lightning import Trainer, seed_everything
 
-import registry
+from factorizer.registry import read_config
 
 
 seed_everything(42, workers=True)
@@ -13,7 +13,7 @@ print("cuda" if torch.cuda.is_available() else "cpu")
 
 def main(args):
     # get config
-    config = registry.read_config(args.config)
+    config = read_config(args.config)
 
     # setup data
     dm = config["data"]

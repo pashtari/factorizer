@@ -2,6 +2,8 @@ from typing import Callable, Sequence, Union
 import inspect
 from functools import partial, partialmethod
 
+import torch
+
 
 def partialclass(obj, *args, **kwargs):
     class NewCls(obj):
@@ -35,3 +37,14 @@ def wrap_class(obj: Union[Sequence, Callable]):
             return partial(callable_obj, *args, **kwargs)
     else:
         return obj
+
+
+def move_to(d, *args, **kwargs):
+    if isinstance(d, (list, tuple, set, frozenset)):
+        d = [move_to(v, *args, **kwargs) for v in d]
+    elif isinstance(d, dict):
+        d = {k: move_to(v, *args, **kwargs) for k, v in d.items()}
+    elif isinstance(d, torch.Tensor):
+        d = d.to(*args, **kwargs)
+
+    return d

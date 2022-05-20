@@ -5,13 +5,16 @@ from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
 from pytorch_lightning.loggers import TensorBoardLogger
 from monai.losses import DiceCELoss
 
-import factorizer as ft
-from factorizer import datasets
-from factorizer.utils.lightning import SemanticSegmentation
-from factorizer.utils.losses import DeepSuprLoss
-from factorizer.utils.metrics import DiceMetric, HausdorffDistanceMetric
-from factorizer.utils.schedulers import WarmupCosineSchedule
-from factorizer.utils.helpers import SaveValResults
+from .factorizer import SegmentationFactorizer, FactorizerSubblock, ablate
+from .unet import UNet, Same, DoubleConv, BasicBlock, PreActivationBlock
+from .layers import MLP, FastSelfAttention
+from .factorization import NMF, Matricize, SWMatricize
+from .datasets import BraTSDataModule, BraTSInferer
+from .utils.lightning import SemanticSegmentation
+from .utils.losses import DeepSuprLoss
+from .utils.metrics import DiceMetric, HausdorffDistanceMetric
+from .utils.schedulers import WarmupCosineSchedule
+from .utils.helpers import SaveValResults
 
 
 def lambda_constructor(loader, node):
@@ -47,10 +50,8 @@ Loader.add_constructor("!lambda", lambda_constructor)
 
 
 # data modules
-Loader.add_constructor(
-    "!BraTSDataModule", get_constructor(datasets.BraTSDataModule)
-)
-Loader.add_constructor("!BraTSInferer", get_constructor(datasets.BraTSInferer))
+Loader.add_constructor("!BraTSDataModule", get_constructor(BraTSDataModule))
+Loader.add_constructor("!BraTSInferer", get_constructor(BraTSInferer))
 
 
 # tasks
@@ -66,29 +67,29 @@ Loader.add_constructor("!GroupNorm", get_constructor(nn.GroupNorm))
 Loader.add_constructor("!LeakyReLU", get_constructor(nn.LeakyReLU))
 Loader.add_constructor("!ReLU", get_constructor(nn.ReLU))
 Loader.add_constructor("!GELU", get_constructor(nn.GELU))
-Loader.add_constructor("!Same", get_constructor(ft.Same))
-Loader.add_constructor("!DoubleConv", get_constructor(ft.DoubleConv))
-Loader.add_constructor("!BasicBlock", get_constructor(ft.BasicBlock))
+Loader.add_constructor("!Same", get_constructor(Same))
+Loader.add_constructor("!DoubleConv", get_constructor(DoubleConv))
+Loader.add_constructor("!BasicBlock", get_constructor(BasicBlock))
 Loader.add_constructor(
-    "!PreActivationBlock", get_constructor(ft.PreActivationBlock)
+    "!PreActivationBlock", get_constructor(PreActivationBlock)
 )
 Loader.add_constructor(
-    "!FactorizerSubblock", get_constructor(ft.FactorizerSubblock)
+    "!FactorizerSubblock", get_constructor(FactorizerSubblock)
 )
-Loader.add_constructor("!Matricize", get_constructor(ft.Matricize))
-Loader.add_constructor("!SWMatricize", get_constructor(ft.SWMatricize))
-Loader.add_constructor("!NMF", get_constructor(ft.NMF))
-Loader.add_constructor("!MLP", get_constructor(ft.MLP))
+Loader.add_constructor("!Matricize", get_constructor(Matricize))
+Loader.add_constructor("!SWMatricize", get_constructor(SWMatricize))
+Loader.add_constructor("!NMF", get_constructor(NMF))
+Loader.add_constructor("!MLP", get_constructor(MLP))
 Loader.add_constructor(
-    "!FastSelfAttention", get_constructor(ft.FastSelfAttention)
+    "!FastSelfAttention", get_constructor(FastSelfAttention)
 )
-Loader.add_constructor("!ablate", get_constructor(ft.ablate))
+Loader.add_constructor("!ablate", get_constructor(ablate))
 
 
 # models
-Loader.add_constructor("!UNet", get_constructor(ft.UNet))
+Loader.add_constructor("!UNet", get_constructor(UNet))
 Loader.add_constructor(
-    "!SegmentationFactorizer", get_constructor(ft.SegmentationFactorizer)
+    "!SegmentationFactorizer", get_constructor(SegmentationFactorizer)
 )
 
 
@@ -122,9 +123,9 @@ Loader.add_constructor(
 Loader.add_constructor("!SaveValResults", get_constructor(SaveValResults))
 
 
-def read_config(path):
+def read_config(path, loader=Loader):
     with open(path, "rb") as file:
-        config = yaml.load(file, Loader)
+        config = yaml.load(file, loader)
 
     return config
 

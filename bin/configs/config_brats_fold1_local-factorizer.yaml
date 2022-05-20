@@ -108,4 +108,3 @@ test:
             post: class,
             write_dir: logs/brats/fold1/local-factorizer/version_0/predictions,
         }
-    save_path: logs/brats/fold1/local-factorizer/version_0/results.csv

@@ -24,8 +24,8 @@ class BraTSOneHotEncoderd(transforms.MapTransform):
     and whole tumor (WT):
 
     ET: label 3
-    TC: NCR&NET (label 2) + ET (label 3)
-    WT: ET (label 3) + ED (label 1) + NCR&NET (label 2)
+    TC: ET (lalbe 3) + NCR&NET (label 2)
+    WT: ET (label 3) + NCR&NET (label 2) + ED (label 1)
 
     """
 
@@ -219,7 +219,9 @@ class BraTSInferer(Inferer):
             output_dtype = np.float32 if output_dtype is None else output_dtype
         elif post == "one-hot-nested":
             post = transforms.Lambdad(
-                "input", lambda x: torch.where(x >= 0, 1.0, 0.0)
+                "input",
+                lambda x: torch.where(x >= 0, 1.0, 0.0),
+                overwrite=False,
             )
             output_dtype = np.uint8 if output_dtype is None else output_dtype
         elif post == "class":

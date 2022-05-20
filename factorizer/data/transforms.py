@@ -4,10 +4,17 @@ import os
 import numpy as np
 import torch
 import torch.nn.functional as F
-from monai.transforms import Transform, MapTransform, LoadImaged, Lambdad
+from monai.transforms import (
+    Transform,
+    MapTransform,
+    LoadImaged,
+    Lambdad,
+    SaveImaged,
+)
 from monai.inferers import SlidingWindowInferer
+from monai.data import decollate_batch
 
-from .io import SaveImaged
+from .utils import move_to
 
 
 class Renamed(Transform):
@@ -30,12 +37,13 @@ class Renamed(Transform):
         if "label_meta_dict" in data:
             data["target_meta_dict"] = data.pop("label_meta_dict")
 
-        data.setdefault(
-            "id",
-            os.path.basename(data["input_meta_dict"]["filename_or_obj"]).split(
-                "."
-            )[0],
-        )
+        if "id" in data:
+            data["input_meta_dict"]["filename_or_obj"] = data["id"]
+        else:
+            data["id"] = os.path.basename(
+                data["input_meta_dict"]["filename_or_obj"]
+            ).split(".")[0]
+
         return data
 
 
@@ -162,19 +170,22 @@ class Inferer(object):
         batch = self.get_inferred(batch, model)
         batch = self.interpolate.inverse_transform(batch)
         batch = self.post(batch)
+        del batch["input_transforms"], batch["target_transforms"]
         return batch
 
     def write(self, batch, write_dir):
         if write_dir is not None:
-            save = SaveImaged(
-                "input",
-                output_dir=write_dir,
-                output_dtype=self.output_dtype,
-                output_postfix="",
-                save_batch=True,
-                print_log=True,
-            )
-            save(batch)
+            batch = decollate_batch(batch)
+            for sample in batch:
+                save = SaveImaged(
+                    "input",
+                    output_dir=write_dir,
+                    output_dtype=self.output_dtype,
+                    output_postfix="pred",
+                    print_log=True,
+                )
+                sample = move_to(sample, device="cpu")
+                save(sample)
 
     def __call__(self, batch, model):
         batch = self.get_postprocessed(batch, model)

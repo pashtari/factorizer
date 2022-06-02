@@ -1,10 +1,16 @@
-import sys
-
 import numpy as np
 import torch
-from monai import transforms, data
+from pytorch_lightning import LightningDataModule
+from monai import transforms
+from monai.data import DataLoader
+from monai.apps import CrossValidation
 
-from ..data import DataModule, Renamed, Inferer
+from ..data import (
+    StandardDataset,
+    Renamed,
+    Inferer,
+    load_properties,
+)
 
 
 ###################################
@@ -116,53 +122,100 @@ def lits_vis_transform(spacing=(1.5, 1.5, 2.0)):
 ###################################
 
 
-class LiTSDataModule(DataModule):
+class LiTSDataModule(LightningDataModule):
     def __init__(
         self,
         data_properties,
-        spacing=(1.5, 1.5, 2.0),
-        spatial_size=(96, 96, 96),
+        spacing=(1.0, 1.0, 1.0),
+        spatial_size=(128, 128, 128),
         num_patches=1,
         num_splits=5,
         split=0,
         batch_size=2,
         num_workers=None,
-        cache_num=sys.maxsize,
-        cache_rate=1.0,
-        progress=True,
-        copy_cache=True,
         seed=42,
+        **kwargs,
     ):
-        dataset_cls_params = {
-            "cache_num": cache_num,
-            "cache_rate": cache_rate,
-            "num_workers": num_workers,
-            "progress": progress,
-            "copy_cache": copy_cache,
-        }
-        dataset_cls = (data.CacheDataset, dataset_cls_params)
+        self.data_properties = load_properties(data_properties)
+        self.num_splits = num_splits
+        self.split = split
+        self.batch_size = batch_size
+        self.num_workers = num_workers
+        self.seed = seed
+        self.dataset_params = kwargs
 
-        train_transform = lits_train_transform(
+        self.train_transform = lits_train_transform(
             spacing, spatial_size, num_patches
         )
-        val_transform = lits_val_transform()
-        test_transform = lits_test_transform()
-        vis_transform = lits_vis_transform()
-        super().__init__(
-            data_properties,
-            train_dataset_cls=dataset_cls,
-            val_dataset_cls=dataset_cls,
-            test_dataset_cls=dataset_cls,
-            train_transform=train_transform,
-            val_transform=val_transform,
-            test_transform=test_transform,
-            vis_transform=vis_transform,
-            num_splits=num_splits,
-            split=split,
-            batch_size=batch_size,
-            num_workers=num_workers,
-            seed=seed,
+        self.val_transform = lits_val_transform()
+        self.test_transform = lits_test_transform()
+        self.vis_transform = lits_vis_transform(spacing)
+
+        self.train_set = self.val_set = self.test_set = None
+
+    def setup(self, stage):
+        if stage in ("fit", "validate", None):
+            # make training set
+            train_cv = CrossValidation(
+                StandardDataset,
+                self.num_splits,
+                self.seed,
+                data_properties=self.data_properties,
+                section="training",
+                transform=self.train_transform,
+                **self.dataset_params,
+            )
+            train_folds = [
+                k for k in range(self.num_splits) if k != self.split
+            ]
+            self.train_set = train_cv.get_dataset(train_folds)
+
+            # make validation set
+            val_cv = CrossValidation(
+                StandardDataset,
+                self.num_splits,
+                self.seed,
+                data_properties=self.data_properties,
+                section="validation",
+                transform=self.val_transform,
+                **self.dataset_params,
+            )
+            self.val_set = val_cv.get_dataset([self.split])
+
+        if stage in ("test", "predict", None):
+            # make test set
+            self.test_set = StandardDataset(
+                data_properties=self.data_properties,
+                section="test",
+                transform=self.test_transform,
+                **self.dataset_params,
+            )
+
+    def train_dataloader(self):
+        train_loader = DataLoader(
+            self.train_set,
+            batch_size=self.batch_size,
+            shuffle=True,
+            num_workers=self.num_workers,
+            pin_memory=torch.cuda.is_available(),
         )
+        return train_loader
+
+    def val_dataloader(self):
+        val_loader = DataLoader(
+            self.val_set,
+            batch_size=self.batch_size,
+            num_workers=self.num_workers,
+        )
+        return val_loader
+
+    def test_dataloader(self):
+        test_loader = DataLoader(
+            self.test_set,
+            batch_size=self.batch_size,
+            num_workers=self.num_workers,
+        )
+        return test_loader
 
 
 # alias

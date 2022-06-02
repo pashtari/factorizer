@@ -4,8 +4,9 @@ import json
 import warnings
 
 import numpy as np
-from monai.transforms import LoadImaged
+from monai.transforms import LoadImaged, Randomizable
 from monai.utils.misc import ensure_tuple
+from monai.data import CacheDataset
 
 
 def _append_paths(base_dir: Text, items: List[dict]) -> List[dict]:
@@ -98,96 +99,56 @@ def load_properties(data_properties: Union[Text, dict]) -> dict:
     return properties
 
 
-def wrap_dataset(obj):
-    MAX_SEED = np.iinfo(np.uint32).max + 1
+class StandardDataset(Randomizable, CacheDataset):
+    def __init__(
+        self,
+        data_properties: Union[Text, dict],
+        section: Text,
+        transform: Optional[Union[Sequence[Callable], Callable]] = None,
+        **kwargs,
+    ) -> None:
 
-    class WrappedDataset(obj):
-        R: np.random.RandomState = np.random.RandomState()
+        self._properties = load_properties(data_properties)
+        self.section = section
 
-        def __init__(
-            self,
-            data_properties: Union[Text, dict],
-            section: Text,
-            transform: Optional[Union[Sequence[Callable], Callable]] = None,
-            **kwargs,
-        ) -> None:
+        if transform is None:
+            transform = LoadImaged(["image", "label"])
 
-            self._properties = load_properties(data_properties)
-            self.section = section
+        self.indices: np.ndarray = np.array([])
+        self.datalist = self._generate_data_list(self._properties)
 
-            if transform is None:
-                transform = LoadImaged(["image", "label"])
+        CacheDataset.__init__(self, self.datalist, transform, **kwargs)
 
-            self.indices: np.ndarray = np.array([])
-            self.datalist = self._generate_data_list(self._properties)
+    def get_indices(self) -> np.ndarray:
+        """Get the indices of datalist used in this dataset."""
+        return self.indices
 
-            obj.__init__(self, self.datalist, transform, **kwargs)
+    def randomize(self, data: List[int]) -> None:
+        self.R.shuffle(data)
 
-        def get_indices(self) -> np.ndarray:
-            """Get the indices of datalist used in this dataset."""
-            return self.indices
+    def get_properties(
+        self, keys: Optional[Union[Sequence[Text], Text]] = None
+    ):
+        """
+        Get the loaded properties of dataset with specified keys.
+        If no keys specified, return all the loaded properties.
 
-        def set_random_state(
-            self,
-            seed: Optional[int] = None,
-            state: Optional[np.random.RandomState] = None,
-        ) -> obj:
+        """
+        if keys is None:
+            return self._properties
+        if self._properties is not None:
+            return {key: self._properties[key] for key in ensure_tuple(keys)}
 
-            if seed is not None:
-                _seed = (
-                    id(seed)
-                    if not isinstance(seed, (int, np.integer))
-                    else seed
-                )
-                _seed = _seed % MAX_SEED
-                self.R = np.random.RandomState(_seed)
-                return self
+        return {}
 
-            if state is not None:
-                if not isinstance(state, np.random.RandomState):
-                    raise TypeError(
-                        f"state must be None or a np.random.RandomState but is {type(state).__name__}."
-                    )
-                self.R = state
-                return self
+    def _generate_data_list(self, data_properties: dict) -> List[dict]:
+        if self.section in ("training", "validation"):
+            section = "training"
+        else:
+            section = self.section
 
-            self.R = np.random.RandomState()
-            return self
+        datalist = data_properties[section]
+        return self._split_datalist(datalist)
 
-        def randomize(self, data: List[int]) -> None:
-            self.R.shuffle(data)
-
-        def get_properties(
-            self, keys: Optional[Union[Sequence[Text], Text]] = None
-        ):
-            """
-            Get the loaded properties of dataset with specified keys.
-            If no keys specified, return all the loaded properties.
-
-            """
-            if keys is None:
-                return self._properties
-            if self._properties is not None:
-                return {
-                    key: self._properties[key] for key in ensure_tuple(keys)
-                }
-
-            return {}
-
-        def _generate_data_list(self, data_properties: dict) -> List[dict]:
-            if self.section in ("training", "validation"):
-                section = "training"
-            else:
-                section = self.section
-
-            datalist = data_properties[section]
-            return self._split_datalist(datalist)
-
-        def _split_datalist(self, datalist: List[dict]) -> List[dict]:
-            return datalist
-
-    WrappedDataset.__name__ = obj.__name__
-    locals()[obj.__name__] = WrappedDataset
-    del WrappedDataset
-    return locals()[obj.__name__]
-
+    def _split_datalist(self, datalist: List[dict]) -> List[dict]:
+        return datalist

@@ -1,6 +1,6 @@
 data:
     !BraTSDataModule {
-        data_properties: /scratch/leuven/336/vsc33647/BraTS2021,
+        data_properties: /scratch/leuven/336/vsc33647/BraTS2021/dataset.json,
         version: "brats2021",
         spacing: [1.0, 1.0, 1.0],
         spatial_size: [128, 128, 128],

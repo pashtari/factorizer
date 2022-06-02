@@ -98,7 +98,7 @@ def brats_train_transform(spatial_size=(128, 128, 128), version="decathlon"):
         transforms.LoadImaged(["image", "label"]),
         transforms.AsChannelFirstd("image")
         if version == "decathlon"
-        else transforms.Identity("image"),
+        else transforms.Identityd("image"),
         BraTSOneHotEncoderd("label", nested=True, version=version),
         transforms.CropForegroundd(["image", "label"], source_key="image"),
         transforms.NormalizeIntensityd(
@@ -143,7 +143,7 @@ def brats_val_transform(version="decathlon"):
         transforms.LoadImaged(["image", "label"], allow_missing_keys=True),
         transforms.AsChannelFirstd("image")
         if version == "decathlon"
-        else transforms.Identity("image"),
+        else transforms.Identityd("image"),
         BraTSOneHotEncoderd(
             "label", nested=True, allow_missing_keys=True, version=version
         ),
@@ -166,7 +166,7 @@ def brats_vis_transform(version="decathlon"):
         transforms.LoadImaged(["image", "label"], allow_missing_keys=True),
         transforms.AsChannelFirstd("image")
         if version == "decathlon"
-        else transforms.Identity("image"),
+        else transforms.Identityd("image"),
         BraTSOneHotEncoderd(
             "label", nested=True, allow_missing_keys=True, version=version
         ),

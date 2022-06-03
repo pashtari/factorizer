@@ -1,7 +1,7 @@
 data:
     !BraTSDataModule {
         data_properties: /scratch/leuven/336/vsc33647/BraTS2021/dataset.json,
-        version: "brats2021",
+        version: brats2021,
         spacing: [1.0, 1.0, 1.0],
         spatial_size: [128, 128, 128],
         num_splits: 5,
@@ -36,6 +36,7 @@ task:
                     act: !LeakyReLU
       inferer:
           !BraTSInferer {
+              version: brats2021,
               spacing: [1.0, 1.0, 1.0],
               spatial_size: [128, 128, 128],
               overlap: 0.5,
@@ -72,7 +73,7 @@ training:
     gpus: 2
     num_nodes: 1
     accelerator: ddp
-    check_val_every_n_epoch: 50
+    check_val_every_n_epoch: 2
     callbacks:
         - !LearningRateMonitor { logging_interval: step }
         - !ModelCheckpoint { every_n_train_steps: 50 }
@@ -86,6 +87,7 @@ test:
         checkpoint_path: logs/brats2021/fold2/resunet/version_0/checkpoints/epoch=199-step=99999.ckpt
     inferer:
         !BraTSInferer {
+            version: brats2021,
             spacing: [1.0, 1.0, 1.0],
             spatial_size: [128, 128, 128],
             overlap: 0.5,

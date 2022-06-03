@@ -8,7 +8,7 @@ from monai.transforms import (
     Transform,
     MapTransform,
     LoadImaged,
-    Lambdad,
+    Identityd,
     SaveImaged,
 )
 from monai.inferers import SlidingWindowInferer
@@ -151,7 +151,7 @@ class Inferer(object):
         self.inferer = SlidingWindowInferer(roi_size=spatial_size, **kwargs)
 
         # postprocessing transforms
-        self.post = Lambdad("input", lambda x: x) if post is None else post
+        self.post = Identityd("input") if post is None else post
 
         # write to file
         self.output_dtype = output_dtype

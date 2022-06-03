@@ -6,6 +6,7 @@ from monai.data import DataLoader
 from monai.apps import CrossValidation
 
 from ..data import (
+    ReadImaged,
     StandardDataset,
     Renamed,
     Inferer,
@@ -18,91 +19,18 @@ from ..data import (
 ###################################
 
 
-class BraTSOneHotEncoderd(transforms.MapTransform):
-    """
-    Convert labels to multi channels based on brats classes:
-    
-    Decathlon version:
-    label 0: background,
-    label 1: edema (ED)
-    label 2: necrotic and non-enhancing tumor (NCR&NET)
-    label 3: enhancing tumor (ET)
-
-    BraTS since 2017:
-    label 0: background,
-    label 1: necrotic and non-enhancing tumor (NCR/NET)
-    label 2: edema (ED)
-    label 4: enhancing tumor (ET)
-
-    If nested = True, the classes are enhancing tumor (ET), tumor core (TC),
-    and whole tumor (WT):
-
-    TC: ET + NCR/NET
-    WT: ET + NCR/NET + ED
-
-    """
-
-    def __init__(
-        self, keys, nested=True, allow_missing_keys=False, version="decathlon"
-    ):
-        super().__init__(keys, allow_missing_keys)
-        self.nested = nested
-        self.version = version
-        if version == "decathlon":
-            self.labels = {"background": 0, "ED": 1, "NCR/NET": 2, "ET": 3}
-        else:
-            self.labels = {"background": 0, "ED": 2, "NCR/NET": 1, "ET": 4}
-
-    def __call__(self, data):
-        if self.nested:
-            d = dict(data)
-            for key in self.key_iterator(d):
-                result = []
-                # ET
-                result.append(d[key] == self.labels["ET"])
-                # TC: ET + NCR/NET
-                result.append(
-                    np.logical_or(
-                        d[key] == self.labels["ET"],
-                        d[key] == self.labels["NCR/NET"],
-                    )
-                )
-                # WT: ET + NCR/NET + ED
-                result.append(
-                    np.logical_or(
-                        np.logical_or(
-                            d[key] == self.labels["ET"],
-                            d[key] == self.labels["NCR/NET"],
-                        ),
-                        d[key] == self.labels["ED"],
-                    )
-                )
-                d[key] = np.stack(result, axis=0).astype(np.float32)
-        else:
-            d = dict(data)
-            for key in self.key_iterator(d):
-                result = []
-                # ED
-                result.append(d[key] == self.labels["ED"])
-                # NCR/NET
-                result.append(d[key] == self.labels["NCR/NET"])
-                # ET
-                result.append(d[key] == self.labels["ET"])
-                d[key] = np.stack(result, axis=0).astype(np.float32)
-
-        return d
-
-
-def brats_train_transform(spatial_size=(128, 128, 128), version="decathlon"):
+def atlas_train_transform(
+    spacing=(1.0, 1.0, 1.0), spatial_size=(128, 128, 128), num_patches=1
+):
     train_transform = [
-        transforms.LoadImaged(["image", "label"]),
-        transforms.AsChannelFirstd("image")
-        if version == "decathlon"
-        else transforms.Identityd("image"),
-        BraTSOneHotEncoderd("label", nested=True, version=version),
+        ReadImaged(["image", "label"]),
+        transforms.AddChanneld("label"),
         transforms.CropForegroundd(["image", "label"], source_key="image"),
         transforms.NormalizeIntensityd(
             "image", nonzero=True, channel_wise=True
+        ),
+        transforms.Spacingd(
+            ["image", "label"], pixdim=spacing, mode=("bilinear", "bilinear"),
         ),
         transforms.RandSpatialCropd(
             ["image", "label"], roi_size=spatial_size, random_size=False
@@ -138,15 +66,10 @@ def brats_train_transform(spatial_size=(128, 128, 128), version="decathlon"):
     return train_transform
 
 
-def brats_val_transform(version="decathlon"):
+def atlas_val_transform():
     val_transform = [
-        transforms.LoadImaged(["image", "label"], allow_missing_keys=True),
-        transforms.AsChannelFirstd("image")
-        if version == "decathlon"
-        else transforms.Identityd("image"),
-        BraTSOneHotEncoderd(
-            "label", nested=True, allow_missing_keys=True, version=version
-        ),
+        ReadImaged(["image", "label"], allow_missing_keys=True),
+        transforms.AddChanneld("label", allow_missing_keys=True),
         transforms.NormalizeIntensityd(
             "image", nonzero=True, channel_wise=True
         ),
@@ -157,20 +80,20 @@ def brats_val_transform(version="decathlon"):
     return val_transform
 
 
-def brats_test_transform(version="decathlon"):
-    return brats_val_transform(version=version)
+def atlas_test_transform():
+    return atlas_val_transform()
 
 
-def brats_vis_transform(version="decathlon"):
+def atlas_vis_transform(spacing=(1.0, 1.0, 1.0)):
     vis_transform = [
-        transforms.LoadImaged(["image", "label"], allow_missing_keys=True),
-        transforms.AsChannelFirstd("image")
-        if version == "decathlon"
-        else transforms.Identityd("image"),
-        BraTSOneHotEncoderd(
-            "label", nested=True, allow_missing_keys=True, version=version
-        ),
+        ReadImaged(["image", "label"], allow_missing_keys=True),
+        transforms.AddChanneld("label", allow_missing_keys=True),
         transforms.NormalizeIntensityd("image", channel_wise=True),
+        transforms.Spacingd(
+            keys=["image", "label"],
+            pixdim=spacing,
+            mode=("bilinear", "nearest"),
+        ),
         transforms.ToTensord(["image", "label"], allow_missing_keys=True),
         Renamed(),
     ]
@@ -183,13 +106,13 @@ def brats_vis_transform(version="decathlon"):
 ###################################
 
 
-class BraTSDataModule(LightningDataModule):
+class ATLASDataModule(LightningDataModule):
     def __init__(
         self,
         data_properties,
-        version="decathlon",
         spacing=(1.0, 1.0, 1.0),
         spatial_size=(128, 128, 128),
+        num_patches=1,
         num_splits=5,
         split=0,
         batch_size=2,
@@ -205,10 +128,12 @@ class BraTSDataModule(LightningDataModule):
         self.seed = seed
         self.dataset_params = kwargs
 
-        self.train_transform = brats_train_transform(spatial_size, version)
-        self.val_transform = brats_val_transform(version)
-        self.test_transform = brats_test_transform(version)
-        self.vis_transform = brats_vis_transform(version)
+        self.train_transform = atlas_train_transform(
+            spacing, spatial_size, num_patches
+        )
+        self.val_transform = atlas_val_transform()
+        self.test_transform = atlas_test_transform()
+        self.vis_transform = atlas_vis_transform(spacing)
 
         self.train_set = self.val_set = self.test_set = None
 
@@ -278,7 +203,7 @@ class BraTSDataModule(LightningDataModule):
 
 
 # alias
-BRATS = BraTSDataModule
+ATLAS = ATLASDataModule
 
 
 ###################################
@@ -286,10 +211,9 @@ BRATS = BraTSDataModule
 ###################################
 
 
-class BraTSInferer(Inferer):
+class ATLASInferer(Inferer):
     def __init__(
         self,
-        version="decathlon",
         spacing=(1.0, 1.0, 1.0),
         spatial_size=(128, 128, 128),
         post=None,
@@ -298,54 +222,18 @@ class BraTSInferer(Inferer):
         **kwargs,
     ) -> None:
 
-        if version == "decathlon":
-            self.labels = {"background": 0, "ED": 1, "NCR/NET": 2, "ET": 3}
-        else:
-            self.labels = {"background": 0, "ED": 2, "NCR/NET": 1, "ET": 4}
-
         # postprocessing transforms
-        if post == "logit-nested":
+        if post == "logit":
             post = transforms.Lambdad("input", lambda x: x)
             output_dtype = np.float32 if output_dtype is None else output_dtype
-        elif post == "prob-nested":
-            post = transforms.Lambdad("input", lambda x: x.sigmoid(dim=1))
+        elif post == "prob":
+            post = transforms.Lambdad("input", torch.sigmoid)
             output_dtype = np.float32 if output_dtype is None else output_dtype
-        elif post == "one-hot-nested":
-            post = transforms.Lambdad(
-                "input", lambda x: torch.where(x >= 0, 1.0, 0.0)
-            )
-            output_dtype = np.uint8 if output_dtype is None else output_dtype
         elif post == "class":
-
-            def func(x):
-                mask = torch.where(x >= 0, 1.0, 0.0)
-                et = mask[:, 0, ...]
-                tc = mask[:, 1, ...]
-                wt = mask[:, 2, ...]
-                out = torch.zeros_like(wt)
-                out[et == 1] = self.labels["ET"]
-                out[torch.logical_and(tc == 1, et == 0)] = self.labels[
-                    "NCR/NET"
-                ]
-                out[torch.logical_and(wt == 1, tc == 0)] = self.labels["ED"]
-                return out
-
-            post = transforms.Lambdad("input", func)
+            post = transforms.Lambdad("input", lambda x: x >= 0)
             output_dtype = np.uint8 if output_dtype is None else output_dtype
-        elif post == "one-hot":
-
-            def func(x):
-                mask = torch.where(x >= 0, 1.0, 0.0)
-                et = mask[:, 0:1, ...]
-                tc = mask[:, 1:2, ...]
-                wt = mask[:, 2:3, ...]
-                bg = (wt != 0).float()
-                nt = torch.logical_and(tc == 1, et == 0).float()
-                ed = torch.logical_and(wt == 1, tc == 0).float()
-                return torch.cat((bg, ed, nt, et), dim=1)
-
-            post = transforms.Lambdad("input", func)
-            output_dtype = np.uint8 if output_dtype is None else output_dtype
+        else:
+            post = post
 
         super().__init__(
             spacing=spacing,

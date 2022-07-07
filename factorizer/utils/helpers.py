@@ -113,6 +113,31 @@ def wrap_class(obj: Union[Sequence, Callable]):
         return obj
 
 
+def is_wrappable_class(obj: Any):
+    if isinstance(obj, Callable):
+        out = True
+    elif isinstance(obj, Sequence):
+        flags = []
+        for i, a in enumerate(obj):
+            if i == 0:
+                flags.append(isinstance(a, Callable))
+            else:
+                flags.append(isinstance(a, (Sequence, dict)))
+
+        out = all(flags)
+    else:
+        out = False
+
+    return out
+
+
+def get_class(obj: Callable):
+    if isinstance(obj, partial):
+        return obj.func
+    else:
+        return obj
+
+
 def dispatcher(func):
     if callable(func):
         func = func

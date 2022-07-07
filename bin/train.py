@@ -3,7 +3,7 @@ from argparse import ArgumentParser, Namespace
 import torch
 from pytorch_lightning import Trainer, seed_everything
 
-from factorizer.registry import read_config
+from registry import read_config
 
 
 seed_everything(42, workers=True)

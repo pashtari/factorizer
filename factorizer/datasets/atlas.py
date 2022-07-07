@@ -20,11 +20,11 @@ from ..data import (
 
 
 def atlas_train_transform(
-    spacing=(1.0, 1.0, 1.0), spatial_size=(128, 128, 128), num_patches=1
+    spacing=(1.0, 1.0, 1.0), spatial_size=(128, 128, 128)
 ):
     train_transform = [
         ReadImaged(["image", "label"]),
-        transforms.AddChanneld("label"),
+        transforms.AddChanneld(["image", "label"]),
         transforms.CropForegroundd(["image", "label"], source_key="image"),
         transforms.NormalizeIntensityd(
             "image", nonzero=True, channel_wise=True
@@ -69,7 +69,7 @@ def atlas_train_transform(
 def atlas_val_transform():
     val_transform = [
         ReadImaged(["image", "label"], allow_missing_keys=True),
-        transforms.AddChanneld("label", allow_missing_keys=True),
+        transforms.AddChanneld(["image", "label"], allow_missing_keys=True),
         transforms.NormalizeIntensityd(
             "image", nonzero=True, channel_wise=True
         ),
@@ -87,7 +87,7 @@ def atlas_test_transform():
 def atlas_vis_transform(spacing=(1.0, 1.0, 1.0)):
     vis_transform = [
         ReadImaged(["image", "label"], allow_missing_keys=True),
-        transforms.AddChanneld("label", allow_missing_keys=True),
+        transforms.AddChanneld(["image", "label"], allow_missing_keys=True),
         transforms.NormalizeIntensityd("image", channel_wise=True),
         transforms.Spacingd(
             keys=["image", "label"],
@@ -112,7 +112,6 @@ class ATLASDataModule(LightningDataModule):
         data_properties,
         spacing=(1.0, 1.0, 1.0),
         spatial_size=(128, 128, 128),
-        num_patches=1,
         num_splits=5,
         split=0,
         batch_size=2,
@@ -128,9 +127,7 @@ class ATLASDataModule(LightningDataModule):
         self.seed = seed
         self.dataset_params = kwargs
 
-        self.train_transform = atlas_train_transform(
-            spacing, spatial_size, num_patches
-        )
+        self.train_transform = atlas_train_transform(spacing, spatial_size)
         self.val_transform = atlas_val_transform()
         self.test_transform = atlas_test_transform()
         self.vis_transform = atlas_vis_transform(spacing)

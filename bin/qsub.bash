@@ -1,6 +1,11 @@
-qsub -N config_brats2021_fold0_global-performer -l nodes=1:ppn=8:gpus=2:cascadelake -l walltime=00:05:00:00 -l partition=gpu -l pmem=20gb -v config="configs/brats2021/config_brats2021_fold0_global-performer.yaml" train_jobscript.pbs
-qsub -N config_brats2021_fold0_unet -l nodes=1:ppn=18:gpus=2:skylake -l walltime=00:05:00:00 -l partition=gpu -l pmem=5gb -v config="configs/brats2021/config_brats2021_fold0_unet.yaml" train_jobscript.pbs
-qsub -N config_brats2021_fold0_global-factorizer -l nodes=1:ppn=8:gpus=2:cascadelake -l walltime=00:05:00:00 -l partition=gpu -l pmem=20gb -v config="configs/brats2021/config_brats2021_fold0_global-factorizer.yaml" train_jobscript.pbs
-qsub -N config_brats2021_fold0_local-factorizer -l nodes=1:ppn=18:gpus=2:skylake -l walltime=00:05:00:00 -l partition=gpu -l pmem=5gb -v config="configs/brats2021/config_brats2021_fold0_local-factorizer.yaml" train_jobscript.pbs
-qsub -N config_brats2021_fold0_resunet -l nodes=1:ppn=18:gpus=2:skylake -l walltime=00:05:00:00 -l partition=gpu -l pmem=5gb -v config="configs/brats2021/config_brats2021_fold0_resunet.yaml" train_jobscript.pbs
-qsub -N config_brats2021_fold0_swin-factorizer -l nodes=1:ppn=18:gpus=2:skylake -l walltime=00:05:00:00 -l partition=gpu -l pmem=5gb -v config="configs/brats2021/config_brats2021_fold0_swin-factorizer.yaml" train_jobscript.pbs
+qsub -N config_brats_fold3_swin-unetr -l nodes=1:ppn=8:gpus=2:cascadelake -l walltime=02:00:00:00 -l partition=gpu -l pmem=20gb -v config="configs/brats/config_brats_fold3_swin-unetr.yaml" train_jobscript.pbs
+qsub -N config_brats_fold4_swin-unetr -l nodes=1:ppn=8:gpus=2:cascadelake -l walltime=02:00:00:00 -l partition=gpu -l pmem=20gb -v config="configs/brats/config_brats_fold4_swin-unetr.yaml" train_jobscript.pbs
+qsub -N config_brats_fold0_unetr -l nodes=1:ppn=8:gpus=2:cascadelake -l walltime=02:00:00:00 -l partition=gpu -l pmem=20gb -v config="configs/brats/config_brats_fold0_unetr.yaml" train_jobscript.pbs
+qsub -N config_brats_fold1_unetr -l nodes=1:ppn=8:gpus=2:cascadelake -l walltime=02:00:00:00 -l partition=gpu -l pmem=20gb -v config="configs/brats/config_brats_fold1_unetr.yaml" train_jobscript.pbs
+qsub -N config_brats_fold2_unetr -l nodes=1:ppn=8:gpus=2:cascadelake -l walltime=02:00:00:00 -l partition=gpu -l pmem=20gb -v config="configs/brats/config_brats_fold2_unetr.yaml" train_jobscript.pbs
+qsub -N config_brats_fold3_unetr -l nodes=1:ppn=8:gpus=2:cascadelake -l walltime=02:00:00:00 -l partition=gpu -l pmem=20gb -v config="configs/brats/config_brats_fold3_unetr.yaml" train_jobscript.pbs
+qsub -N config_brats_fold4_unetr -l nodes=1:ppn=8:gpus=2:cascadelake -l walltime=02:00:00:00 -l partition=gpu -l pmem=20gb -v config="configs/brats/config_brats_fold4_unetr.yaml" train_jobscript.pbs
+
+
+
+

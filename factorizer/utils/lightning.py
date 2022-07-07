@@ -1,3 +1,4 @@
+import torch
 from torch import nn, optim
 from pytorch_lightning.core import LightningModule
 
@@ -60,7 +61,11 @@ class SemanticSegmentation(LightningModule):
         return sum(p.numel() for p in self.net.parameters() if p.requires_grad)
 
     def forward(self, x):
-        return self.net(x)
+        out = self.net(x)
+        if not isinstance(out, torch.Tensor):
+            out = out[0]
+
+        return out
 
     def configure_optimizers(self):
         optimizer = self.optimizer(self.net.parameters())
@@ -92,7 +97,7 @@ class SemanticSegmentation(LightningModule):
         y, id_ = batch["target"], batch["id"]
 
         # inference
-        y_hat = self.inferer(batch, lambda x: self.net(x)[0])
+        y_hat = self.inferer(batch, self.forward)
 
         # calculate metrics
         out = {"id": id_}
@@ -126,7 +131,7 @@ class SemanticSegmentation(LightningModule):
 
     def test_step(self, batch, batch_idx):
         # inference
-        y_hat = self.inferer(batch, lambda x: self.net(x)[0])
+        y_hat = self.inferer(batch, self.forward)
 
     def test_epoch_end(self, outputs):
         return None

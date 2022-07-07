@@ -168,7 +168,7 @@ def brats_vis_transform(version="decathlon"):
         if version == "decathlon"
         else transforms.Identityd("image"),
         BraTSOneHotEncoderd(
-            "label", nested=True, allow_missing_keys=True, version=version
+            "label", nested=False, allow_missing_keys=True, version=version
         ),
         transforms.NormalizeIntensityd("image", channel_wise=True),
         transforms.ToTensord(["image", "label"], allow_missing_keys=True),

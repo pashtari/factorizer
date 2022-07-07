@@ -40,9 +40,9 @@ for rank in range(1, 8):
 # remove only one layer
 for layer in range(1, 10):
     cfg_new = re.sub(
-        "          - !SegmentationFactorizer",
+        "          - !ft.SegmentationFactorizer",
         f"""          - !ablate
-            - !SegmentationFactorizer
+            - !ft.SegmentationFactorizer
             - ["nmf", "factorize"]
             - !lambda "layer, sublayer: layer == {layer-1}" """,
         cfg,
@@ -55,9 +55,9 @@ for layer in range(1, 10):
 # keep up to Lth block
 for layer in range(1, 10):
     cfg_new = re.sub(
-        "          - !SegmentationFactorizer",
+        "          - !ft.SegmentationFactorizer",
         f"""          - !ablate
-            - !SegmentationFactorizer
+            - !ft.SegmentationFactorizer
             - ["nmf", "factorize"]
             - !lambda "layer, sublayer: layer > {layer-1}" """,
         cfg,

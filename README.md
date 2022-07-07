@@ -143,7 +143,7 @@ where `config.yaml` is the config file. You can find the config files in [./bin/
 
 ```bash
 cd ./bin
-python train.py --config configs/config_brats_fold0_swin-factorizer.yaml
+python train.py --config configs/brats/config_brats_fold0_swin-factorizer.yaml
 ```
 The model checkpoints will then be saved in `./bin/logs/brats/fold0/swin-factorizer/version_0/checkpoints`.
 
@@ -154,7 +154,7 @@ The model checkpoints will then be saved in `./bin/logs/brats/fold0/swin-factori
 
 ```bash
 cd ./bin
-python validate.py --config configs/config_brats_fold0_swin-factorizer.yaml
+python validate.py --config configs/brats/config_brats_fold0_swin-factorizer.yaml
 ```
 The results will then be saved as `results.csv` in `./bin/logs/brats/fold0/swin-factorizer/version_0`.
 
@@ -166,11 +166,12 @@ All the trained models and results can be downloaded via the [OneDrive link](htt
 ```bash
 bin
 ├── configs
-│   ├── ablations
-│   │   ├── config_brats_fold0_swin-factorizer-wop.py
-│   │   └── ...
-│   ├── config_brats_fold0_swin-factorizer.yaml
-│   └── ...
+│   └── brats
+│       ├── ablations
+│       │   ├── config_brats_fold0_swin-factorizer-wop.py
+│       │   └── ...
+│       ├── config_brats_fold0_swin-factorizer.yaml
+│       └── ...
 ├── logs
 │   └── brats
 │       ├── fold0

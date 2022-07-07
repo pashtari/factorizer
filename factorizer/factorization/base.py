@@ -233,3 +233,4 @@ class TF(nn.Module):
         factors = self.decompose(x)
         tensors = {**factors, **dict(self.named_parameters())}
         return self.forward_expr(tensors)
+

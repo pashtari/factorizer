@@ -203,17 +203,13 @@ class LiTSDataModule(LightningDataModule):
 
     def val_dataloader(self):
         val_loader = DataLoader(
-            self.val_set,
-            batch_size=self.batch_size,
-            num_workers=self.num_workers,
+            self.val_set, batch_size=1, num_workers=self.num_workers,
         )
         return val_loader
 
     def test_dataloader(self):
         test_loader = DataLoader(
-            self.test_set,
-            batch_size=self.batch_size,
-            num_workers=self.num_workers,
+            self.test_set, batch_size=1, num_workers=self.num_workers,
         )
         return test_loader
 

@@ -1,6 +1,8 @@
 import torch
 from torch import nn
+from torchvision.ops import StochasticDepth
 
+from .layers import Linear
 from .utils.helpers import as_tuple, prod, wrap_class
 
 
@@ -232,6 +234,59 @@ class PreActivationBlock(nn.Module):
 
         out += shortcut
         return out
+
+
+class CovNeXtBlock(nn.Module):
+    """ ConvNeXt Block"""
+
+    def __init__(
+        self,
+        in_channels,
+        out_channels,
+        mlp_ratio=4,
+        stochastic_depth_prob=0.0,
+        layer_scale=1e-6,
+        conv=(nn.Conv3d, {"kernel_size": 7, "padding": 3}),
+        norm=nn.LayerNorm,
+        act=nn.GELU,
+        **kwargs,
+    ):
+        super().__init__()
+
+        conv = wrap_class(conv)
+        norm = wrap_class(norm)
+        act = wrap_class(act)
+
+        if in_channels != out_channels:
+            self.adapter = Linear(in_channels, out_channels, bias=False)
+
+        hidden_channels = int(mlp_ratio * in_channels)
+        self.dwconv = conv(out_channels, out_channels, groups=out_channels)
+        self.norm = norm(out_channels)
+        self.pwconv1 = nn.Linear(out_channels, hidden_channels)
+        self.act = act()
+        self.pwconv2 = nn.Linear(hidden_channels, out_channels)
+        self.gamma = (
+            nn.Parameter(layer_scale * torch.ones(out_channels))
+            if layer_scale > 0
+            else None
+        )
+        self.stochastic_depth = StochasticDepth(stochastic_depth_prob, "row")
+
+    def forward(self, x):
+        x = self.adapter(x) if hasattr(self, "adapter") else x
+        out = self.dwconv(x)
+        out = torch.einsum("b c ... -> b ... c", out)
+        out = self.norm(out)
+        out = self.pwconv1(out)
+        out = self.act(out)
+        out = self.pwconv2(out)
+        if self.gamma is not None:
+            out = self.gamma * out
+        out = torch.einsum("b ... c -> b c ...", out)
+        out = self.stochastic_depth(out)
+        out += x
+        return x
 
 
 class Same(object):

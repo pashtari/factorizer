@@ -8,11 +8,11 @@ import opt_einsum as oe
 
 def t(x):
     """Transpose a tensor, i.e. "b i j -> b j i"."""
-    return x.transpose(1, -1)
+    return x.transpose(-2, -1)
 
 
 def dot(x, y):
-    out = (x * y).flatten(1).sum(1, keepdim=True)
+    out = (x * y).flatten(-2).sum(-1, keepdim=True)
     return out
 
 
@@ -20,7 +20,7 @@ def norm2(x, w=None):
     w = torch.ones_like(x) if w is None else w
     x = x.flatten(1)
     w = w.flatten(1)
-    out = torch.sum(w * (x**2), dim=1).sqrt()
+    out = torch.sum(w * (x ** 2), dim=1).sqrt()
     return out
 
 
@@ -142,7 +142,7 @@ class Reshape(nn.Module):
 
 
 class Matricize(Reshape):
-    """Matricize, e.g. 'b (c1 c2) (h1 h2) (w1 w2) -> (b c1 h1 w1) c2 (h2 w2)'."""
+    """Matricize, e.g. 'b (c1 c2) (h1 h2) (w1 w2) -> (b c1) (h1 w1) c2 (h2 w2)'."""
 
     def __init__(
         self,
@@ -169,7 +169,8 @@ class Matricize(Reshape):
         left = (
             f'b (h d) {" ".join([f"(g{i} p{i})" for i in range(spatial_dim)])}'
         )
-        right = f'(b h {" ".join([f"g{i}" for i in range(spatial_dim)])}) '
+        right = f"(b h) "
+        right += f'({" ".join([f"g{i}" for i in range(spatial_dim)])}) '
         right += f'd ({" ".join([f"p{i}" for i in range(spatial_dim)])})'
         equation = f"{left} -> {right}"
 
@@ -190,6 +191,7 @@ class Matricize(Reshape):
 
         if shifts is not None:
             dims = tuple(j + 2 for j in range(spatial_dim))
+            shifts = to_ntuple(shifts)
         else:
             dims = None
 
@@ -204,7 +206,7 @@ class Matricize(Reshape):
 
 
 class Tensorize(Reshape):
-    """Tensorize, e.g. 'b (c1 c2) (h1 h2) (w1 w2) -> (b c1 h1 w1) c2 h2 w2'."""
+    """Tensorize, e.g. 'b (c1 c2) (h1 h2) (w1 w2) -> (b c1) (h1 w1) c2 h2 w2'."""
 
     def __init__(
         self,
@@ -231,7 +233,8 @@ class Tensorize(Reshape):
         left = (
             f'b (h d) {" ".join([f"(g{i} p{i})" for i in range(spatial_dim)])}'
         )
-        right = f'(b h {" ".join([f"g{i}" for i in range(spatial_dim)])}) '
+        right = f"(b h) "
+        right = f'({" ".join([f"g{i}" for i in range(spatial_dim)])}) '
         right += f'd {" ".join([f"p{i}" for i in range(spatial_dim)])}'
         equation = f"{left} -> {right}"
 
@@ -252,6 +255,7 @@ class Tensorize(Reshape):
 
         if shifts is not None:
             dims = tuple(j + 2 for j in range(spatial_dim))
+            shifts = to_ntuple(shifts)
         else:
             dims = None
 
@@ -273,44 +277,61 @@ class SWMatricize(nn.Module):
         head_dim=None,
         grid_size=None,
         patch_size=None,
+        shifts=None,
         **kwargs,
     ) -> None:
         super().__init__()
-        self.regular_window = Matricize(
-            input_size,
-            num_heads=num_heads,
-            head_dim=head_dim,
-            grid_size=grid_size,
-            patch_size=patch_size,
-            **kwargs,
-        )
         spatial_dim = len(input_size) - 2
         to_ntuple = _ntuple(spatial_dim)
-        shifts = tuple(s // 2 for s in to_ntuple(patch_size))
-        self.shifted_window = Matricize(
-            input_size,
-            num_heads=num_heads,
-            head_dim=head_dim,
-            grid_size=grid_size,
-            patch_size=patch_size,
-            shifts=shifts,
-            **kwargs,
-        )
-        self.output_size = self.regular_window.output_size
+        patch_size = to_ntuple(patch_size)
+        grid_size = to_ntuple(grid_size)
+        if shifts is None:
+            shifts = [None, tuple(s // 2 for s in patch_size)]
+
+        shifted_windows = []
+        for s in shifts:
+            if s is None:
+                shifted_windows.append(
+                    Matricize(
+                        input_size,
+                        num_heads=num_heads,
+                        head_dim=head_dim,
+                        grid_size=grid_size,
+                        patch_size=patch_size,
+                        **kwargs,
+                    )
+                )
+            else:
+                shifted_windows.append(
+                    Matricize(
+                        input_size,
+                        num_heads=num_heads,
+                        head_dim=head_dim,
+                        grid_size=grid_size,
+                        patch_size=patch_size,
+                        shifts=s,
+                        **kwargs,
+                    )
+                )
+
+        self.shifted_windows = nn.ModuleList(shifted_windows)
+        self.output_size = self.shifted_windows[0].output_size
 
     def forward(self, x):
-        out1 = self.regular_window(x)
-        out2 = self.shifted_window(x)
-        return torch.cat((out1, out2))
+        out = []
+        for shifted_window in self.shifted_windows:
+            out.append(shifted_window(x))
+        return torch.cat(out)
 
     def inverse_forward(self, x):
         b = x.shape[0]
-        out1 = x[: (b // 2), ...]
-        out2 = x[(b // 2) :, ...]
-        out = 0.5 * (
-            self.regular_window.inverse_forward(out1)
-            + self.shifted_window.inverse_forward(out2)
-        )
+        num_shifts = len(self.shifted_windows)
+        out = 0.0
+        for j in range(num_shifts):
+            slc = slice(j * (b // num_shifts), (j + 1) * (b // num_shifts))
+            out = out + self.shifted_windows[j].inverse_forward(x[slc, ...])
+
+        out = out / num_shifts
         return out
 
 
@@ -322,42 +343,59 @@ class SWTensorize(nn.Module):
         head_dim=None,
         grid_size=None,
         patch_size=None,
+        shifts=None,
         **kwargs,
     ) -> None:
         super().__init__()
-        self.regular_window = Tensorize(
-            input_size,
-            num_heads=num_heads,
-            head_dim=head_dim,
-            grid_size=grid_size,
-            patch_size=patch_size,
-            **kwargs,
-        )
         spatial_dim = len(input_size) - 2
         to_ntuple = _ntuple(spatial_dim)
-        shifts = tuple(s // 2 for s in to_ntuple(patch_size))
-        self.shifted_window = Tensorize(
-            input_size,
-            num_heads=num_heads,
-            head_dim=head_dim,
-            grid_size=grid_size,
-            patch_size=patch_size,
-            shifts=shifts,
-            **kwargs,
-        )
-        self.output_size = self.regular_window.output_size
+        patch_size = to_ntuple(patch_size)
+        grid_size = to_ntuple(grid_size)
+        if shifts is None:
+            shifts = [None, tuple(s // 2 for s in patch_size)]
+
+        shifted_windows = []
+        for s in shifts:
+            if s is None:
+                shifted_windows.append(
+                    Tensorize(
+                        input_size,
+                        num_heads=num_heads,
+                        head_dim=head_dim,
+                        grid_size=grid_size,
+                        patch_size=patch_size,
+                        **kwargs,
+                    )
+                )
+            else:
+                shifted_windows.append(
+                    Tensorize(
+                        input_size,
+                        num_heads=num_heads,
+                        head_dim=head_dim,
+                        grid_size=grid_size,
+                        patch_size=patch_size,
+                        shifts=s,
+                        **kwargs,
+                    )
+                )
+
+        self.shifted_windows = nn.ModuleList(shifted_windows)
+        self.output_size = self.shifted_windows[0].output_size
 
     def forward(self, x):
-        out1 = self.regular_window(x)
-        out2 = self.shifted_window(x)
-        return torch.cat((out1, out2))
+        out = []
+        for shifted_window in self.shifted_windows:
+            out.append(shifted_window(x))
+        return torch.cat(out)
 
     def inverse_forward(self, x):
         b = x.shape[0]
-        out1 = x[: (b // 2), ...]
-        out2 = x[(b // 2) :, ...]
-        out = 0.5 * (
-            self.regular_window.inverse_forward(out1)
-            + self.shifted_window.inverse_forward(out2)
-        )
+        num_shifts = len(self.shifted_windows)
+        out = 0.0
+        for j in range(num_shifts):
+            slc = slice(j * (b // num_shifts), (j + 1) * (b // num_shifts))
+            out = out + self.shifted_windows[j].inverse_forward(x[slc, ...])
+
+        out = out / num_shifts
         return out

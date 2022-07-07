@@ -13,8 +13,8 @@ class ScaledDotProductAttention(nn.Module):
     def attention_weights(self, query, key, mask):
         _, E, _ = query.shape
         query = query / math.sqrt(E)
-        # t(B × E × N) x (B × E × M) -> (B, N, M)
-        attn = torch.bmm(key.transpose(-2, -1), query)
+        # t(* × E × N) @ (* × E × M) -> (* × N × M)
+        attn = key.transpose(-2, -1) @ query
         if mask is not None:
             attn.masked_fill_(mask[None], -math.inf)
 
@@ -22,13 +22,13 @@ class ScaledDotProductAttention(nn.Module):
         return attn
 
     def forward(self, query, key=None, value=None, mask=None):
-        # query: B × E × M, key: B × E × N, value: B × D × N
+        # query: * × E × M, key: * × E × N, value: * × D × N
         key = query if key is None else key
         value = key if value is None else value
 
         attn = self.attention_weights(query, key, mask)
-        # (B × D × N) x (B, N, M) -> (B, D, M)
-        output = torch.bmm(value, attn)
+        # (* × D × N) @ (* × N × M) -> (* × D × M)
+        output = value @ attn
         return output
 
 
@@ -46,27 +46,27 @@ class FastScaledDotProductAttention(nn.Module):
         self.register_buffer("orth_proj", orth_proj)
 
     def forward(self, query, key=None, value=None, **kwargs):
-        # query: B × E × M, key: B × E × N, value: B × D × N
+        # query: * × E × M, key: * × E × N, value: * × D × N
         key = query if key is None else key
         value = key if value is None else value
 
         query = query / math.sqrt(self.dim)
 
         phi_q = self.kernel_fun(
-            torch.einsum("b c m, c e -> b e m", query, self.orth_proj)
+            torch.einsum("... c m, c e -> ... e m", query, self.orth_proj)
         )
         phi_k = self.kernel_fun(
-            torch.einsum("b c n, c e -> b e n", key, self.orth_proj)
+            torch.einsum("... c n, c e -> ... e n", key, self.orth_proj)
         )
 
         # normalize
-        phi_k_rowsum = phi_k.sum(-1)  # B × E
-        scale = torch.einsum("b e m, b e -> b m", phi_q, phi_k_rowsum)
+        phi_k_rowsum = phi_k.sum(-1)  # * × E
+        scale = torch.einsum("... e m, ... e -> ... m", phi_q, phi_k_rowsum)
         scale = 1 / (scale + 1e-8)
-        phi_q = torch.einsum("b e m, b m -> b e m", phi_q, scale)
+        phi_q = torch.einsum("... e m, ... m -> ... e m", phi_q, scale)
 
-        kv = torch.einsum("b e n, b d n -> b e d", phi_k, value)
-        output = torch.einsum("b e m, b e d -> b d m", phi_q, kv)
+        kv = torch.einsum("... e n, ... d n -> ... e d", phi_k, value)
+        output = torch.einsum("... e m, ... e d -> ... d m", phi_q, kv)
         return output
 
 

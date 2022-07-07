@@ -5,7 +5,7 @@ from torch import nn
 
 from .utils.helpers import wrap_class, cumprod
 from .layers import LayerNorm, Linear, MLP
-from .factorization import Reshape, MLSVD
+from .factorization import Matricize, SVD
 from .unet import UNet
 
 
@@ -21,6 +21,33 @@ class PosEmbed(nn.Module):
     def forward(self, x):
         # x: B × C × S1 × S2 × ... × Sp
         out = x + self.pos
+        out = self.dropout(out)
+        return out
+
+
+class DimWisePosEmbed(nn.Module):
+    """"Learnable positional embedding."""
+
+    def __init__(self, input_dim, spatial_size, dropout=0.0, **kwargs):
+        super().__init__()
+        self.pos = []
+        for dim, size in enumerate(spatial_size):
+            pe_spatial_size = [
+                size if j == dim else 1 for j in range(len(spatial_size))
+            ]
+            pe = nn.Parameter(torch.empty(1, input_dim, *pe_spatial_size))
+            nn.init.normal_(pe, std=1.0)
+            self.pos.append(pe)
+
+        self.pos = nn.ParameterList(self.pos)
+        self.dropout = nn.Dropout(dropout)
+
+    def forward(self, x):
+        # x: B × C × S1 × S2 × ... × Sp
+        out = x
+        for p in self.pos:
+            out = out + p
+
         out = self.dropout(out)
         return out
 
@@ -42,9 +69,9 @@ class FactorizerSubblock(nn.Module):
         input_dim,
         output_dim,
         spatial_size,
-        tensorize=Reshape,
-        act=nn.GELU,
-        factorize=MLSVD,
+        tensorize=(Matricize, {"num_heads": 1, "grid_size": 1}),
+        act=nn.Identity,
+        factorize=SVD,
         dropout=0.0,
         **kwargs,
     ):
@@ -59,7 +86,7 @@ class FactorizerSubblock(nn.Module):
 
         self.act = act()
 
-        tensorized_size = self.tensorize.output_size[1:]
+        tensorized_size = self.tensorize.output_size[2:]
         tensorized_size = tuple(
             s for s in tensorized_size if s != 1
         )  # squeeze size
@@ -85,7 +112,7 @@ class FactorizerSubblock(nn.Module):
         shape = out.shape
 
         # remove 1-dim modes (squeeze)
-        out = out.reshape(shape[0], *self.tensorized_size)
+        out = out.reshape(*shape[:2], *self.tensorized_size)
 
         # tensor factorization)
         out = self.factorize(out)
@@ -114,9 +141,9 @@ class FactorizerSubblockV2(nn.Module):
         spatial_size,
         inner_dim=None,
         ratio=2,
-        tensorize=Reshape,
-        act=nn.GELU,
-        factorize=MLSVD,
+        tensorize=(Matricize, {"num_heads": 1, "grid_size": 1}),
+        act=nn.Identity,
+        factorize=SVD,
         dropout=0.0,
         **kwargs,
     ):
@@ -128,7 +155,7 @@ class FactorizerSubblockV2(nn.Module):
 
         self.tensorize = tensorize((None, input_dim, *spatial_size))
         self.act = act()
-        tensorized_size = self.tensorize.output_size[1:]
+        tensorized_size = self.tensorize.output_size[2:]
         tensorized_size = tuple(
             s for s in tensorized_size if s != 1
         )  # squeeze size
@@ -150,7 +177,7 @@ class FactorizerSubblockV2(nn.Module):
         shape = out.shape
 
         # remove 1-dim modes (squeeze)
-        out = out.reshape(shape[0], *self.tensorized_size)
+        out = out.reshape(*shape[:2], *self.tensorized_size)
 
         # tensor factorization)
         out = self.factorize(out)
@@ -192,6 +219,57 @@ class FactorizerBlock(nn.Module):
 
         if pos_embed:
             self.pos_embed = PosEmbed(input_dim, spatial_size, dropout=dropout)
+
+        self.blocks = nn.ModuleDict()
+        for key, value in subblocks.items():
+            subblock = wrap_class(value)
+            block = Residual(
+                nn.Sequential(
+                    LayerNorm(output_dim),
+                    subblock(
+                        output_dim, output_dim, spatial_size=spatial_size
+                    ),
+                )
+            )
+            self.blocks[key] = block
+
+    def forward(self, x):
+        # x: B × C × S1 × S2 × ... × Sp
+        out = self.adapter(x) if hasattr(self, "adapter") else x
+        out = self.pos_embed(out) if hasattr(self, "pos_embed") else out
+
+        for block in self.blocks.values():
+            out = block(out)
+
+        return out
+
+
+class FactorizerBlockV2(nn.Module):
+    """Generic Factorizer V2 Block."""
+
+    def __init__(
+        self,
+        input_dim,
+        output_dim,
+        spatial_size,
+        adapter=None,
+        pos_embed=DimWisePosEmbed,
+        dropout=0.0,
+        **subblocks,
+    ):
+        super().__init__()
+        if input_dim != output_dim:
+            if adapter is None:
+                self.adapter = nn.Sequential(
+                    Linear(input_dim, output_dim, bias=False),
+                    nn.Dropout(dropout),
+                )
+            else:
+                adapter = wrap_class(adapter)
+                self.adapter = adapter(input_dim, output_dim)
+
+        pos_embed = wrap_class(pos_embed)
+        self.pos_embed = pos_embed(output_dim, spatial_size, dropout=dropout)
 
         self.blocks = nn.ModuleDict()
         for key, value in subblocks.items():
@@ -294,6 +372,85 @@ class SegmentationFactorizer(UNet):
                     **kwargs,
                 }
                 blocks[(layer, sublayer)] = (FactorizerBlock, params)
+
+        return blocks
+
+
+class SegmentationFactorizerV2(UNet):
+    """Segmentation Factorizer V2 (SeFV2)."""
+
+    def __init__(
+        self,
+        in_channels,
+        out_channels,
+        spatial_size,
+        stem_width=None,
+        encoder_depth=(1, 1, 1, 1, 1),
+        encoder_width=(32, 64, 128, 256, 512),
+        strides=(1, 2, 2, 2, 2),
+        decoder_depth=(1, 1, 1, 1),
+        stem=None,
+        downsample=None,
+        upsample=None,
+        head=None,
+        pos_embed=DimWisePosEmbed,
+        num_deep_supr=1,
+        **kwargs,
+    ):
+
+        self.spatial_size = spatial_size
+        spatial_dims = len(spatial_size)
+        blocks = self._get_blocks(
+            spatial_size,
+            encoder_depth,
+            decoder_depth,
+            strides,
+            pos_embed,
+            **kwargs,
+        )
+        super().__init__(
+            in_channels,
+            out_channels,
+            spatial_dims=spatial_dims,
+            stem_width=stem_width,
+            encoder_depth=encoder_depth,
+            encoder_width=encoder_width,
+            strides=strides,
+            decoder_depth=decoder_depth,
+            stem=stem,
+            downsample=downsample,
+            block=blocks,
+            upsample=upsample,
+            head=head,
+            num_deep_supr=num_deep_supr,
+        )
+
+    def _get_blocks(
+        self,
+        spatial_size,
+        encoder_depth,
+        decoder_depth,
+        strides,
+        pos_embed,
+        **kwargs,
+    ):
+        net_depth = encoder_depth + decoder_depth
+        num_layers = len(net_depth)
+        cumstrides = cumprod(strides)
+        blocks = {}
+        for layer, depth in enumerate(net_depth):
+            for sublayer in range(depth):
+                # get spatial size at current level
+                level = min(layer, num_layers - 1 - layer)
+                current_spatial_size = tuple(
+                    s // cumstrides[level] for s in spatial_size
+                )
+                params = {
+                    "spatial_size": current_spatial_size,
+                    "pos_embed": pos_embed,
+                    **kwargs,
+                }
+                blocks[(layer, sublayer)] = (FactorizerBlockV2, params)
 
         return blocks
 

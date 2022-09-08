@@ -5,7 +5,7 @@ This repo is the official implementation of ["Factorizer: A Scalable Interpretab
 
 ## Introduction
 
-**Factorizer** leverages the power of low-rank matrix approximation to construct end-to-end deep models for medical image segmentation. Built upon differentiable matrix factorization layers and matricize operations, Factorizers with U-Shaped architectures can compete favorably with CNN and Transformer baselines in terms of accuracy, scalability, and interpretability. The methods and results on the task of brain tumor segmentation are presented in detail in the [paper](https://arxiv.org/abs/2202.12295).
+**Factorizer** leverages the power of low-rank matrix approximation to construct end-to-end deep models for medical image segmentation. Built upon differentiable matrix factorization layers and matricize operations, Factorizers with U-Shaped architectures can compete favorably with CNN and Transformer baselines in terms of accuracy, scalability, and interpretability. The methods and results for the task of brain tumor segmentation are presented in detail in the [paper](https://arxiv.org/abs/2202.12295).
 
 ![teaser](figures/graphical_abstract.png)
 
@@ -112,24 +112,22 @@ y[0].shape, y[1].shape, y[2].shape
 
 ## Data Preparation
 
-To reproduce the results in the [paper](https://arxiv.org/abs/2202.12295), please download [Task01_BrainTumour](https://drive.google.com/file/d/1A2IU8Sgea1h3fYLpYtFb2v7NYdMjvEhU/view) (BraTS) from the [Decathlon database](http://medicaldecathlon.com/). In general, the folders structure of the used dataset must be similar that of Decathlon, as exemplified below. Our data module requires the path of a JSON file (or a Python dictionary) containing the data properties, including the paths of the training images, training labels, and test images.
+To reproduce the results of brain tumor segmentation presented in the [paper](https://arxiv.org/abs/2202.12295), please download [Task01_BrainTumour](https://drive.google.com/file/d/1A2IU8Sgea1h3fYLpYtFb2v7NYdMjvEhU/view) (BraTS) from the [Decathlon database](http://medicaldecathlon.com/). Our data module requires the path to a JSON file (or a Python dictionary) containing the data properties, including the locations of the training images, training labels, and test images (if they exist). It is recommended to place the JSON file in the data folder so that relative paths can be used for simplicity, as exemplified below for BraTS:
 
 ```bash
-data
-├── Task01_BrainTumour
-│   ├── dataset.json # data properties 
-│   ├── imagesTr
-│   │   ├── BRATS_001.nii.gz
-│   │   └── ...
-│   ├── labelsTr
-│   │   ├── BRATS_001.nii.gz
-│   │   └── ...
-│   └── imagesTs
-│       ├── BRATS_485.nii.gz
-│       └── ...
-└── ...
-```
 
+Task01_BrainTumour
+├── dataset.json # data properties 
+├── imagesTr
+│   ├── BRATS_001.nii.gz
+│   └── ...
+├── labelsTr
+│   ├── BRATS_001.nii.gz
+│   └── ...
+└── imagesTs
+    ├── BRATS_485.nii.gz
+    └── ...
+```
 
 ## Training
 To train a model from the terminal:
@@ -145,7 +143,7 @@ where `config.yaml` is the config file. You can find the config files in [./bin/
 cd ./bin
 python train.py --config configs/brats/config_brats_fold0_swin-factorizer.yaml
 ```
-The model checkpoints will then be saved in `./bin/logs/brats/fold0/swin-factorizer/version_0/checkpoints`.
+The model checkpoints will then be saved in `./bin/logs/brats/fold0/swin-factorizer/version_0/checkpoints`, which is specified in the config file.
 
 
 ## Validation
@@ -156,12 +154,12 @@ The model checkpoints will then be saved in `./bin/logs/brats/fold0/swin-factori
 cd ./bin
 python validate.py --config configs/brats/config_brats_fold0_swin-factorizer.yaml
 ```
-The results will then be saved as `results.csv` in `./bin/logs/brats/fold0/swin-factorizer/version_0`.
+The results will then be saved as `results.csv` in `./bin/logs/brats/fold0/swin-factorizer/version_0`. A valid checkpoint path is required to perform a validation loop. In this example, as specified in the config file, the path to the checkpoint is `logs/brats/fold0/swin-factorizer/version_0/checkpoints/epoch=515-step=99999.ckpt`.
 
 
 ## Models
 
-All the trained models and results can be downloaded via the [OneDrive link](https://kuleuven-my.sharepoint.com/:f:/g/personal/pooya_ashtari_kuleuven_be/EjPbUGpTId5EvP2antdg4tQBuzDMXAqskPSdebWEVGzMlw?e=sU4FIr), as a folder named logs. Once you downloaded the logs folder, put it inside the folder [./bin](./bin).
+All the trained models and results can be downloaded via the [OneDrive link](https://kuleuven-my.sharepoint.com/:f:/g/personal/pooya_ashtari_kuleuven_be/Ej0kOf9wSt1NueXP1_M0Nn0BawQ_gqhslJO2GD-rjZLC-w?e=KzRfae), as a folder named logs. Once you downloaded the logs folder, place it inside the folder [./bin](./bin).
 
 ```bash
 bin

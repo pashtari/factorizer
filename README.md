@@ -137,7 +137,9 @@ cd ./bin
 python train.py --config config.yaml
 ```
 
-where `config.yaml` is the config file. You can find the config files in [./bin/configs](./bin/configs), but before using them, change their values of `data_properties` to yours. For example, the first fold of a 5-fold cross-validation to train Swin Factorizer on the BraTS dataset using two GPUs is done by 
+where `config.yaml` is the config file. You can find the config files in [./bin/configs](./bin/configs), but before using them, change their values of `data_properties` to yours. 
+
+**Example.** the first fold of a 5-fold cross-validation to train Swin Factorizer on the BraTS dataset using two GPUs is done by 
 
 ```bash
 cd ./bin
@@ -157,7 +159,7 @@ python validate.py --config configs/brats/config_brats_fold0_swin-factorizer.yam
 The results will then be saved as `results.csv` in `./bin/logs/brats/fold0/swin-factorizer/version_0`. A valid checkpoint path is required to perform a validation loop. In this example, as specified in the config file, the path to the checkpoint is `logs/brats/fold0/swin-factorizer/version_0/checkpoints/epoch=515-step=99999.ckpt`.
 
 
-## Models
+## Trained Models
 
 All the trained models and results can be downloaded via the [OneDrive link](https://kuleuven-my.sharepoint.com/:f:/g/personal/pooya_ashtari_kuleuven_be/Ej0kOf9wSt1NueXP1_M0Nn0BawQ_gqhslJO2GD-rjZLC-w?e=KzRfae), as a folder named logs. Once you downloaded the logs folder, place it inside the folder [./bin](./bin).
 

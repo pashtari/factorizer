@@ -99,7 +99,7 @@ class Interpolate(object):
     def transform(self, batch):
         self.orig_spacing = batch[self.meta_key]["pixdim"][0][1:4].to("cpu")
         if torch.allclose(self.orig_spacing, self.spacing):
-            out = batch
+            out = copy.deepcopy(batch)
         else:
             out = copy.deepcopy(batch)
             self.orig_size = batch[self.meta_key]["dim"][0][1:4].to("cpu")
@@ -193,6 +193,7 @@ class Inferer(object):
                 save(sample)
 
     def __call__(self, batch, model):
-        batch = self.get_postprocessed(batch, model)
-        self.write(batch, self.write_dir)
-        return batch["input"]
+        batch_out = copy.deepcopy(batch)
+        batch_out = self.get_postprocessed(batch_out, model)
+        self.write(batch_out, self.write_dir)
+        return batch_out["input"]

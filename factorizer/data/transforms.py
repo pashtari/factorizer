@@ -7,7 +7,11 @@ import torch.nn.functional as F
 from monai.transforms import (
     Transform,
     MapTransform,
+    Compose,
     LoadImaged,
+    ConcatItemsd,
+    DeleteItemsd,
+    FromMetaTensord,
     Identityd,
     SaveImaged,
 )
@@ -60,24 +64,21 @@ class ReadImaged(MapTransform):
                 load_image = LoadImaged(key, *self._args, **self._kwargs)
                 d = load_image(d)
             else:
-                modalities = []
-                for modality in d[key]:
-                    d["modality"] = modality
-                    if "modality_meta_dict" in d:
-                        del d["modality_meta_dict"]
+                modalities = {}
+                for j, modality in enumerate(d[key]):
+                    modalities[f"modality_{j}"] = modality
 
-                    load_image = LoadImaged(
-                        "modality", *self._args, **self._kwargs
-                    )
-                    d = load_image(d)
-                    modalities.append(d["modality"])
-
-                d[key] = np.stack(modalities)
-                if d[key].shape[0] == 1:
-                    d[key] = np.squeeze(d[key], axis=0)
-
-                d[f"{key}_meta_dict"] = d["modality_meta_dict"]
-                del d["modality"], d["modality_meta_dict"]
+                d = {**d, **modalities}
+                load_image = Compose(
+                    [
+                        LoadImaged(
+                            modalities.keys(), *self._args, **self._kwargs
+                        ),
+                        ConcatItemsd(modalities.keys(), key),
+                        DeleteItemsd("modality_*", use_re=True),
+                    ]
+                )
+                d = load_image(d)
 
         return d
 

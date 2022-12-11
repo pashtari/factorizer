@@ -23,9 +23,7 @@ def isles_train_transform(spacing=(2.0, 2.0, 2.0), spatial_size=(64, 64, 64)):
         transforms.LoadImaged(["image", "label"]),
         transforms.AddChanneld("label"),
         transforms.CropForegroundd(["image", "label"], source_key="image"),
-        transforms.NormalizeIntensityd(
-            "image", nonzero=True, channel_wise=True
-        ),
+        transforms.NormalizeIntensityd("image", nonzero=True, channel_wise=True),
         transforms.Spacingd(
             ["image", "label"],
             pixdim=spacing,
@@ -69,9 +67,7 @@ def isles_val_transform():
     val_transform = [
         transforms.LoadImaged(["image", "label"], allow_missing_keys=True),
         transforms.AddChanneld("label", allow_missing_keys=True),
-        transforms.NormalizeIntensityd(
-            "image", nonzero=True, channel_wise=True
-        ),
+        transforms.NormalizeIntensityd("image", nonzero=True, channel_wise=True),
         transforms.ToTensord(["image", "label"], allow_missing_keys=True),
         Renamed(),
     ]
@@ -119,6 +115,7 @@ class ISLESDataModule(LightningDataModule):
         seed=42,
         **kwargs,
     ):
+        super().__init__()
         self.data_properties = load_properties(data_properties)
         self.num_splits = num_splits
         self.split = split
@@ -146,9 +143,7 @@ class ISLESDataModule(LightningDataModule):
                 transform=self.train_transform,
                 **self.dataset_params,
             )
-            train_folds = [
-                k for k in range(self.num_splits) if k != self.split
-            ]
+            train_folds = [k for k in range(self.num_splits) if k != self.split]
             self.train_set = train_cv.get_dataset(train_folds)
 
             # make validation set

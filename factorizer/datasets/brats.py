@@ -21,7 +21,7 @@ from ..data import (
 class BraTSOneHotEncoderd(transforms.MapTransform):
     """
     Convert labels to multi channels based on brats classes:
-    
+
     Decathlon version:
     label 0: background,
     label 1: edema (ED)
@@ -42,9 +42,7 @@ class BraTSOneHotEncoderd(transforms.MapTransform):
 
     """
 
-    def __init__(
-        self, keys, nested=True, allow_missing_keys=False, version="decathlon"
-    ):
+    def __init__(self, keys, nested=True, allow_missing_keys=False, version="decathlon"):
         super().__init__(keys, allow_missing_keys)
         self.nested = nested
         self.version = version
@@ -101,9 +99,7 @@ def brats_train_transform(spatial_size=(128, 128, 128), version="decathlon"):
         else transforms.Identityd("image"),
         BraTSOneHotEncoderd("label", nested=True, version=version),
         transforms.CropForegroundd(["image", "label"], source_key="image"),
-        transforms.NormalizeIntensityd(
-            "image", nonzero=True, channel_wise=True
-        ),
+        transforms.NormalizeIntensityd("image", nonzero=True, channel_wise=True),
         transforms.RandSpatialCropd(
             ["image", "label"], roi_size=spatial_size, random_size=False
         ),
@@ -147,9 +143,7 @@ def brats_val_transform(version="decathlon"):
         BraTSOneHotEncoderd(
             "label", nested=True, allow_missing_keys=True, version=version
         ),
-        transforms.NormalizeIntensityd(
-            "image", nonzero=True, channel_wise=True
-        ),
+        transforms.NormalizeIntensityd("image", nonzero=True, channel_wise=True),
         transforms.ToTensord(["image", "label"], allow_missing_keys=True),
         Renamed(),
     ]
@@ -197,6 +191,7 @@ class BraTSDataModule(LightningDataModule):
         seed=42,
         **kwargs,
     ):
+        super().__init__()
         self.data_properties = load_properties(data_properties)
         self.num_splits = num_splits
         self.split = split
@@ -224,9 +219,7 @@ class BraTSDataModule(LightningDataModule):
                 transform=self.train_transform,
                 **self.dataset_params,
             )
-            train_folds = [
-                k for k in range(self.num_splits) if k != self.split
-            ]
+            train_folds = [k for k in range(self.num_splits) if k != self.split]
             self.train_set = train_cv.get_dataset(train_folds)
 
             # make validation set
@@ -311,9 +304,7 @@ class BraTSInferer(Inferer):
             post = transforms.Lambdad("input", lambda x: x.sigmoid(dim=1))
             output_dtype = np.float32 if output_dtype is None else output_dtype
         elif post == "one-hot-nested":
-            post = transforms.Lambdad(
-                "input", lambda x: torch.where(x >= 0, 1.0, 0.0)
-            )
+            post = transforms.Lambdad("input", lambda x: torch.where(x >= 0, 1.0, 0.0))
             output_dtype = np.uint8 if output_dtype is None else output_dtype
         elif post == "class":
 
@@ -324,9 +315,7 @@ class BraTSInferer(Inferer):
                 wt = mask[:, 2, ...]
                 out = torch.zeros_like(wt)
                 out[et == 1] = self.labels["ET"]
-                out[torch.logical_and(tc == 1, et == 0)] = self.labels[
-                    "NCR/NET"
-                ]
+                out[torch.logical_and(tc == 1, et == 0)] = self.labels["NCR/NET"]
                 out[torch.logical_and(wt == 1, tc == 0)] = self.labels["ED"]
                 return out
 

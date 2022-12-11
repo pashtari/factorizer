@@ -27,11 +27,11 @@ def wmh_train_transform(
         transforms.Lambdad("label", lambda x: (x == 1).astype(np.float32)),
         transforms.AddChanneld("label"),
         transforms.CropForegroundd(["image", "label"], source_key="image"),
-        transforms.NormalizeIntensityd(
-            "image", nonzero=True, channel_wise=True
-        ),
+        transforms.NormalizeIntensityd("image", nonzero=True, channel_wise=True),
         transforms.Spacingd(
-            ["image", "label"], pixdim=spacing, mode=("bilinear", "bilinear"),
+            ["image", "label"],
+            pixdim=spacing,
+            mode=("bilinear", "bilinear"),
         ),
         transforms.SpatialPadd(["image", "label"], spatial_size=spatial_size),
         transforms.RandCropByPosNegLabeld(
@@ -82,9 +82,7 @@ def wmh_val_transform():
             allow_missing_keys=True,
         ),
         transforms.AddChanneld("label", allow_missing_keys=True),
-        transforms.NormalizeIntensityd(
-            "image", nonzero=True, channel_wise=True
-        ),
+        transforms.NormalizeIntensityd("image", nonzero=True, channel_wise=True),
         transforms.ToTensord(["image", "label"], allow_missing_keys=True),
         Renamed(),
     ]
@@ -137,6 +135,7 @@ class WMHDataModule(LightningDataModule):
         seed=42,
         **kwargs,
     ):
+        super().__init__()
         self.data_properties = load_properties(data_properties)
         self.num_splits = num_splits
         self.split = split
@@ -145,9 +144,7 @@ class WMHDataModule(LightningDataModule):
         self.seed = seed
         self.dataset_params = kwargs
 
-        self.train_transform = wmh_train_transform(
-            spacing, spatial_size, num_patches
-        )
+        self.train_transform = wmh_train_transform(spacing, spatial_size, num_patches)
         self.val_transform = wmh_val_transform()
         self.test_transform = wmh_test_transform()
         self.vis_transform = wmh_vis_transform(spacing)
@@ -166,9 +163,7 @@ class WMHDataModule(LightningDataModule):
                 transform=self.train_transform,
                 **self.dataset_params,
             )
-            train_folds = [
-                k for k in range(self.num_splits) if k != self.split
-            ]
+            train_folds = [k for k in range(self.num_splits) if k != self.split]
             self.train_set = train_cv.get_dataset(train_folds)
 
             # make validation set
@@ -204,13 +199,17 @@ class WMHDataModule(LightningDataModule):
 
     def val_dataloader(self):
         val_loader = DataLoader(
-            self.val_set, batch_size=1, num_workers=self.num_workers,
+            self.val_set,
+            batch_size=1,
+            num_workers=self.num_workers,
         )
         return val_loader
 
     def test_dataloader(self):
         test_loader = DataLoader(
-            self.test_set, batch_size=1, num_workers=self.num_workers,
+            self.test_set,
+            batch_size=1,
+            num_workers=self.num_workers,
         )
         return test_loader
 

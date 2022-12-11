@@ -18,16 +18,12 @@ from ..data import (
 ###################################
 
 
-def atlas_train_transform(
-    spacing=(1.0, 1.0, 1.0), spatial_size=(128, 128, 128)
-):
+def atlas_train_transform(spacing=(1.0, 1.0, 1.0), spatial_size=(128, 128, 128)):
     train_transform = [
         transforms.LoadImaged(["image", "label"]),
         transforms.AddChanneld(["image", "label"]),
         transforms.CropForegroundd(["image", "label"], source_key="image"),
-        transforms.NormalizeIntensityd(
-            "image", nonzero=True, channel_wise=True
-        ),
+        transforms.NormalizeIntensityd("image", nonzero=True, channel_wise=True),
         transforms.Spacingd(
             ["image", "label"],
             pixdim=spacing,
@@ -71,9 +67,7 @@ def atlas_val_transform():
     val_transform = [
         transforms.LoadImaged(["image", "label"], allow_missing_keys=True),
         transforms.AddChanneld(["image", "label"], allow_missing_keys=True),
-        transforms.NormalizeIntensityd(
-            "image", nonzero=True, channel_wise=True
-        ),
+        transforms.NormalizeIntensityd("image", nonzero=True, channel_wise=True),
         transforms.ToTensord(["image", "label"], allow_missing_keys=True),
         Renamed(),
     ]
@@ -120,6 +114,7 @@ class ATLASDataModule(LightningDataModule):
         seed=42,
         **kwargs,
     ):
+        super().__init__()
         self.data_properties = load_properties(data_properties)
         self.num_splits = num_splits
         self.split = split
@@ -147,9 +142,7 @@ class ATLASDataModule(LightningDataModule):
                 transform=self.train_transform,
                 **self.dataset_params,
             )
-            train_folds = [
-                k for k in range(self.num_splits) if k != self.split
-            ]
+            train_folds = [k for k in range(self.num_splits) if k != self.split]
             self.train_set = train_cv.get_dataset(train_folds)
 
             # make validation set

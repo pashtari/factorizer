@@ -39,9 +39,7 @@ def btcv_train_transform(
             pixdim=spacing,
             mode=("bilinear", "bilinear"),
         ),
-        transforms.SpatialPadd(
-            keys=["image", "label"], spatial_size=spatial_size
-        ),
+        transforms.SpatialPadd(keys=["image", "label"], spatial_size=spatial_size),
         transforms.RandCropByPosNegLabeld(
             keys=["image", "label"],
             label_key="label",
@@ -152,6 +150,7 @@ class BTCVDataModule(LightningDataModule):
         seed=42,
         **kwargs,
     ):
+        super().__init__()
         self.data_properties = load_properties(data_properties)
         self.num_splits = num_splits
         self.split = split
@@ -160,9 +159,7 @@ class BTCVDataModule(LightningDataModule):
         self.seed = seed
         self.dataset_params = kwargs
 
-        self.train_transform = btcv_train_transform(
-            spacing, spatial_size, num_patches
-        )
+        self.train_transform = btcv_train_transform(spacing, spatial_size, num_patches)
         self.val_transform = btcv_val_transform()
         self.test_transform = btcv_test_transform()
         self.vis_transform = btcv_vis_transform(spacing)
@@ -181,9 +178,7 @@ class BTCVDataModule(LightningDataModule):
                 transform=self.train_transform,
                 **self.dataset_params,
             )
-            train_folds = [
-                k for k in range(self.num_splits) if k != self.split
-            ]
+            train_folds = [k for k in range(self.num_splits) if k != self.split]
             self.train_set = train_cv.get_dataset(train_folds)
 
             # make validation set
@@ -219,13 +214,17 @@ class BTCVDataModule(LightningDataModule):
 
     def val_dataloader(self):
         val_loader = DataLoader(
-            self.val_set, batch_size=1, num_workers=self.num_workers,
+            self.val_set,
+            batch_size=1,
+            num_workers=self.num_workers,
         )
         return val_loader
 
     def test_dataloader(self):
         test_loader = DataLoader(
-            self.test_set, batch_size=1, num_workers=self.num_workers,
+            self.test_set,
+            batch_size=1,
+            num_workers=self.num_workers,
         )
         return test_loader
 
@@ -279,4 +278,3 @@ class BTCVInferer(Inferer):
             output_dtype=output_dtype,
             **kwargs,
         )
-

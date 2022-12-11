@@ -150,6 +150,7 @@ class LiTSDataModule(LightningDataModule):
         seed=42,
         **kwargs,
     ):
+        super().__init__()
         self.data_properties = load_properties(data_properties)
         self.num_splits = num_splits
         self.split = split
@@ -158,9 +159,7 @@ class LiTSDataModule(LightningDataModule):
         self.seed = seed
         self.dataset_params = kwargs
 
-        self.train_transform = lits_train_transform(
-            spacing, spatial_size, num_patches
-        )
+        self.train_transform = lits_train_transform(spacing, spatial_size, num_patches)
         self.val_transform = lits_val_transform()
         self.test_transform = lits_test_transform()
         self.vis_transform = lits_vis_transform(spacing)
@@ -179,9 +178,7 @@ class LiTSDataModule(LightningDataModule):
                 transform=self.train_transform,
                 **self.dataset_params,
             )
-            train_folds = [
-                k for k in range(self.num_splits) if k != self.split
-            ]
+            train_folds = [k for k in range(self.num_splits) if k != self.split]
             self.train_set = train_cv.get_dataset(train_folds)
 
             # make validation set

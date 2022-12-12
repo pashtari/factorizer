@@ -1,6 +1,5 @@
 import torch
 from torch import nn
-from torchvision.ops import StochasticDepth
 
 from .layers import Linear
 from .utils.helpers import as_tuple, prod, wrap_class
@@ -236,59 +235,6 @@ class PreActivationBlock(nn.Module):
         return out
 
 
-class CovNeXtBlock(nn.Module):
-    """ ConvNeXt Block"""
-
-    def __init__(
-        self,
-        in_channels,
-        out_channels,
-        mlp_ratio=4,
-        stochastic_depth_prob=0.0,
-        layer_scale=1e-6,
-        conv=(nn.Conv3d, {"kernel_size": 7, "padding": 3}),
-        norm=nn.LayerNorm,
-        act=nn.GELU,
-        **kwargs,
-    ):
-        super().__init__()
-
-        conv = wrap_class(conv)
-        norm = wrap_class(norm)
-        act = wrap_class(act)
-
-        if in_channels != out_channels:
-            self.adapter = Linear(in_channels, out_channels, bias=False)
-
-        hidden_channels = int(mlp_ratio * in_channels)
-        self.dwconv = conv(out_channels, out_channels, groups=out_channels)
-        self.norm = norm(out_channels)
-        self.pwconv1 = nn.Linear(out_channels, hidden_channels)
-        self.act = act()
-        self.pwconv2 = nn.Linear(hidden_channels, out_channels)
-        self.gamma = (
-            nn.Parameter(layer_scale * torch.ones(out_channels))
-            if layer_scale > 0
-            else None
-        )
-        self.stochastic_depth = StochasticDepth(stochastic_depth_prob, "row")
-
-    def forward(self, x):
-        x = self.adapter(x) if hasattr(self, "adapter") else x
-        out = self.dwconv(x)
-        out = torch.einsum("b c ... -> b ... c", out)
-        out = self.norm(out)
-        out = self.pwconv1(out)
-        out = self.act(out)
-        out = self.pwconv2(out)
-        if self.gamma is not None:
-            out = self.gamma * out
-        out = torch.einsum("b ... c -> b c ...", out)
-        out = self.stochastic_depth(out)
-        out += x
-        return x
-
-
 class Same(object):
     def __init__(self, block):
         super().__init__()
@@ -317,9 +263,7 @@ class UNetEncoderBlock(nn.Module):
 
         elif downsample == "on-block":
             wrapped_block = wrap_class(block[0])
-            self.blocks = [
-                wrapped_block(in_channels, out_channels, stride=stride)
-            ]
+            self.blocks = [wrapped_block(in_channels, out_channels, stride=stride)]
 
         else:
             downsample = wrap_class(downsample)
@@ -367,11 +311,7 @@ class UNetEncoder(nn.Module):
                     depth[0],
                     strides[0],
                     downsample,
-                    {
-                        j: block[i, j]
-                        for i, j in layer_iterator(depth)
-                        if i == 0
-                    },
+                    {j: block[i, j] for i, j in layer_iterator(depth) if i == 0},
                 ),
             ]
         )
@@ -383,11 +323,7 @@ class UNetEncoder(nn.Module):
                     depth[i + 1],
                     strides[i + 1],
                     downsample,
-                    {
-                        j: block[h, j]
-                        for h, j in layer_iterator(depth)
-                        if h == i + 1
-                    },
+                    {j: block[h, j] for h, j in layer_iterator(depth) if h == i + 1},
                 )
             )
 
@@ -452,11 +388,7 @@ class UNetDecoder(nn.Module):
                     depth[0],
                     strides[0],
                     upsample,
-                    {
-                        j: block[i, j]
-                        for i, j in layer_iterator(depth)
-                        if i == 0
-                    },
+                    {j: block[i, j] for i, j in layer_iterator(depth) if i == 0},
                 )
             ]
         )
@@ -468,11 +400,7 @@ class UNetDecoder(nn.Module):
                     depth[i + 1],
                     strides[i + 1],
                     upsample,
-                    {
-                        j: block[h, j]
-                        for h, j in layer_iterator(depth)
-                        if h == i + 1
-                    },
+                    {j: block[h, j] for h, j in layer_iterator(depth) if h == i + 1},
                 )
             )
 
@@ -574,4 +502,3 @@ class UNet(nn.Module):
             out.append(head(y[j]))
 
         return out
-

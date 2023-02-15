@@ -7,25 +7,25 @@ from .linear import Linear
 class MLP(nn.Module):
     def __init__(
         self,
-        input_dim,
-        output_dim=None,
-        hidden_dim=None,
+        in_channels,
+        out_channels=None,
+        hidden_channels=None,
         ratio=2,
         dropout=0.0,
         **kwargs,
     ):
         super().__init__()
-        output_dim = input_dim if output_dim is None else output_dim
-        hidden_dim = (
-            int(ratio * input_dim) if hidden_dim is None else hidden_dim
+        out_channels = in_channels if out_channels is None else out_channels
+        hidden_channels = (
+            int(ratio * in_channels) if hidden_channels is None else hidden_channels
         )
         dropout = _pair(dropout)
 
         self.block = nn.Sequential(
-            Linear(input_dim, hidden_dim),
+            Linear(in_channels, hidden_channels),
             nn.GELU(),
             nn.Dropout(dropout[0]),
-            Linear(hidden_dim, output_dim),
+            Linear(hidden_channels, out_channels),
             nn.Dropout(dropout[1]),
         )
 

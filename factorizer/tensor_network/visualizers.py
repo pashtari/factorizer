@@ -1,14 +1,12 @@
-from networkx import Graph, MultiGraph
+from typing import Union, Hashable, Tuple, Dict
 
-from typing import Tuple, Union, Dict, Hashable
+from networkx import Graph, MultiGraph
 
 Coordinate2D = Tuple[float, float]
 Coordinate3D = Tuple[float, float, float]
 
 
-def vis2d(
-    g: Union[Graph, MultiGraph], pos: Dict[Hashable, Coordinate2D]
-) -> Dict:
+def vis2d(g: Union[Graph, MultiGraph], pos: Dict[Hashable, Coordinate2D]) -> Dict:
     xn = []  # x-coordinates of nodes
     yn = []  # y-coordinates
     node_size = []

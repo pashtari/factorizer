@@ -73,25 +73,25 @@ class FastScaledDotProductAttention(nn.Module):
 class FastSelfAttention(SelfAttention):
     def __init__(
         self,
-        input_dim,
-        output_dim=None,
+        in_channels,
+        out_channels=None,
         spatial_size=None,
         num_heads=None,
-        head_dim=None,
+        head_channels=None,
         *args,
         **kwargs
     ):
-        output_dim = input_dim if output_dim is None else output_dim
-        assert (num_heads, head_dim) != (
+        out_channels = in_channels if out_channels is None else out_channels
+        assert (num_heads, head_channels) != (
             None,
             None,
-        ), "'num_heads' or 'head_dim' must be specified."
+        ), "'num_heads' or 'head_channels' must be specified."
 
         if num_heads is None:
-            num_heads = input_dim // head_dim
+            num_heads = in_channels // head_channels
 
         super().__init__(
-            input_dim, heads=num_heads, dim_head=head_dim, *args, **kwargs
+            in_channels, heads=num_heads, dim_head=head_channels, *args, **kwargs
         )
 
     def forward(self, x, *args, **kwargs):
@@ -102,4 +102,3 @@ class FastSelfAttention(SelfAttention):
         shape[1] = out.shape[-1]
         out = out.transpose(1, 2).reshape(shape)
         return out
-

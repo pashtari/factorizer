@@ -1,3 +1,4 @@
+from typing import Tuple, Union, Optional, Any, Callable, Dict, Sequence
 import math
 from itertools import permutations
 
@@ -8,6 +9,7 @@ import einops
 from ..utils.helpers import as_tuple, null_context, prod
 from .base import TF
 from ..tensor_network import (
+    TensorNetwork,
     SingleTensor,
     CanonicalPolyadic,
     Tucker,
@@ -21,7 +23,12 @@ from ..tensor_network import (
 
 
 class RandomTensorInit(nn.Module):
-    def __init__(self, tensor_network, method="uniform", **kwargs):
+    def __init__(
+        self,
+        tensor_network: TensorNetwork,
+        method: str = "uniform",
+        **kwargs,
+    ) -> None:
         super().__init__()
         self.tensor_network = tensor_network
         self.method = getattr(nn.init, f"{method}_")
@@ -36,7 +43,7 @@ class RandomTensorInit(nn.Module):
 
         self.flops = 0
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> Dict[str, torch.Tensor]:
         # expand initial factors along the batch dim.
         B = x.shape[0]
         factors = {}
@@ -48,7 +55,7 @@ class RandomTensorInit(nn.Module):
 
 
 class MLSVDInit(nn.Module):
-    def __init__(self, tensor_network, nonnegative=False):
+    def __init__(self, tensor_network: TensorNetwork, nonnegative: bool = False) -> None:
         super().__init__()
         self.tensor_network = tensor_network
         self.nonnegative = nonnegative
@@ -58,7 +65,7 @@ class MLSVDInit(nn.Module):
 
         self.flops = self.mlsvd.flops["decompose"]
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> Dict[str, torch.Tensor]:
         factors = self.mlsvd.decompose(x)
         for k in self.tensor_network.nodes:
             if self.nonnegative:
@@ -74,8 +81,12 @@ class MLSVDInit(nn.Module):
 
 class GeneralizedMultiplicativeUpdate(nn.Module):
     def __init__(
-        self, tensor_network, nodes=None, eps=1e-8, contract_params=None
-    ):
+        self,
+        tensor_network: TensorNetwork,
+        nodes: Optional[Sequence[str]] = None,
+        eps: float = 1e-8,
+        contract_params: Optional[Dict[str, Any]] = None,
+    ) -> None:
         super().__init__()
         self.tensor_network = self.tn = tensor_network
         if nodes is None:
@@ -100,17 +111,17 @@ class GeneralizedMultiplicativeUpdate(nn.Module):
         self.flops = 0
         for node in self.nodes:
             self.numerator_tn[node] = self.make_numerator_tn(self.tn, node)
-            self.numerator_expr[node] = self.numerator_tn[
-                node
-            ].contract_expression(**self.contract_params)
+            self.numerator_expr[node] = self.numerator_tn[node].contract_expression(
+                **self.contract_params
+            )
             self.flops += self.numerator_expr[node][1].opt_cost
             self.denominator_tn[node] = self.make_denominator_tn(self.tn, node)
-            self.denominator_expr[node] = self.denominator_tn[
-                node
-            ].contract_expression(**self.contract_params)
+            self.denominator_expr[node] = self.denominator_tn[node].contract_expression(
+                **self.contract_params
+            )
             self.flops += self.denominator_expr[node][1].opt_cost
 
-    def make_numerator_tn(self, tn, node):
+    def make_numerator_tn(self, tn: TensorNetwork, node: str) -> TensorNetwork:
         numerator_tn = SingleTensor(tn.output_shape, tn.output_edges)
         numerator_tn.join(
             tn,
@@ -120,7 +131,7 @@ class GeneralizedMultiplicativeUpdate(nn.Module):
         numerator_tn.output_edges = numerator_tn.nodes[node]["legs"]
         return numerator_tn
 
-    def make_denominator_tn(self, tn, node):
+    def make_denominator_tn(self, tn: TensorNetwork, node: str) -> TensorNetwork:
         denominator_tn = tn.copy()
         denominator_tn.rename_nodes({n: f"{n}_*" for n in tn.nodes})
         denominator_tn.rename_edges(
@@ -135,7 +146,9 @@ class GeneralizedMultiplicativeUpdate(nn.Module):
         denominator_tn.output_edges = removed_node.nodes[node]["legs"]
         return denominator_tn
 
-    def forward(self, x, tensors_dict):
+    def forward(
+        self, x: torch.Tensor, tensors_dict: Dict[str, torch.Tensor]
+    ) -> Dict[str, torch.Tensor]:
         for node in self.nodes:
             numerator_expr, _ = self.numerator_expr[node]
             numerator = numerator_expr({"X": x, **tensors_dict}) + self.eps
@@ -158,14 +171,21 @@ class GeneralizedMultiplicativeUpdate(nn.Module):
 
 class CPMultiplicativeUpdate(GeneralizedMultiplicativeUpdate):
     def __init__(
-        self, size, rank=None, factor=None, **kwargs,
-    ):
+        self,
+        size: Sequence[int],
+        rank: Optional[int] = None,
+        factor: Optional[Sequence[int]] = None,
+        **kwargs,
+    ) -> None:
         canonical_polyadic = CanonicalPolyadic(size, rank)
         node_names = list(canonical_polyadic.nodes.keys())
+        factor = tuple(range(len(node_names))) if factor is None else factor
         nodes = [node_names[j] for j in as_tuple(factor)]
         super().__init__(canonical_polyadic, nodes, **kwargs)
 
-    def forward(self, x, tensors):
+    def forward(
+        self, x: torch.Tensor, tensors: Sequence[torch.Tensor]
+    ) -> Sequence[torch.Tensor]:
         tensors_dict = dict([*zip(self.tn.nodes, tensors)])
         return tuple(super().forward(x, tensors_dict).values())
 
@@ -178,27 +198,27 @@ class CPMultiplicativeUpdate(GeneralizedMultiplicativeUpdate):
 class MLSVD(TF):
     """Multilinear Singular Value Decomposition.
 
-        X ≈ (G; U1, ..., UM)
+    X ≈ (G; U1, ..., UM)
     """
 
     def __init__(
         self,
-        size,
-        rank=None,
-        compression=10,
-        no_grad=False,
-        contract_params=None,
-        verbose=False,
+        size: Sequence[int],
+        rank: Optional[Sequence[int]] = None,
+        compression: float = 10,
+        no_grad: bool = False,
+        contract_params: Optional[Dict[str, Any]] = None,
+        verbose: bool = False,
         **kwargs,
-    ):
+    ) -> None:
         self.size = size
         self.tucker = Tucker(size, rank, compression)
         self.ndims = len(size)
         self.rank = self.tucker.rank
         self.no_grad = no_grad
 
-        def init(tensor_network):
-            def wrapper(x):
+        def init(tensor_network: TensorNetwork) -> Callable:
+            def wrapper(x: torch.Tensor):
                 return {k: None for k in self.tucker.nodes}
 
             wrapper.flops = 0
@@ -218,7 +238,7 @@ class MLSVD(TF):
         self.order = min(flops_dict, key=flops_dict.get)
         self.flops = flops_dict[self.order]
 
-        def solver(tensor_network):
+        def solver(tensor_network: TensorNetwork) -> Callable:
             def update(x, factors):
                 core = x
                 for j in self.order:
@@ -242,7 +262,9 @@ class MLSVD(TF):
             **kwargs,
         )
 
-    def sinle_update(self, core, dim, rank):
+    def sinle_update(
+        self, core: torch.Tensor, dim: int, rank: int
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         ndims = core.ndim - 1
         shape = core.shape[1:]
 
@@ -258,21 +280,19 @@ class MLSVD(TF):
 
         dim_dict = {f"i_{j}": shape[j] for j in range(ndims)}
         dim_dict[f"i_{dim}"] = rank
-        core_new = einops.rearrange(
-            core_new, f"{inds2} -> {inds1}", **dim_dict
-        )
+        core_new = einops.rearrange(core_new, f"{inds2} -> {inds1}", **dim_dict)
         return u, core_new
 
-    def sinle_update_flops(self, size, dim, rank):
+    def sinle_update_flops(self, size: Sequence[int], dim: int, rank: int) -> int:
         size_ = list(size)
         m = size_.pop(dim)
         n = prod(size_)
 
-        flops = 6 * m * n * rank + (m + n) * (rank ** 2)
-        flops += n * (rank ** 2)
+        flops = 6 * m * n * rank + (m + n) * (rank**2)
+        flops += n * (rank**2)
         return 2 * math.ceil(flops)
 
-    def context(self):
+    def context(self) -> Any:
         # get context
         if self.no_grad:
             context = torch.no_grad()
@@ -281,7 +301,7 @@ class MLSVD(TF):
 
         return context
 
-    def decompose(self, x):
+    def decompose(self, x: torch.Tensor) -> Dict[str, torch.Tensor]:
         # x: B × N1 × N2 × ... × Np
 
         with self.context():
@@ -301,24 +321,24 @@ class MLSVD(TF):
 class NCPD(TF):
     """Non-negative Canonical Polyadic Decomposition (NTF).
 
-        X ≈ (U1, ..., UM),
-        U1, ..., UM ≥ 0
+    X ≈ (U1, ..., UM),
+    U1, ..., UM ≥ 0
     """
 
     def __init__(
         self,
-        size,
-        rank=None,
-        compression=10,
-        num_iters=5,
-        num_grad_steps=None,
-        trainable_dims=(),
-        init="uniform",
-        solver="mu",
-        contract_params=None,
-        verbose=False,
+        size: Sequence[int],
+        rank: Optional[int] = None,
+        compression: float = 10,
+        num_iters: int = 5,
+        num_grad_steps: Optional[int] = None,
+        trainable_dims: Sequence[int] = (),
+        init: Union[str, Any] = "uniform",
+        solver: Union[str, Any] = "mu",
+        contract_params: Optional[Dict[str, Any]] = None,
+        verbose: bool = False,
         **kwargs,
-    ):
+    ) -> None:
         canonica_polyadic = CanonicalPolyadic(size, rank, compression)
 
         # set factors initializer
@@ -349,24 +369,24 @@ NTF = NCPD
 class NTD(TF):
     """Non-negative Tucker Decomposition.
 
-        X ≈ (G; U1, ..., UM),
-        G, U1, ..., UM ≥ 0
+    X ≈ (G; U1, ..., UM),
+    G, U1, ..., UM ≥ 0
     """
 
     def __init__(
         self,
-        size,
-        rank=None,
-        compression=10,
-        num_iters=5,
-        num_grad_steps=None,
-        trainable_dims=(),
-        init="nnmlsvd",
-        solver="mu",
-        contract_params=None,
-        verbose=False,
+        size: Sequence[int],
+        rank: Optional[Sequence[int]] = None,
+        compression: float = 10,
+        num_iters: int = 5,
+        num_grad_steps: Optional[int] = None,
+        trainable_dims: Sequence[int] = (),
+        init: Union[str, Any] = "nnmlsvd",
+        solver: Union[str, Any] = "mu",
+        contract_params: Optional[Dict[str, Any]] = None,
+        verbose: bool = False,
         **kwargs,
-    ):
+    ) -> None:
         tucker = Tucker(size, rank, compression)
 
         if f"{init}_" in dir(nn.init):
@@ -396,24 +416,24 @@ class NTD(TF):
 class NTTD(TF):
     """Non-negative Tensor-Train Decomposition.
 
-        X ≈ train(U1, ..., UM),
-        U1, ..., UM ≥ 0
+    X ≈ train(U1, ..., UM),
+    U1, ..., UM ≥ 0
     """
 
     def __init__(
         self,
-        size,
-        rank=None,
-        compression=10,
-        num_iters=5,
-        num_grad_steps=None,
-        trainable_dims=(),
-        init="uniform",
-        solver="mu",
-        contract_params=None,
-        verbose=False,
+        size: Sequence[int],
+        rank: Optional[Sequence[int]] = None,
+        compression: float = 10,
+        num_iters: int = 5,
+        num_grad_steps: Optional[int] = None,
+        trainable_dims: Sequence[int] = (),
+        init: Union[str, Any] = "uniform",
+        solver: Union[str, Any] = "mu",
+        contract_params: Optional[Dict[str, Any]] = None,
+        verbose: bool = False,
         **kwargs,
-    ):
+    ) -> None:
         tensor_train = TensorTrain(size, rank, compression)
 
         # set factors initializer
@@ -442,6 +462,5 @@ class Nofactorization(nn.Module):
         super().__init__()
         self.flops = {"init": 0, "decompose": 0, "reconstruct": 0}
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor):
         return x
-

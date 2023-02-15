@@ -1,4 +1,4 @@
-from typing import Sequence
+from typing import Union, Optional, Any, Callable, Dict, Sequence, Tuple
 from abc import ABC
 import copy
 import math
@@ -6,7 +6,6 @@ import random
 
 import torch
 from torch import nn
-import torch.nn.functional as F
 import opt_einsum as oe
 
 from ..utils.helpers import (
@@ -25,7 +24,12 @@ from .base import MF
 
 
 class RandomInit(nn.Module):
-    def __init__(self, size, rank, method="uniform"):
+    def __init__(
+        self,
+        size: Tuple[int, int],
+        rank: int,
+        method: Union[str, Tuple[str, str]] = "uniform",
+    ) -> None:
         super().__init__()
         M, N = size
         method = as_tuple(method)
@@ -46,7 +50,7 @@ class RandomInit(nn.Module):
 
         self.flops = 0
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         u_shape = (*x.shape[:-2], *self.u0.shape)
         v_shape = (*x.shape[:-2], *self.v0.shape)
 
@@ -56,37 +60,37 @@ class RandomInit(nn.Module):
 
 
 class FCMInit(nn.Module):
-    def __init__(self, size, rank):
+    def __init__(self, size: Tuple[int, int], rank: int) -> None:
         super().__init__()
         self.fcm = FCM(size=size, rank=rank, num_iters=1)
         self.fcm.m = nn.Parameter(torch.tensor([2]))
         self.flops = self.fcm.flops["decompose"]
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         u, v = self.fcm.decompose(x)
         return u, v
 
 
 class EKMInit(nn.Module):
-    def __init__(self, size, rank):
+    def __init__(self, size: Tuple[int, int], rank: int) -> None:
         super().__init__()
         self.ekm = EKM(size=size, rank=rank, num_iters=1)
         self.ekm.alpha = nn.Parameter(torch.tensor([0.1]))
         self.flops = self.ekm.flops["decompose"]
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         u, v = self.ekm.decompose(x)
         return u, v
 
 
 class SVDInit(nn.Module):
-    def __init__(self, size, rank):
+    def __init__(self, size: Tuple[int, int], rank: int) -> None:
         super().__init__()
         (M, N), R = size, rank
         self.svd = SVD(size=size, rank=rank)
         self.flops = self.svd.flops["decompose"] + R + 2 * M * R + 2 * N * R
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         u, s, v = self.svd.decompose(x)
         s = torch.sqrt(s)  # FLOPS = R
         u = torch.einsum("bir, br -> bir", u, s)  # FLOPS = 2MR
@@ -95,14 +99,14 @@ class SVDInit(nn.Module):
 
 
 class NNDSVDInit(nn.Module):
-    def __init__(self, size, rank):
+    def __init__(self, size: Tuple[int, int], rank: int) -> None:
         super().__init__()
         self.size = M, N = size
         self.rank = rank
         self.svd = SVD(size, rank)
         self.flops = self.svd.flops["decompose"] + 2 * (4 * rank * (M + N))
 
-    def forward(self, x):
+    def forward(self, x) -> Tuple[torch.Tensor, torch.Tensor]:
         u, s, v = self.svd.decompose(x)
         s = torch.sqrt(s)
         u = torch.einsum("bir, br -> bir", u, s)
@@ -134,25 +138,28 @@ class NNDSVDInit(nn.Module):
 class Solver(nn.Module, ABC):
     """An abstract class of a solver."""
 
-    def __init__(self, factor=(0, 1), **kwargs):
+    def __init__(self, factor: Sequence[int] = (0, 1), **kwargs) -> None:
         super().__init__()
         self.factor = as_tuple(factor)
-        assert set(self.factor).issubset(
-            {0, 1}
-        ), "`factor` elements must be 0 or 1."
+        assert set(self.factor).issubset({0, 1}), "`factor` elements must be 0 or 1."
         self.size = kwargs.get("size")  # size and rank used to count flops
         self.rank = kwargs.get("rank")
         self.flops = self.get_flops(self.size, self.rank, self.factor)
 
-    def get_flops_u(self, size, rank):
+    def get_flops_u(self, size: Tuple[int, int], rank: int) -> int:
         raise NotImplementedError(
             f"Subclass {self.__class__.__name__} must implement this method."
         )
 
-    def get_flops_v(self, size, rank):
+    def get_flops_v(self, size: Tuple[int, int], rank: int) -> int:
         return self.get_flops_u(size[::-1], rank)
 
-    def get_flops(self, size=None, rank=None, factor=None):
+    def get_flops(
+        self,
+        size: Optional[Tuple[int, int]] = None,
+        rank: Optional[int] = None,
+        factor: Optional[Sequence[int]] = None,
+    ) -> Optional[int]:
         size = self.size if size is None else size
         rank = self.rank if rank is None else rank
         factor = self.factor if factor is None else factor
@@ -168,17 +175,19 @@ class Solver(nn.Module, ABC):
 
         return flops
 
-    def update_u(self, x, u, v):
+    def update_u(self, x: torch.Tensor, u: torch.Tensor, v: torch.Tensor) -> torch.Tensor:
         # x ≈ u @ t(v) --> u = ?
         raise NotImplementedError(
             f"Subclass {self.__class__.__name__} must implement this method."
         )
 
-    def update_v(self, x, u, v):
+    def update_v(self, x: torch.Tensor, u: torch.Tensor, v: torch.Tensor) -> torch.Tensor:
         # x ≈ u @ t(v) --> v = ?
         return self.update_u(t(x), v, u)
 
-    def forward(self, x, factor_matrices):
+    def forward(
+        self, x: torch.Tensor, factor_matrices: Tuple[torch.Tensor, torch.Tensor]
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         u, v = factor_matrices
 
         for j in self.factor:
@@ -193,12 +202,16 @@ class Solver(nn.Module, ABC):
 class LeastSquares(Solver):
     """Least Squares."""
 
-    def __init__(self, factor=(0, 1), eps=1e-8, project=None, **kwargs):
+    def __init__(
+        self,
+        factor: Sequence[int] = (0, 1),
+        eps: float = 1e-8,
+        project: Optional[Any] = None,
+        **kwargs,
+    ):
         super().__init__()
         self.factor = as_tuple(factor)
-        assert set(self.factor).issubset(
-            {0, 1}
-        ), "`factor` elements must be 0 or 1."
+        assert set(self.factor).issubset({0, 1}), "`factor` elements must be 0 or 1."
         self.eps = eps
         project = nn.Identity if project is None else project
         project = wrap_class(project)
@@ -207,12 +220,16 @@ class LeastSquares(Solver):
         self.rank = kwargs.get("rank")
         self.flops = self.get_flops(self.size, self.rank, self.factor)
 
-    def get_flops_u(self, size, rank):
+    def get_flops_u(
+        self,
+        size: Optional[Tuple[int, int]] = None,
+        rank: Optional[int] = None,
+    ) -> int:
         (M, N), R = size, rank
         flops = math.ceil(2 * N * (R**2) * M - (2 / 3) * (R**3) * M)
         return flops
 
-    def update_u(self, x, u, v):
+    def update_u(self, x: torch.Tensor, u: torch.Tensor, v: torch.Tensor) -> torch.Tensor:
         # x ≈ u @ t(v) --> u = ?
         *_, M, N = x.shape
         if M >= N:
@@ -228,12 +245,16 @@ class LeastSquares(Solver):
 class ProjectedGradient(Solver):
     "Projected gradient descent with line search for linear least squares."
 
-    def __init__(self, factor=(0, 1), project=None, eps=1e-8, **kwargs):
+    def __init__(
+        self,
+        factor: Sequence[int] = (0, 1),
+        project: Optional[Any] = None,
+        eps: float = 1e-8,
+        **kwargs,
+    ):
         super().__init__()
         self.factor = as_tuple(factor)
-        assert set(self.factor).issubset(
-            {0, 1}
-        ), "`factor` elements must be 0 or 1."
+        assert set(self.factor).issubset({0, 1}), "`factor` elements must be 0 or 1."
         self.eps = eps
         project = nn.Identity if project is None else project
         project = wrap_class(project)
@@ -242,12 +263,14 @@ class ProjectedGradient(Solver):
         self.rank = kwargs.get("rank")
         self.flops = self.get_flops(self.size, self.rank, self.factor)
 
-    def get_flops_u(self, size, rank):
+    def get_flops_u(
+        self, size: Optional[Tuple[int, int]] = None, rank: Optional[int] = None
+    ) -> int:
         (M, N), R = size, rank
         flops = 2 * M * N * R + 4 * M * R + 2 * N * R + 7 * M * R
         return flops
 
-    def update_u(self, x, u, v):
+    def update_u(self, x: torch.Tensor, u: torch.Tensor, v: torch.Tensor) -> torch.Tensor:
         # x ≈ u @ t(v) --> u = ?
         a, b = x @ v, t(v) @ v  # FLOPS = 2MNR + 2RNR
         g = a - u @ b  # gradient; FLOPS = MR + 2MRR
@@ -262,12 +285,16 @@ class ProjectedGradient(Solver):
 class CoordinateDescent(Solver):
     "Block coordinate descent update for linear least squares."
 
-    def __init__(self, factor=(0, 1), eps=1e-8, project=None, **kwargs):
+    def __init__(
+        self,
+        factor: Sequence[int] = (0, 1),
+        eps: float = 1e-8,
+        project: Optional[Any] = None,
+        **kwargs,
+    ):
         super().__init__()
         self.factor = as_tuple(factor)
-        assert set(self.factor).issubset(
-            {0, 1}
-        ), "`factor` elements must be 0 or 1."
+        assert set(self.factor).issubset({0, 1}), "`factor` elements must be 0 or 1."
         self.eps = eps
         project = nn.Identity if project is None else project
         project = wrap_class(project)
@@ -276,12 +303,14 @@ class CoordinateDescent(Solver):
         self.rank = kwargs.get("rank")
         self.flops = self.get_flops(self.size, self.rank, self.factor)
 
-    def get_flops_u(self, size, rank):
+    def get_flops_u(
+        self, size: Optional[Tuple[int, int]] = None, rank: Optional[int] = None
+    ) -> int:
         (M, N), R = size, rank
         flops = 2 * R * (M * N + N * R + M * R + M)
         return flops
 
-    def update_u(self, x, u, v):
+    def update_u(self, x: torch.Tensor, u: torch.Tensor, v: torch.Tensor) -> torch.Tensor:
         # x ≈ u @ t(v) --> u = ?
         R = u.shape[-1]
         a, b = x @ v, t(v) @ v  # FLOPS = 2MNR + 2RNR
@@ -293,9 +322,7 @@ class CoordinateDescent(Solver):
                 term2 = u_new[..., indices].clone()
                 term3 = b[..., indices, r : (r + 1)].clone()
                 numerator = term1 - term2 @ term3 + self.eps  # FLOPS = 2MR
-                denominator = (
-                    b[..., r : (r + 1), r : (r + 1)].clone() + self.eps
-                )
+                denominator = b[..., r : (r + 1), r : (r + 1)].clone() + self.eps
                 u_new[..., r : (r + 1)] = self.project(
                     numerator / denominator
                 ).clone()  # FLOPS = 2M
@@ -308,23 +335,25 @@ class CoordinateDescent(Solver):
 
 
 class MultiplicativeUpdate(Solver):
-    def __init__(self, factor=(0, 1), eps=1e-8, **kwargs):
+    def __init__(
+        self, factor: Sequence[int] = (0, 1), eps: float = 1e-8, **kwargs
+    ) -> None:
         super().__init__()
         self.factor = as_tuple(factor)
-        assert set(self.factor).issubset(
-            {0, 1}
-        ), "`factor` elements must be 0 or 1."
+        assert set(self.factor).issubset({0, 1}), "`factor` elements must be 0 or 1."
         self.eps = eps
         self.size = kwargs.get("size")  # size and rank used to count flops
         self.rank = kwargs.get("rank")
         self.flops = self.get_flops(self.size, self.rank, self.factor)
 
-    def get_flops_u(self, size, rank):
+    def get_flops_u(
+        self, size: Optional[Tuple[int, int]] = None, rank: Optional[int] = None
+    ) -> int:
         (M, N), R = size, rank
         flops = 2 * R * (M * N + N * R + M * R + 2 * M)
         return flops
 
-    def update_u(self, x, u, v):
+    def update_u(self, x: torch.Tensor, u: torch.Tensor, v: torch.Tensor) -> torch.Tensor:
         # x ≈ u @ t(v) --> u = ?
         a, b = x @ v, t(v) @ v  # FLOPS = 2MNR + 2RNR
         numerator = u * a + self.eps  # FLOPS = 2MR
@@ -340,37 +369,43 @@ class WeightedMultiplicativeUpdate(Solver):
     s.t. U, V ≥ 0
     """
 
-    def __init__(self, factor=(0, 1), eps=1e-8, **kwargs):
+    def __init__(
+        self, factor: Sequence[int] = (0, 1), eps: float = 1e-8, **kwargs
+    ) -> None:
         super().__init__()
         self.factor = as_tuple(factor)
-        assert set(self.factor).issubset(
-            {0, 1}
-        ), "`factor` elements must be 0 or 1."
+        assert set(self.factor).issubset({0, 1}), "`factor` elements must be 0 or 1."
         self.eps = eps
         self.size = kwargs.get("size")  # size and rank used to count flops
         self.rank = kwargs.get("rank")
         self.flops = self.get_flops(self.size, self.rank, self.factor)
 
-    def get_flops_u(self, size, rank):
+    def get_flops_u(
+        self, size: Optional[Tuple[int, int]] = None, rank: Optional[int] = None
+    ) -> int:
         (M, N), R = size, rank
         flops = 2 * (3 * M * N * R + M * N + 2 * M * R)
         return flops
 
-    def update_u(self, x, u, v, w):
+    def update_u(
+        self, x: torch.Tensor, u: torch.Tensor, v: torch.Tensor, w: torch.Tensor
+    ) -> torch.Tensor:
         # x ≈ u @ t(v) --> u = ?
         a = (w * x) @ v  # FLOPS = MN + 2MNR
         numerator = u * a + self.eps  # FLOPS = 2MR
-        denominator = (
-            w * (u @ t(v))
-        ) @ v + self.eps  # FLOPS = 2MRN + MN + 2MNR + MR
+        denominator = (w * (u @ t(v))) @ v + self.eps  # FLOPS = 2MRN + MN + 2MNR + MR
         u_new = numerator / denominator  # FLOPS = MR
         return u_new
 
-    def update_v(self, x, u, v, w):
+    def update_v(
+        self, x: torch.Tensor, u: torch.Tensor, v: torch.Tensor, w: torch.Tensor
+    ) -> torch.Tensor:
         # x ≈ u @ t(v) --> v = ?
         return self.update_u(t(x), v, u, t(w))
 
-    def forward(self, x, factor_matrices):
+    def forward(
+        self, x: torch.Tensor, factor_matrices: Tuple[torch.Tensor, torch.Tensor]
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         u, v = factor_matrices
         weight = torch.ones_like(x) if weight is None else weight
 
@@ -384,20 +419,27 @@ class WeightedMultiplicativeUpdate(Solver):
 
 
 class FastMultiplicativeUpdate(Solver):
-    def __init__(self, size, rank, factor=(0, 1), eps=1e-8, **kwargs):
+    def __init__(
+        self,
+        size: Tuple[int, int],
+        rank: int,
+        factor: Sequence[int] = (0, 1),
+        eps: float = 1e-8,
+        **kwargs,
+    ):
         super().__init__()
         self.size = size
         self.rank = rank
         self.factor = as_tuple(factor)
-        assert set(self.factor).issubset(
-            {0, 1}
-        ), "`factor` elements must be 0 or 1."
+        assert set(self.factor).issubset({0, 1}), "`factor` elements must be 0 or 1."
         self.eps = eps
         self.expr_u = self.get_expr_u(self.size, self.rank)
         self.expr_v = self.get_expr_v(self.size, self.rank)
         self.flops = self.get_flops(self.size, self.rank, self.factor)
 
-    def get_flops_u(self, size, rank):
+    def get_flops_u(
+        self, size: Optional[Tuple[int, int]] = None, rank: Optional[int] = None
+    ) -> int:
         (M, N), R = size, rank
         x_size = (1, M, N)
         u_size = (1, M, R)
@@ -423,7 +465,9 @@ class FastMultiplicativeUpdate(Solver):
         flops += denominator_info.opt_cost
         return flops
 
-    def get_flops_v(self, size, rank):
+    def get_flops_v(
+        self, size: Optional[Tuple[int, int]] = None, rank: Optional[int] = None
+    ) -> int:
         (M, N), R = size, rank
         x_size = (1, M, N)
         u_size = (1, M, R)
@@ -449,7 +493,9 @@ class FastMultiplicativeUpdate(Solver):
         flops += denominator_info.opt_cost
         return flops
 
-    def get_expr_u(self, size, rank):
+    def get_expr_u(
+        self, size: Optional[Tuple[int, int]] = None, rank: Optional[int] = None
+    ) -> Tuple[Callable, Callable]:
         (M, N), R = size, rank
         x_size = (1, M, N)
         u_size = (1, M, R)
@@ -462,7 +508,9 @@ class FastMultiplicativeUpdate(Solver):
         )
         return numerator_expr, denominator_expr
 
-    def get_expr_v(self, size, rank):
+    def get_expr_v(
+        self, size: Optional[Tuple[int, int]] = None, rank: Optional[int] = None
+    ) -> Tuple[Callable, Callable]:
         (M, N), R = size, rank
         x_size = (1, M, N)
         u_size = (1, M, R)
@@ -475,7 +523,7 @@ class FastMultiplicativeUpdate(Solver):
         )
         return numerator_expr, denominator_expr
 
-    def update_u(self, x, u, v):
+    def update_u(self, x: torch.Tensor, u: torch.Tensor, v: torch.Tensor) -> torch.Tensor:
         # x ≈ u @ t(v) --> u = ?
         numerator_expr, denominator_expr = self.expr_u
         numerator = numerator_expr(x, u, v) + self.eps
@@ -499,29 +547,25 @@ class SemiMultiplicativeUpdate(Solver):
     s.t. V ≥ 0
     """
 
-    def __init__(self, factor=(0, 1), eps=1e-8, **kwargs):
+    def __init__(
+        self, factor: Sequence[int] = (0, 1), eps: float = 1e-8, **kwargs
+    ) -> None:
         super().__init__()
         self.factor = as_tuple(factor)
-        assert set(self.factor).issubset(
-            {0, 1}
-        ), "`factor` elements must be 0 or 1."
+        assert set(self.factor).issubset({0, 1}), "`factor` elements must be 0 or 1."
         self.eps = eps
         self.size = kwargs.get("size")  # size and rank used to count flops
         self.rank = kwargs.get("rank")
         self.flops = self.get_flops(self.size, self.rank, self.factor)
 
-    def get_flops_u(self, size, rank):
+    def get_flops_u(
+        self, size: Optional[Tuple[int, int]] = None, rank: Optional[int] = None
+    ) -> int:
         (M, N), R = size, rank
-        flops = (
-            2 * M * N * R
-            + 2 * R * N * R
-            + 7 * M * R
-            + 4 * M * R * R
-            + 2 * R * R
-        )
+        flops = 2 * M * N * R + 2 * R * N * R + 7 * M * R + 4 * M * R * R + 2 * R * R
         return flops
 
-    def update_u(self, x, u, v):
+    def update_u(self, x: torch.Tensor, u: torch.Tensor, v: torch.Tensor) -> torch.Tensor:
         # x ≈ u @ t(v) --> u = ?
         a, b = x @ v, t(v) @ v  # FLOPS = 2MNR + 2RNR
         numerator = (
@@ -535,7 +579,7 @@ class SemiMultiplicativeUpdate(Solver):
 
 
 class Compose(Solver, Sequence):
-    def __init__(self, solvers=None, **kwargs):
+    def __init__(self, solvers: Optional[Sequence[Solver]] = None, **kwargs) -> None:
         super().__init__()
         if solvers is None:
             solvers = []
@@ -556,20 +600,22 @@ class Compose(Solver, Sequence):
 
         self.flops = None if None in self.flops else sum(self.flops)
 
-    def forward(self, x, factor_matrices):
+    def forward(
+        self, x: torch.Tensor, factor_matrices: Tuple[torch.Tensor, torch.Tensor]
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         u, v = factor_matrices
         for solver in self.solvers:
             u, v = solver(x, (u, v))
 
         return u, v
 
-    def __setitem__(self, idx, solver):
+    def __setitem__(self, idx: int, solver: Solver) -> None:
         self.solvers[idx] = solver
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx: int) -> Solver:
         return self.solvers[idx]
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.solvers)
 
     # def __iter__(self):
@@ -589,25 +635,25 @@ class FCM(MF):
 
     def __init__(
         self,
-        size,
-        rank=None,
-        compression=None,
-        m=2,
-        num_iters=5,
-        num_grad_steps=None,
-        eps=1e-16,
-        seed=42,
-        verbose=False,
+        size: Tuple[int, int],
+        rank: Optional[int] = None,
+        compression: float = 10,
+        m: float = 2,
+        num_iters: int = 5,
+        num_grad_steps: Optional[int] = None,
+        eps: float = 1e-16,
+        seed: int = 42,
+        verbose: bool = False,
         **kwargs,
-    ):
+    ) -> None:
         self.m = m
         self.eps = eps
         self.seed = seed
 
-        def init(size, rank):
+        def init(size: Tuple[int, int], rank: int) -> Callable:
             (M, _), R = size, rank
 
-            def wrapper(x):
+            def wrapper(x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
                 random.seed(self.seed)
                 inds = random.sample(range(M), R)
                 v = t(x[:, inds, :])
@@ -617,8 +663,10 @@ class FCM(MF):
             wrapper.flops = 0
             return wrapper
 
-        def solver(size, rank):
-            def wrapper(x, factors):
+        def solver(size: Tuple[int, int], rank: int) -> Callable:
+            def wrapper(
+                x: torch.Tensor, factors: Tuple[torch.Tensor, torch.Tensor]
+            ) -> Tuple[torch.Tensor, torch.Tensor]:
                 _, v = factors
                 u_new = self.get_memberships(x, v)
                 v_new = self.get_centers(x, u_new)
@@ -640,25 +688,25 @@ class FCM(MF):
             **kwargs,
         )
 
-    def get_dist(self, x, v):
+    def get_dist(self, x: torch.Tensor, v: torch.Tensor) -> torch.Tensor:
         x2 = (x**2).sum(2, keepdim=True)
         xv = x @ v
         v2 = (v**2).sum(1, keepdim=True)
         return torch.relu(x2 - 2 * xv + v2)
 
-    def get_memberships(self, x, v):
+    def get_memberships(self, x: torch.Tensor, v: torch.Tensor) -> torch.Tensor:
         d = self.get_dist(x, v)  # FLOPS = 2MRN
         u = (d + self.eps) ** (1 / (1 - self.m))  # FLOPS = 2MR
         u = (u + self.eps) / (u.sum(2, keepdim=True) + self.eps)  # FLOPS = 2MR
         return u
 
-    def get_centers(self, x, u):
+    def get_centers(self, x: torch.Tensor, u: torch.Tensor) -> torch.Tensor:
         u = u**self.m  # FLOPS = MR
         u = (u + self.eps) / (u.sum(1, keepdim=True) + self.eps)  # FLOPS = 2MR
         v = t(x) @ u  # FLOPS = 2MRN
         return v
 
-    def loss(self, x, u, v):
+    def loss(self, x: torch.Tensor, u: torch.Tensor, v: torch.Tensor) -> torch.Tensor:
         d = self.get_dist(x, v)
         return torch.mean((u**self.m) * d)
 
@@ -668,25 +716,25 @@ class EKM(MF):
 
     def __init__(
         self,
-        size,
-        rank=None,
-        compression=None,
-        alpha=0.1,
-        num_iters=5,
-        num_grad_steps=None,
-        eps=1e-16,
-        seed=42,
-        verbose=False,
+        size: Tuple[int, int],
+        rank: Optional[int] = None,
+        compression: float = 10,
+        alpha: float = 0.1,
+        num_iters: int = 5,
+        num_grad_steps: Optional[int] = None,
+        eps: float = 1e-16,
+        seed: int = 42,
+        verbose: bool = False,
         **kwargs,
-    ):
+    ) -> None:
         self.eps = eps
         self.seed = seed
         self.verbose = verbose
 
-        def init(size, rank):
+        def init(size: Tuple[int, int], rank: int) -> Callable:
             (M, _), R = size, rank
 
-            def wrapper(x):
+            def wrapper(x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
                 random.seed(self.seed)
                 inds = random.sample(range(M), R)
                 v = t(x[:, inds, :])
@@ -696,8 +744,10 @@ class EKM(MF):
             wrapper.flops = 0
             return wrapper
 
-        def solver(size, rank):
-            def wrapper(x, factors):
+        def solver(size: Tuple[int, int], rank: int) -> Callable:
+            def wrapper(
+                x: torch.Tensor, factors: Tuple[torch.Tensor, torch.Tensor]
+            ) -> Tuple[torch.Tensor, torch.Tensor]:
                 _, v = factors
                 u_new = self.get_memberships(x, v)
                 v_new = self.get_centers(x, u_new)
@@ -721,24 +771,24 @@ class EKM(MF):
         (_, N), R = self.size, self.rank
         self.alpha = alpha * N / (1 + math.log(R))
 
-    def get_dist(self, x, v):
+    def get_dist(self, x: torch.Tensor, v: torch.Tensor) -> torch.Tensor:
         x2 = (x**2).sum(2, keepdim=True)
         xv = x @ v
         v2 = (v**2).sum(1, keepdim=True)
         return torch.relu(x2 - 2 * xv + v2)
 
-    def get_memberships(self, x, v):
+    def get_memberships(self, x: torch.Tensor, v: torch.Tensor) -> torch.Tensor:
         d = self.get_dist(x, v)  # FLOPS = 2MRN
         u = -d / self.alpha  # FLOPS = 2MR
         u = torch.softmax(u, dim=2)  # FLOPS = 3MR
         return u
 
-    def get_centers(self, x, u):
+    def get_centers(self, x: torch.Tensor, u: torch.Tensor) -> torch.Tensor:
         u = (u + self.eps) / (u.sum(1, keepdim=True) + self.eps)  # FLOPS = 2MR
         v = t(x) @ u  # FLOPS = 2MRN
         return v
 
-    def loss(self, x, u, v):
+    def loss(self, x: torch.Tensor, u: torch.Tensor, v: torch.Tensor) -> torch.Tensor:
         d = self.get_dist(x, v)
         h = torch.where(u > self.eps, u * u.log(), torch.zeros_like(u))
         h = h + (1 / self.rank) * math.log(self.rank)
@@ -755,13 +805,13 @@ class SVD(nn.Module):
 
     def __init__(
         self,
-        size,
-        rank=None,
-        compression=10,
-        no_grad=False,
-        verbose=False,
+        size: Tuple[int, int],
+        rank: Optional[int] = None,
+        compression: float = 10,
+        no_grad: bool = False,
+        verbose: bool = False,
         **kwargs,
-    ):
+    ) -> None:
         super().__init__()
         self.size = M, N = size
         self.no_grad = no_grad
@@ -807,14 +857,12 @@ class SVD(nn.Module):
 
         # FLOPs
         self.flops = {"init": 0}
-        self.flops["decompose"] = 2 * math.ceil(
-            6 * M * N * R + (M + N) * (R**2)
-        )
+        self.flops["decompose"] = 2 * math.ceil(6 * M * N * R + (M + N) * (R**2))
         self.flops["reconstruct"] = self.reconstruct_info.opt_cost
 
         self.verbose = verbose
 
-    def context(self):
+    def context(self) -> Any:
         # get context
         if self.no_grad:
             context = torch.no_grad()
@@ -823,7 +871,9 @@ class SVD(nn.Module):
 
         return context
 
-    def decompose(self, x):
+    def decompose(
+        self, x: torch.Tensor
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         # x: B × M × N
         with self.context():
             torch.manual_seed(42)
@@ -835,13 +885,17 @@ class SVD(nn.Module):
 
         return u, s, v
 
-    def reconstruct(self, u, s, v):
+    def reconstruct(
+        self, u: torch.Tensor, s: torch.Tensor, v: torch.Tensor
+    ) -> torch.Tensor:
         return self.reconstruct_expr(u, s, v)
 
-    def loss(self, x, u, s, v):
+    def loss(
+        self, x: torch.Tensor, u: torch.Tensor, s: torch.Tensor, v: torch.Tensor
+    ) -> torch.Tensor:
         return relative_error(x, self.reconstruct(u, s, v))
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         u, s, v = self.decompose(x)
         return self.reconstruct(u, s, v)
 
@@ -855,16 +909,16 @@ class LRMA(MF):
 
     def __init__(
         self,
-        size,
-        rank=None,
-        compression=10,
-        num_iters=5,
-        num_grad_steps=None,
-        init="normal",
-        solver="cd",
-        verbose=False,
+        size: Tuple[int, int],
+        rank: Optional[int] = None,
+        compression: float = 10,
+        num_iters: int = 5,
+        num_grad_steps: Optional[int] = None,
+        init: Union[str, Any] = "normal",
+        solver: Union[str, Any] = "cd",
+        verbose: bool = False,
         **kwargs,
-    ):
+    ) -> None:
         # set factors initializer
         init = _wrap_init(init)
 
@@ -893,14 +947,14 @@ class NMF(MF):
 
     def __init__(
         self,
-        size,
-        rank=None,
-        compression=10,
-        num_iters=5,
-        num_grad_steps=None,
-        init="uniform",
-        solver="hals",
-        verbose=False,
+        size: Tuple[int, int],
+        rank: Optional[int] = None,
+        compression: float = 10,
+        num_iters: int = 5,
+        num_grad_steps: Optional[int] = None,
+        init: Union[str, Any] = "uniform",
+        solver: Union[str, Any] = "hals",
+        verbose: bool = False,
         **kwargs,
     ):
         # set factors initializer
@@ -931,14 +985,14 @@ class GMF(MF):
 
     def __init__(
         self,
-        size,
-        rank=None,
-        compression=10,
-        num_iters=5,
-        num_grad_steps=None,
-        init="uniform-normal",
-        solver=("hals-0", "ls-1"),
-        verbose=False,
+        size: Tuple[int, int],
+        rank: Optional[int] = None,
+        compression: float = 10,
+        num_iters: int = 5,
+        num_grad_steps: Optional[int] = None,
+        init: Union[str, Any] = "uniform-normal",
+        solver: Union[str, Any] = ("hals-0", "ls-1"),
+        verbose: bool = False,
         **kwargs,
     ):
         # set factors initializer
@@ -970,16 +1024,16 @@ class LocalGlobalMF(GMF):
 
     def __init__(
         self,
-        size,
-        rank=None,
-        compression=10,
-        alpha=0.01,
-        trainable=True,
-        num_iters=5,
-        num_grad_steps=None,
-        init=None,
-        solver=None,
-        verbose=False,
+        size: Tuple[int, int],
+        rank: Optional[int] = None,
+        compression: float = 10,
+        num_iters: int = 5,
+        num_grad_steps: Optional[int] = None,
+        alpha: float = 0.01,
+        trainable: bool = True,
+        init: Union[str, Any] = "uniform-normal",
+        solver: Union[str, Any] = ("hals-0", "ls-1"),
+        verbose: bool = False,
         **kwargs,
     ):
         super().__init__(
@@ -1004,15 +1058,17 @@ class LocalGlobalMF(GMF):
 
         self.solver = self.modify_solver(self.solver)
 
-    def modify_get_flops_u(self, get_flops_u):
-        def wrapper(size, rank):
+    def modify_get_flops_u(self, get_flops_u: Callable) -> Callable:
+        def wrapper(size: Tuple[int, int], rank: int):
             (M, N), R = size, rank
             return get_flops_u((M, (N + R)), R)
 
         return wrapper
 
-    def modify_update_u(self, update_u):
-        def wrapper(x, u, v, *args, **kwargs):
+    def modify_update_u(self, update_u: Callable) -> Callable:
+        def wrapper(
+            x: torch.Tensor, u: torch.Tensor, v: torch.Tensor, *args, **kwargs
+        ) -> torch.Tensor:
             J, R = u.shape[-3], u.shape[-1]
             λ = torch.exp(self.gamma)
             c = u.mean(-3, keepdim=True).repeat_interleave(J, -3)
@@ -1027,15 +1083,13 @@ class LocalGlobalMF(GMF):
         out = eye.expand((*x.shape[:2], n, n))
         return out
 
-    def modify_solver(self, solver):
+    def modify_solver(self, solver: Solver) -> Solver:
         new_solver = copy.deepcopy(solver)
         if isinstance(new_solver, Sequence):
             num_solvers = len(solver)
             for j in range(num_solvers):
                 if hasattr(solver[j], "update_u"):
-                    new_solver[j].update_u = self.modify_update_u(
-                        new_solver[j].update_u
-                    )
+                    new_solver[j].update_u = self.modify_update_u(new_solver[j].update_u)
                     new_solver[j].get_flops_u = self.modify_get_flops_u(
                         new_solver[j].get_flops_u
                     )
@@ -1043,15 +1097,13 @@ class LocalGlobalMF(GMF):
         else:
             if hasattr(solver, "update_u"):
                 new_solver.update_u = self.modify_update_u(new_solver.update_u)
-                new_solver.get_flops_u = self.modify_get_flops_u(
-                    new_solver.get_flops_u
-                )
+                new_solver.get_flops_u = self.modify_get_flops_u(new_solver.get_flops_u)
                 new_solver.flops = new_solver.get_flops()
 
         return new_solver
 
 
-def _dispatch(obj, dispatch_map):
+def _dispatch(obj: Any, dispatch_map: Dict[str, Any]) -> Any:
     out = dispatch_map.get(obj, obj) if isinstance(obj, str) else obj
     return out
 
@@ -1095,11 +1147,11 @@ SOLVER_DISPATCH_MAP = {
 }
 
 
-def _wrap_init(obj):
+def _wrap_init(obj: Any) -> Any:
     return _dispatch(obj, INIT_DISPATCH_MAP)
 
 
-def _wrap_solver(obj):
+def _wrap_solver(obj: Any) -> Any:
     if is_wrappable_class(obj):
         return obj
     elif isinstance(obj, str):

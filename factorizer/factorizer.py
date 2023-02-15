@@ -1,53 +1,9 @@
-import copy
-
-import torch
 from torch import nn
 
-from .utils.helpers import wrap_class, cumprod
-from .layers import LayerNorm, Linear
-from .factorization import Matricize, SVD
+from .utils.helpers import wrap_class
+from .layers import LayerNorm, Linear, PositionalEmbedding
+from .factorization import Matricize, NMF
 from .unet import UNet
-
-
-class PosEmbed(nn.Module):
-    """Learnable positional embedding."""
-
-    def __init__(self, input_dim, spatial_size, dropout=0.0, **kwargs):
-        super().__init__()
-        self.pos = nn.Parameter(torch.empty(1, input_dim, *spatial_size))
-        nn.init.normal_(self.pos, std=1.0)
-        self.dropout = nn.Dropout(dropout)
-
-    def forward(self, x):
-        # x: B × C × S1 × S2 × ... × Sp
-        out = x + self.pos
-        out = self.dropout(out)
-        return out
-
-
-class DimWisePosEmbed(nn.Module):
-    """Learnable positional embedding."""
-
-    def __init__(self, input_dim, spatial_size, dropout=0.0, **kwargs):
-        super().__init__()
-        self.pos = []
-        for dim, size in enumerate(spatial_size):
-            pe_spatial_size = [size if j == dim else 1 for j in range(len(spatial_size))]
-            pe = nn.Parameter(torch.empty(1, input_dim, *pe_spatial_size))
-            nn.init.normal_(pe, std=1.0)
-            self.pos.append(pe)
-
-        self.pos = nn.ParameterList(self.pos)
-        self.dropout = nn.Dropout(dropout)
-
-    def forward(self, x):
-        # x: B × C × S1 × S2 × ... × Sp
-        out = x
-        for p in self.pos:
-            out = out + p
-
-        out = self.dropout(out)
-        return out
 
 
 class Residual(nn.Module):
@@ -64,12 +20,12 @@ class FactorizerSubblock(nn.Module):
 
     def __init__(
         self,
-        input_dim,
-        output_dim,
+        in_channels,
+        out_channels,
         spatial_size,
         tensorize=(Matricize, {"num_heads": 1, "grid_size": 1}),
-        act=nn.Identity,
-        factorize=SVD,
+        act=nn.ReLU,
+        factorize=NMF,
         dropout=0.0,
         **kwargs,
     ):
@@ -78,18 +34,18 @@ class FactorizerSubblock(nn.Module):
         act = wrap_class(act)
         factorize = wrap_class(factorize)
 
-        self.in_proj = Linear(input_dim, output_dim, bias=False)
+        self.in_proj = Linear(in_channels, out_channels, bias=False)
 
-        self.tensorize = tensorize((None, output_dim, *spatial_size))
+        self.tensorize = tensorize((None, out_channels, *spatial_size))
 
         self.act = act()
 
         tensorized_size = self.tensorize.output_size[2:]
-        tensorized_size = tuple(s for s in tensorized_size if s != 1)  # squeeze size
+        # tensorized_size = tuple(s for s in tensorized_size if s != 1)  # squeeze size
         self.tensorized_size = tensorized_size
         self.factorize = factorize(tensorized_size, **kwargs)
 
-        self.out_proj = Linear(output_dim, output_dim)
+        self.out_proj = Linear(out_channels, out_channels)
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, x):
@@ -104,17 +60,17 @@ class FactorizerSubblock(nn.Module):
         # apply activation function
         out = self.act(out)
 
-        # save the size
-        shape = out.shape
+        # # save the size
+        # shape = out.shape
 
-        # remove 1-dim modes (squeeze)
-        out = out.reshape(*shape[:2], *self.tensorized_size)
+        # # remove singleton dims (squeeze)
+        # out = out.reshape(*shape[:2], *self.tensorized_size)
 
-        # tensor factorization)
+        # matrix or tensor factorization
         out = self.factorize(out)
 
-        # back to the original size (unsqueeze)
-        out = out.reshape(shape)
+        # # back to the original size (unsqueeze)
+        # out = out.reshape(shape)
 
         # detensorize (unfold/fold)
         out = self.tensorize.inverse_forward(out)
@@ -132,46 +88,71 @@ class FactorizerBlock(nn.Module):
 
     def __init__(
         self,
-        input_dim,
-        output_dim,
+        channels,
         spatial_size,
-        adapter=None,
-        pos_embed=False,
+        **subblocks,
+    ):
+        super().__init__()
+        self.blocks = nn.ModuleDict()
+        for key, value in subblocks.items():
+            subblock = wrap_class(value)
+            self.blocks[key] = Residual(
+                nn.Sequential(
+                    LayerNorm(channels),
+                    subblock(channels, channels, spatial_size=spatial_size),
+                )
+            )
+
+    def forward(self, x):
+        # x: B × C × S1 × S2 × ... × Sp
+        out = x
+        for blk in self.blocks.values():
+            out = blk(out)
+
+        return out
+
+
+class FactorizerStage(nn.Module):
+    """Generic Factorizer block for one stage."""
+
+    def __init__(
+        self,
+        in_channels,
+        out_channels,
+        spatial_size,
+        depth=1,
+        adapter=(Linear, {"bias": False}),
+        pos_embed=nn.Identity,
         dropout=0.0,
         **subblocks,
     ):
         super().__init__()
-        if input_dim != output_dim:
-            if adapter is None:
-                self.adapter = nn.Sequential(
-                    Linear(input_dim, output_dim, bias=False),
-                    nn.Dropout(dropout),
-                )
-            else:
-                adapter = wrap_class(adapter)
-                self.adapter = adapter(input_dim, output_dim)
+        if in_channels != out_channels:
+            adapter = wrap_class(adapter)
+            self.adapter = adapter(in_channels, out_channels)
 
-        if pos_embed:
-            self.pos_embed = PosEmbed(input_dim, spatial_size, dropout=dropout)
+        pos_embed = wrap_class(pos_embed)
+        self.pos_embed = pos_embed(out_channels, spatial_size)
+        if len(list(self.pos_embed.parameters())) > 0:
+            self.pos_drop = nn.Dropout(dropout)
 
-        self.blocks = nn.ModuleDict()
-        for key, value in subblocks.items():
-            subblock = wrap_class(value)
-            block = Residual(
-                nn.Sequential(
-                    LayerNorm(output_dim),
-                    subblock(output_dim, output_dim, spatial_size=spatial_size),
+        self.blocks = nn.ModuleList()
+        for j in range(depth):
+            self.blocks.append(
+                FactorizerBlock(
+                    out_channels,
+                    spatial_size,
+                    **subblocks,
                 )
             )
-            self.blocks[key] = block
 
     def forward(self, x):
         # x: B × C × S1 × S2 × ... × Sp
         out = self.adapter(x) if hasattr(self, "adapter") else x
         out = self.pos_embed(out) if hasattr(self, "pos_embed") else out
-
-        for block in self.blocks.values():
-            out = block(out)
+        out = self.pos_drop(out) if hasattr(self, "pos_drop") else out
+        for blk in self.blocks:
+            out = blk(out)
 
         return out
 
@@ -183,8 +164,7 @@ class SegmentationFactorizer(UNet):
         self,
         in_channels,
         out_channels,
-        spatial_size,
-        stem_width=None,
+        spatial_size=None,
         encoder_depth=(1, 1, 1, 1, 1),
         encoder_width=(32, 64, 128, 256, 512),
         strides=(1, 2, 2, 2, 2),
@@ -193,81 +173,28 @@ class SegmentationFactorizer(UNet):
         downsample=None,
         upsample=None,
         head=None,
-        pos_embed=True,
+        pos_embed=PositionalEmbedding,
         num_deep_supr=1,
         **kwargs,
     ):
-
-        self.spatial_size = spatial_size
-        spatial_dims = len(spatial_size)
-        blocks = self._get_blocks(
-            spatial_size,
-            encoder_depth,
-            decoder_depth,
-            strides,
-            pos_embed,
-            **kwargs,
-        )
+        num_encoder_stages = len(encoder_depth)
+        num_decoder_stages = len(decoder_depth)
+        encoder_block = (num_encoder_stages - 1) * [FactorizerStage]
+        bottleneck_block = [(FactorizerStage, {"pos_embed": pos_embed})]
+        encoder_block = num_decoder_stages * [FactorizerStage]
+        block = encoder_block + bottleneck_block + encoder_block
         super().__init__(
             in_channels,
             out_channels,
-            spatial_dims=spatial_dims,
-            stem_width=stem_width,
+            spatial_size=spatial_size,
             encoder_depth=encoder_depth,
             encoder_width=encoder_width,
             strides=strides,
             decoder_depth=decoder_depth,
             stem=stem,
             downsample=downsample,
-            block=blocks,
+            block=block,
             upsample=upsample,
             head=head,
             num_deep_supr=num_deep_supr,
         )
-
-    def _get_blocks(
-        self,
-        spatial_size,
-        encoder_depth,
-        decoder_depth,
-        strides,
-        pos_embed,
-        **kwargs,
-    ):
-        net_depth = encoder_depth + decoder_depth
-        num_layers = len(net_depth)
-        cumstrides = cumprod(strides)
-        blocks = {}
-        for layer, depth in enumerate(net_depth):
-            for sublayer in range(depth):
-                # get spatial size at current level
-                level = min(layer, num_layers - 1 - layer)
-                current_spatial_size = tuple(s // cumstrides[level] for s in spatial_size)
-
-                bridge = (layer, sublayer) == (num_layers // 2, 0)
-                params = {
-                    "spatial_size": current_spatial_size,
-                    "pos_embed": pos_embed and bridge,
-                    **kwargs,
-                }
-                blocks[(layer, sublayer)] = (FactorizerBlock, params)
-
-        return blocks
-
-
-def ablate(obj, name, indicator):
-    class Ablated(obj):
-        def _get_blocks(self, *args, **kwargs):
-            blocks = super()._get_blocks(*args, **kwargs)
-            for (layer, sublayer), (cl, params) in blocks.items():
-                params_new = copy.deepcopy(params)
-                if indicator(layer, sublayer):
-                    params_new[name[0]][1][name[1]] = nn.Identity
-                    blocks[(layer, sublayer)] = (cl, params_new)
-
-            return blocks
-
-    Ablated.__name__ = obj.__name__
-    locals()[obj.__name__] = Ablated
-    del Ablated
-    return locals()[obj.__name__]

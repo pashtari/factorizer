@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 from typing import (
+    Optional,
     Any,
+    Hashable,
     Callable,
     Text,
     Tuple,
@@ -12,8 +14,6 @@ from typing import (
     Set,
     Dict,
     TypedDict,
-    Optional,
-    Hashable,
 )
 from copy import copy
 import pickle
@@ -159,7 +159,8 @@ class TensorNetwork(object):
                     dim = v["tensor"].shape[i]
 
                 self.edges.setdefault(
-                    e, {"nodes": set(), "dimension": dim, "tags": {e}},
+                    e,
+                    {"nodes": set(), "dimension": dim, "tags": {e}},
                 )
                 self.edges[e]["nodes"].add((k, i))
 
@@ -184,9 +185,7 @@ class TensorNetwork(object):
 
     @property
     def output_shape(self) -> Sequence[Hashable]:
-        return tuple(
-            self.edges[edge]["dimension"] for edge in self.output_edges
-        )
+        return tuple(self.edges[edge]["dimension"] for edge in self.output_edges)
 
     @property
     def num_nodes(self) -> int:
@@ -274,9 +273,7 @@ class TensorNetwork(object):
                 # update node legs
                 linking_legs_indicator[i] = False
 
-            elif (
-                leg_freq_dict[e] > 1 or e in self.output_edges
-            ):  # buffered legs
+            elif leg_freq_dict[e] > 1 or e in self.output_edges:  # buffered legs
                 # form an identity matrix as a buffer
                 buff_tensor = torch.eye(
                     removed_node["shape"][i],
@@ -315,9 +312,7 @@ class TensorNetwork(object):
                 self.output_edges.append(e)
 
         removed_node["linking_legs_indicator"] = linking_legs_indicator
-        tn = TensorNetwork(
-            nodes={node: removed_node}, output_edges=removed_node["legs"]
-        )
+        tn = TensorNetwork(nodes={node: removed_node}, output_edges=removed_node["legs"])
         return tn
 
     def popedge(self, edge: Hashable) -> Edges:
@@ -325,9 +320,7 @@ class TensorNetwork(object):
         for node, _ in edge_value["nodes"]:
             legs = []
             shape = []
-            for e, s in zip(
-                self.nodes[node]["legs"], self.nodes[node]["shape"]
-            ):
+            for e, s in zip(self.nodes[node]["legs"], self.nodes[node]["shape"]):
                 if e != edge:
                     legs.append(e)
                     shape.append(s)
@@ -342,9 +335,7 @@ class TensorNetwork(object):
     def join(
         self,
         obj: TensorNetwork,
-        linking_edges: Optional[
-            Tuple[Sequence[Hashable], Sequence[Hashable]]
-        ] = None,
+        linking_edges: Optional[Tuple[Sequence[Hashable], Sequence[Hashable]]] = None,
         inplace=False,
     ) -> TensorNetwork:
 
@@ -359,15 +350,11 @@ class TensorNetwork(object):
             linking_edges = (shared_edges_list, shared_edges_list)
 
         all_linking_edges = set(linking_edges[0]).union(linking_edges[1])
-        obj_output_or_linking_edges = set(obj.output_edges).union(
-            all_linking_edges
-        )
+        obj_output_or_linking_edges = set(obj.output_edges).union(all_linking_edges)
         output_edges_1 = [
             e for e in tn.output_edges if e not in obj_output_or_linking_edges
         ]
-        output_edges_2 = [
-            e for e in obj.output_edges if e not in all_linking_edges
-        ]
+        output_edges_2 = [e for e in obj.output_edges if e not in all_linking_edges]
         tn.output_edges = output_edges_1 + output_edges_2
 
         edges_hash_table = dict(zip(linking_edges[1], linking_edges[0]))
@@ -379,8 +366,7 @@ class TensorNetwork(object):
             tn.edges[v] = e
             for node, _ in obj.edges[k]["nodes"]:
                 obj_temp.nodes[node]["legs"] = [
-                    edges_hash_table.get(e, e)
-                    for e in obj_temp.nodes[node]["legs"]
+                    edges_hash_table.get(e, e) for e in obj_temp.nodes[node]["legs"]
                 ]
 
             del obj_temp.edges[k]
@@ -394,9 +380,7 @@ class TensorNetwork(object):
         self, nodes: Iterable[Hashable] = [], tags: bool = True
     ) -> TensorNetwork:
         if tags:
-            nodes_set = set().union(
-                *self.filter_by_tags(tags=nodes, which="nodes")
-            )
+            nodes_set = set().union(*self.filter_by_tags(tags=nodes, which="nodes"))
         else:
             nodes_set = set(nodes)
 
@@ -453,9 +437,7 @@ class TensorNetwork(object):
         args = [*chain(*zip(self.shapes, self.legs)), self.output_edges]
         _, con_info = oe.contract_path(*args, shapes=True, **kwargs)
         kwargs["optimize"] = con_info.path
-        con_expr = oe.contract_expression(
-            con_info.eq, *con_info.shapes, **kwargs
-        )
+        con_expr = oe.contract_expression(con_info.eq, *con_info.shapes, **kwargs)
         return self._expression_decorator(con_expr), con_info
 
     def _expression_decorator(self, expr):
@@ -469,9 +451,7 @@ class TensorNetwork(object):
     def to_graph(self):
         vertices = []
         for kn, vn in self.nodes.items():
-            vertices.append(
-                (kn, {"legs": vn["legs"], "tags": vn["tags"], "size": 1})
-            )
+            vertices.append((kn, {"legs": vn["legs"], "tags": vn["tags"], "size": 1}))
 
         output_counter = 0
         junction_counter = 0

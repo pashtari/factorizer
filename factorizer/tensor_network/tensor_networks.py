@@ -1,6 +1,5 @@
-from operator import truth
-from typing import Optional, Sequence, Hashable, Tuple, Union
-from numbers import Number, Real
+from typing import Optional, Sequence, Hashable
+from numbers import Real
 import math
 
 from sympy import Symbol, solve
@@ -30,7 +29,7 @@ class CanonicalPolyadic(TensorNetwork):
         self,
         size: Sequence[int],
         rank: Optional[int] = None,
-        compression: Optional[Number] = None,
+        compression: Optional[float] = None,
         batch: Optional[bool] = True,
         **kwargs,
     ) -> None:
@@ -80,7 +79,7 @@ class Tucker(TensorNetwork):
         self,
         size,
         rank: Optional[Sequence[int]] = None,
-        compression: Optional[Number] = None,
+        compression: Optional[float] = None,
         batch: Optional[bool] = True,
         **kwargs,
     ) -> None:
@@ -132,15 +131,11 @@ class Tucker(TensorNetwork):
         # alpha is the dim ratio
         alpha = Symbol("alpha", real=True)
         # degrees of freedom of the low-rank tensor
-        df_lowrank = sum(s ** 2 for s in size) / alpha + prod(size) / (
-            alpha ** ndims
-        )
+        df_lowrank = sum(s**2 for s in size) / alpha + prod(size) / (alpha**ndims)
 
         alpha = solve(df_input - compression * df_lowrank, alpha)
         alpha = min(
-            a.evalf()
-            for a in alpha
-            if isinstance(a.evalf(), Real) and a.evalf() > 0
+            a.evalf() for a in alpha if isinstance(a.evalf(), Real) and a.evalf() > 0
         )
         rank = tuple(int(max(math.ceil(s / alpha), 2)) for s in size)
         return rank
@@ -168,7 +163,7 @@ class TensorTrain(TensorNetwork):
         self,
         size: Sequence[int],
         rank: Optional[Sequence[int]] = None,
-        compression: Optional[Number] = None,
+        compression: Optional[float] = None,
         batch: Optional[bool] = True,
         **kwargs,
     ) -> None:
@@ -224,13 +219,11 @@ class TensorTrain(TensorNetwork):
         # rank (or bond dimension) is the same for all
         rank = Symbol("rank", real=True)
         # degrees of freedom of the low-rank tensor
-        df_lowrank = (size[0] + size[-1]) * rank + sum(size[1:-1]) * rank ** 2
+        df_lowrank = (size[0] + size[-1]) * rank + sum(size[1:-1]) * rank**2
 
         rank = solve(df_input - compression * df_lowrank, rank)
         rank = min(
-            a.evalf()
-            for a in rank
-            if isinstance(a.evalf(), Real) and a.evalf() > 0
+            a.evalf() for a in rank if isinstance(a.evalf(), Real) and a.evalf() > 0
         )
         rank = tuple(max(int(math.ceil(rank)), 2) for s in size[:-1])
         return rank

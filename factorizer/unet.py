@@ -1,238 +1,8 @@
 import torch
 from torch import nn
 
-from .layers import Linear
 from .utils.helpers import as_tuple, prod, wrap_class
-
-
-class DoubleConv(nn.Module):
-    """(Conv -- Drop -- Norm -- Act) ** 2."""
-
-    def __init__(
-        self,
-        in_channels,
-        out_channels,
-        mid_channels=None,
-        conv=(nn.Conv3d, {"kernel_size": 3, "padding": 1}),
-        norm=(nn.GroupNorm, (8,)),
-        act=nn.LeakyReLU,
-        drop=(nn.Dropout, {"p": 0.0}),
-        stride=1,
-        **kwargs,
-    ):
-        super().__init__()
-        mid_channels = out_channels if mid_channels is None else mid_channels
-
-        conv = wrap_class(conv)
-        drop = wrap_class(drop)
-        norm = wrap_class(norm)
-        act = wrap_class(act)
-
-        self.block1 = nn.Sequential(
-            conv(in_channels, mid_channels, stride=stride),
-            drop(),
-            norm(mid_channels),
-            act(),
-        )
-
-        self.block2 = nn.Sequential(
-            conv(mid_channels, out_channels, stride=1),
-            drop(),
-            norm(out_channels),
-            act(),
-        )
-
-    def forward(self, x):
-        out = self.block1(x)
-        out = self.block2(out)
-        return out
-
-
-class BasicBlock(nn.Module):
-    """Basic ResNet block."""
-
-    def __init__(
-        self,
-        in_channels,
-        out_channels,
-        mid_channels=None,
-        conv=(nn.Conv3d, {"kernel_size": 3, "padding": 1}),
-        norm=(nn.GroupNorm, (8,)),
-        act=nn.LeakyReLU,
-        drop=(nn.Dropout, {"p": 0.0}),
-        stride=1,
-        **kwargs,
-    ):
-        super().__init__()
-        mid_channels = out_channels if mid_channels is None else mid_channels
-
-        conv1 = wrap_class(conv)
-        conv2 = wrap_class(conv)
-        drop = wrap_class(drop)
-        norm = wrap_class(norm)
-        act = wrap_class(act)
-
-        self.conv1 = conv1(in_channels, mid_channels, stride=stride)
-        self.drop1 = drop()
-        self.norm1 = norm(mid_channels)
-        self.conv2 = conv2(mid_channels, out_channels)
-        self.drop2 = drop()
-        self.norm2 = norm(out_channels)
-        self.act = act()
-
-        if prod(as_tuple(stride)) != 1 or in_channels != out_channels:
-            self.shortcut = conv[0](
-                in_channels,
-                out_channels,
-                kernel_size=1,
-                stride=stride,
-                bias=False,
-            )
-        else:
-            self.shortcut = nn.Identity()
-
-    def forward(self, x):
-        shortcut = self.shortcut(x)
-
-        out = self.conv1(x)
-        out = self.drop1(out)
-        out = self.norm1(out)
-        out = self.act(out)
-
-        out = self.conv2(out)
-        out = self.drop2(out)
-        out = self.norm2(out)
-
-        out += shortcut
-
-        out = self.act(out)
-
-        return out
-
-
-class BottleneckBlock(nn.Module):
-    """ResNet bottleneck block."""
-
-    def __init__(
-        self,
-        in_channels,
-        out_channels,
-        alpha=0.5,
-        conv=(nn.Conv3d, {"kernel_size": 3, "padding": 1}),
-        norm=(nn.GroupNorm, (8,)),
-        act=nn.LeakyReLU,
-        drop=(nn.Dropout, {"p": 0.0}),
-        stride=1,
-        **kwargs,
-    ):
-        super().__init__()
-        mid_channels = int(in_channels * alpha)
-
-        conv2 = wrap_class(conv)
-        drop = wrap_class(drop)
-        norm = wrap_class(norm)
-        act = wrap_class(act)
-
-        self.conv1 = conv[0](in_channels, mid_channels, kernel_size=1)
-        self.drop1 = drop()
-        self.norm1 = norm(mid_channels)
-        self.conv2 = conv2(mid_channels, mid_channels, stride=stride)
-        self.drop2 = drop()
-        self.norm2 = norm(mid_channels)
-        self.conv3 = conv[0](mid_channels, out_channels, kernel_size=1)
-        self.drop3 = drop()
-        self.norm3 = norm(mid_channels)
-        self.act = act()
-
-        if prod(as_tuple(stride)) != 1 or in_channels != out_channels:
-            self.shortcut = conv[0](
-                in_channels,
-                out_channels,
-                kernel_size=1,
-                stride=stride,
-                bias=False,
-            )
-        else:
-            self.shortcut = nn.Identity()
-
-    def forward(self, x):
-        shortcut = self.shortcut(x)
-
-        out = self.conv1(x)
-        out = self.drop1(out)
-        out = self.norm1(out)
-        out = self.act(out)
-
-        out = self.conv2(out)
-        out = self.drop2(out)
-        out = self.norm2(out)
-        out = self.act(out)
-
-        out = self.conv3(out)
-        out = self.drop3(out)
-        out = self.norm3(out)
-
-        out += shortcut
-        out = self.act(out)
-
-        return out
-
-
-class PreActivationBlock(nn.Module):
-    """Pre-activation version of the BasicBlock."""
-
-    def __init__(
-        self,
-        in_channels,
-        out_channels,
-        mid_channels=None,
-        conv=(nn.Conv3d, {"kernel_size": 3, "padding": 1}),
-        norm=(nn.GroupNorm, (8,)),
-        act=nn.LeakyReLU,
-        drop=(nn.Dropout, {"p": 0.0}),
-        stride=1,
-        **kwargs,
-    ):
-        super().__init__()
-        mid_channels = out_channels if mid_channels is None else mid_channels
-
-        conv1 = wrap_class(conv)
-        conv2 = wrap_class(conv)
-        drop = wrap_class(drop)
-        norm = wrap_class(norm)
-        act = wrap_class(act)
-
-        self.norm1 = norm(in_channels)
-        self.act = act()
-        self.conv1 = conv1(in_channels, mid_channels, stride=stride)
-        self.drop1 = drop()
-        self.norm2 = norm(mid_channels)
-        self.conv2 = conv2(mid_channels, out_channels)
-        self.drop2 = drop()
-
-        if prod(as_tuple(stride)) != 1 or in_channels != out_channels:
-            self.shortcut = conv[0](
-                in_channels,
-                out_channels,
-                kernel_size=1,
-                stride=stride,
-                bias=False,
-            )
-
-    def forward(self, x):
-        out = self.norm1(x)
-        out = self.act(out)
-        shortcut = self.shortcut(out) if hasattr(self, "shortcut") else x
-        out = self.conv1(out)
-        out = self.drop1(out)
-
-        out = self.norm2(out)
-        out = self.act(out)
-        out = self.conv2(out)
-        out = self.drop2(out)
-
-        out += shortcut
-        return out
+from .layers.conv import DoubleConv
 
 
 class Same(object):
@@ -242,6 +12,22 @@ class Same(object):
 
     def __getitem__(self, *args, **kwargs):
         return self.block
+
+
+class UNetStage(nn.Module):
+    """U-Net block for one stage."""
+
+    def __init__(self, in_channels, out_channels, depth=1, block=DoubleConv, **kwargs):
+        super().__init__()
+        block = wrap_class(block)
+        self.blocks = nn.Sequential(block(in_channels, out_channels, **kwargs))
+
+        for j in range(1, depth):
+            self.blocks.append(block(out_channels, out_channels, **kwargs))
+
+    def forward(self, x):
+        out = self.blocks(x)
+        return out
 
 
 class UNetEncoderBlock(nn.Module):
@@ -254,40 +40,20 @@ class UNetEncoderBlock(nn.Module):
         depth=1,
         stride=2,
         downsample=(nn.Conv3d, {"kernel_size": 2}),
-        block=Same(PreActivationBlock),
+        block=UNetStage,
+        **kwargs,
     ):
         super().__init__()
-        if prod(as_tuple(stride)) == 1:
-            wrapped_block = wrap_class(block[0])
-            self.blocks = [wrapped_block(in_channels, out_channels)]
-
-        elif downsample == "on-block":
-            wrapped_block = wrap_class(block[0])
-            self.blocks = [wrapped_block(in_channels, out_channels, stride=stride)]
-
-        else:
-            downsample = wrap_class(downsample)
-            wrapped_block = wrap_class(block[0])
-            self.blocks = [
-                downsample(in_channels, out_channels, stride=stride),
-                wrapped_block(out_channels, out_channels),
-            ]
-
-        for i in range(1, depth):
-            wrapped_block = wrap_class(block[i])
-            self.blocks.append(wrapped_block(out_channels, out_channels))
-
-        self.blocks = nn.Sequential(*self.blocks)
+        block = wrap_class(block)
+        downsample = nn.Identity if prod(as_tuple(stride)) == 1 else downsample
+        downsample = wrap_class(downsample)
+        self.downsample = downsample(in_channels, out_channels, stride=2)
+        self.block = block(out_channels, out_channels, depth=depth, **kwargs)
 
     def forward(self, x):
-        x = self.blocks(x)
-        return x
-
-
-def layer_iterator(depth_list):
-    for layer, depth in enumerate(depth_list):
-        for sublayer in range(depth):
-            yield layer, sublayer
+        out = self.downsample(x)
+        out = self.block(out)
+        return out
 
 
 class UNetEncoder(nn.Module):
@@ -296,41 +62,41 @@ class UNetEncoder(nn.Module):
     def __init__(
         self,
         in_channels,
+        out_channels=(32, 64, 128, 256, 512),
         depth=(1, 1, 1, 1, 1),
-        width=(32, 64, 128, 256, 512),
         strides=(1, 2, 2, 2, 2),
         downsample=None,
-        block=Same(PreActivationBlock),
+        block=Same(DoubleConv),
+        **kwargs,
     ):
         super().__init__()
-        self.blocks = nn.ModuleList(
-            [
-                UNetEncoderBlock(
-                    in_channels,
-                    width[0],
-                    depth[0],
-                    strides[0],
-                    downsample,
-                    {j: block[i, j] for i, j in layer_iterator(depth) if i == 0},
-                ),
-            ]
-        )
-        for i in range(len(width) - 1):
+        channels = [in_channels, *out_channels]
+        self.in_spatial_size = kwargs.get("spatial_size")
+        self.blocks = nn.ModuleList()
+        for i in range(len(out_channels)):
+            if "spatial_size" in kwargs:
+                kwargs["spatial_size"] = tuple(
+                    d // strides[i] for d in kwargs["spatial_size"]
+                )
+
             self.blocks.append(
                 UNetEncoderBlock(
-                    width[i],
-                    width[i + 1],
-                    depth[i + 1],
-                    strides[i + 1],
+                    channels[i],
+                    channels[i + 1],
+                    depth[i],
+                    strides[i],
                     downsample,
-                    {j: block[h, j] for h, j in layer_iterator(depth) if h == i + 1},
+                    block[i],
+                    **kwargs,
                 )
             )
 
+        self.out_spatial_size = kwargs.get("spatial_size")
+
     def forward(self, x):
         out = [self.blocks[0](x)]
-        for block in self.blocks[1:]:
-            out.append(block(out[-1]))
+        for blk in self.blocks[1:]:
+            out.append(blk(out[-1]))
 
         return out
 
@@ -345,25 +111,20 @@ class UNetDecoderBlock(nn.Module):
         depth=1,
         stride=2,
         upsample=(nn.ConvTranspose3d, {"kernel_size": 2}),
-        block=Same(PreActivationBlock),
+        block=UNetStage,
+        **kwargs,
     ):
         super().__init__()
         upsample = wrap_class(upsample)
+        block = wrap_class(block)
         self.upsample = upsample(in_channels, out_channels, stride=stride)
-
-        wrapped_block = wrap_class(block[0])
-        self.blocks = [wrapped_block(2 * out_channels, out_channels)]
-        for i in range(1, depth):
-            wrapped_block = wrap_class(block[i])
-            self.blocks.append(wrapped_block(out_channels, out_channels))
-
-        self.blocks = nn.Sequential(*self.blocks)
+        self.block = block(2 * out_channels, out_channels, depth=depth, **kwargs)
 
     def forward(self, x1, x2):
         x1 = self.upsample(x1)
-        x = torch.cat([x2, x1], dim=1)
-        x = self.blocks(x)
-        return x
+        out = torch.cat([x2, x1], dim=1)
+        out = self.block(out)
+        return out
 
 
 class UNetDecoder(nn.Module):
@@ -371,45 +132,41 @@ class UNetDecoder(nn.Module):
 
     def __init__(
         self,
-        in_channels,
+        in_channels=(512, 256, 128, 64, 32),
         depth=(1, 1, 1, 1),
-        width=(256, 128, 64, 32),
         strides=(2, 2, 2, 2),
         upsample=None,
-        block=Same(PreActivationBlock),
+        block=Same(DoubleConv),
+        **kwargs,
     ):
         super().__init__()
-        self.in_channels = in_channels
-        self.blocks = nn.ModuleList(
-            [
-                UNetDecoderBlock(
-                    in_channels,
-                    width[0],
-                    depth[0],
-                    strides[0],
-                    upsample,
-                    {j: block[i, j] for i, j in layer_iterator(depth) if i == 0},
+        self.in_spatial_size = kwargs.get("spatial_size")
+        self.blocks = nn.ModuleList()
+        for i in range(len(in_channels) - 1):
+            if "spatial_size" in kwargs:
+                kwargs["spatial_size"] = tuple(
+                    d * strides[i] for d in kwargs["spatial_size"]
                 )
-            ]
-        )
-        for i in range(len(width) - 1):
             self.blocks.append(
                 UNetDecoderBlock(
-                    width[i],
-                    width[i + 1],
-                    depth[i + 1],
-                    strides[i + 1],
+                    in_channels[i],
+                    in_channels[i + 1],
+                    depth[i],
+                    strides[i],
                     upsample,
-                    {j: block[h, j] for h, j in layer_iterator(depth) if h == i + 1},
+                    block[i],
+                    **kwargs,
                 )
             )
 
+        self.out_spatial_size = kwargs.get("spatial_size")
+
     def forward(self, x):
         out = x
-        for i, block in enumerate(self.blocks):
-            i0 = -1 - i
-            i1 = -2 - i
-            out[i1] = block(out[i0], out[i1])
+        for i, blk in enumerate(self.blocks):
+            i1 = -1 - i
+            i2 = -2 - i
+            out[i2] = blk(out[i1], out[i2])
 
         return out
 
@@ -421,8 +178,7 @@ class UNet(nn.Module):
         self,
         in_channels,
         out_channels,
-        spatial_dims=3,
-        stem_width=None,
+        spatial_size=None,
         encoder_depth=(1, 1, 1, 1, 1),
         encoder_width=(32, 64, 128, 256, 512),
         strides=(1, 2, 2, 2, 2),
@@ -433,19 +189,27 @@ class UNet(nn.Module):
         upsample=None,
         head=None,
         num_deep_supr=1,
+        **kwargs,
     ):
         super().__init__()
-        conv = getattr(nn, f"Conv{spatial_dims}d")
-        tconv = getattr(nn, f"ConvTranspose{spatial_dims}d")
-        if stem is None:
-            stem = (conv, {"kernel_size": 3, "padding": 1, "bias": False})
+        self.spatial_size = spatial_size
+        if spatial_size is not None:
+            spatial_dims = len(spatial_size)
+            conv = getattr(nn, f"Conv{spatial_dims}d")
+            tconv = getattr(nn, f"ConvTranspose{spatial_dims}d")
+
+        if stem in (None, nn.Identity):
+            stem = nn.Identity
+            stem_width = in_channels
+        else:
+            stem_width = encoder_width[0]
 
         if downsample is None:
             downsample = (conv, {"kernel_size": 2})
 
         if block is None:
             block = (
-                PreActivationBlock,
+                DoubleConv,
                 {"conv": (conv, {"kernel_size": 3, "padding": 1})},
             )
             block = Same(block)
@@ -459,32 +223,29 @@ class UNet(nn.Module):
         stem = wrap_class(stem)
         head = wrap_class(head)
 
-        if stem_width is None:
-            stem_width = encoder_width[0]
-
         self.stem = stem(in_channels, stem_width)
         self.encoder = UNetEncoder(
             stem_width,
-            encoder_depth,
             encoder_width,
+            encoder_depth,
             strides,
             downsample,
-            block,
+            [block[i] for i in range(len(encoder_depth))],
+            spatial_size=spatial_size,
+            **kwargs,
         )
         self.decoder = UNetDecoder(
-            encoder_width[-1],
+            encoder_width[::-1],
             decoder_depth,
-            encoder_width[-2::-1],
-            strides[:0:-1],
+            strides[::-1][: len(decoder_depth)],
             upsample,
-            {
-                (i, j): block[i + len(encoder_depth), j]
-                for i, j in layer_iterator(decoder_depth)
-            },
+            [block[i + len(encoder_depth)] for i in range(len(decoder_depth))],
+            spatial_size=self.encoder.out_spatial_size,
+            **kwargs,
         )
 
         self.num_deep_supr = num_deep_supr
-        self.heads = nn.ModuleList([])
+        self.heads = nn.ModuleList()
         for j in range(num_deep_supr):
             self.heads.append(head(encoder_width[j], out_channels))
 

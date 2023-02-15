@@ -1,3 +1,4 @@
+from typing import Any, Dict, Optional, Sequence, Tuple
 import math
 
 import torch
@@ -5,7 +6,7 @@ from torch import nn
 
 from ..utils.helpers import wrap_class, null_context
 from .operations import t, relative_error
-from ..tensor_network import SingleTensor
+from ..tensor_network import TensorNetwork, SingleTensor
 
 
 class MF(nn.Module):
@@ -17,22 +18,20 @@ class MF(nn.Module):
 
     def __init__(
         self,
-        size,
-        rank=None,
-        compression=10,
-        num_iters=5,
-        num_grad_steps=None,
-        init=None,
-        solver=None,
-        verbose=False,
+        size: Sequence[int],
+        init: Any,
+        solver: Any,
+        rank: Optional[int] = None,
+        compression: float = 10,
+        num_iters: int = 5,
+        num_grad_steps: Optional[int] = None,
+        verbose: bool = False,
         **kwargs,
-    ):
+    ) -> None:
         super().__init__()
         self.size = M, N = size
         self.num_iters = num_iters
-        self.num_grad_steps = (
-            num_iters if num_grad_steps is None else num_grad_steps
-        )
+        self.num_grad_steps = num_iters if num_grad_steps is None else num_grad_steps
 
         assert (rank, compression) != (
             None,
@@ -45,9 +44,7 @@ class MF(nn.Module):
         df_lowrank = M + N
 
         if rank is None:
-            self.rank = rank = max(
-                math.ceil(df_input / (compression * df_lowrank)), 1
-            )
+            self.rank = rank = max(math.ceil(df_input / (compression * df_lowrank)), 1)
         else:
             self.rank = rank
 
@@ -73,7 +70,7 @@ class MF(nn.Module):
 
         self.verbose = verbose
 
-    def context(self, it):
+    def context(self, it: int) -> Any:
         # get context at each iteration it
         if it < self.num_iters - self.num_grad_steps + 1:
             context = torch.no_grad()
@@ -82,7 +79,9 @@ class MF(nn.Module):
 
         return context
 
-    def decompose(self, x, *args, **kwargs):
+    def decompose(
+        self, x: torch.Tensor, *args, **kwargs
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         # x: B × M × N
 
         # initialize
@@ -100,13 +99,19 @@ class MF(nn.Module):
 
         return u, v
 
-    def reconstruct(self, u, v):
+    def reconstruct(self, u: torch.Tensor, v: torch.Tensor) -> torch.Tensor:
         return u @ t(v)
 
-    def loss(self, x, u, v, w=None):
+    def loss(
+        self,
+        x: torch.Tensor,
+        u: torch.Tensor,
+        v: torch.Tensor,
+        w: Optional[torch.Tensor] = None,
+    ) -> torch.Tensor:
         return relative_error(x, self.reconstruct(u, v), w)
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         u, v = self.decompose(x)
         return self.reconstruct(u, v)
 
@@ -120,22 +125,20 @@ class TF(nn.Module):
 
     def __init__(
         self,
-        tensor_network,
-        num_iters=5,
-        num_grad_steps=None,
-        trainable_dims=(),
-        init=None,
-        solver=None,
-        contract_params=None,
-        verbose=False,
+        tensor_network: TensorNetwork,
+        init: Any,
+        solver: Any,
+        num_iters: int = 5,
+        num_grad_steps: Optional[int] = None,
+        trainable_dims: Sequence = (),
+        contract_params: Optional[Dict[str, Any]] = None,
+        verbose: bool = False,
         **kwargs,
-    ):
+    ) -> None:
         super().__init__()
         self.tensor_network = tensor_network
         self.num_iters = num_iters
-        self.num_grad_steps = (
-            num_iters if num_grad_steps is None else num_grad_steps
-        )
+        self.num_grad_steps = num_iters if num_grad_steps is None else num_grad_steps
 
         # set factors initializer
         init = wrap_class(init)
@@ -186,9 +189,7 @@ class TF(nn.Module):
         self.flops["init"] = getattr(self.init, "flops", None)
         # decomposition flops
         self.flops["decompose"] = (
-            num_iters * self.solver.flops
-            if hasattr(self.solver, "flops")
-            else None
+            num_iters * self.solver.flops if hasattr(self.solver, "flops") else None
         )
         # reconstruction flops
         self.flops["reconstruct"] = self.forward_info.opt_cost
@@ -196,7 +197,7 @@ class TF(nn.Module):
         self.compression = self.tensor_network.compression
         self.verbose = verbose
 
-    def context(self, it):
+    def context(self, it: int) -> Any:
         # get context at each iteration it
         if it < self.num_iters - self.num_grad_steps + 1:
             context = torch.no_grad()
@@ -205,7 +206,7 @@ class TF(nn.Module):
 
         return context
 
-    def decompose(self, x):
+    def decompose(self, x: torch.Tensor) -> Dict[str, torch.Tensor]:
         # x: B × N1 × N2 × ... × Np
 
         # initialize
@@ -223,14 +224,13 @@ class TF(nn.Module):
 
         return factors
 
-    def reconstruct(self, factors):
+    def reconstruct(self, factors: Dict[str, torch.Tensor]) -> torch.Tensor:
         return self.reconstruct_expr(factors)
 
-    def loss(self, x, factors):
+    def loss(self, x: torch.Tensor, factors: Dict[str, torch.Tensor]) -> torch.Tensor:
         return relative_error(x, self.reconstruct(factors))
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         factors = self.decompose(x)
         tensors = {**factors, **dict(self.named_parameters())}
         return self.forward_expr(tensors)
-

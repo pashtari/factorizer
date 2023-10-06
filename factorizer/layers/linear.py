@@ -2,7 +2,7 @@ from torch import nn
 
 
 class Linear(nn.Module):
-    """ "Linear layer for channels-first inputs."""
+    """Linear layer for channels first inputs."""
 
     def __init__(
         self,

@@ -1,3 +1,5 @@
+from typing import Sequence
+
 import torch
 from torch import nn
 
@@ -74,7 +76,7 @@ class UNetEncoder(nn.Module):
         self.in_spatial_size = kwargs.get("spatial_size")
         self.blocks = nn.ModuleList()
         for i in range(len(out_channels)):
-            if "spatial_size" in kwargs:
+            if isinstance(kwargs.get("spatial_size"), Sequence):
                 kwargs["spatial_size"] = tuple(
                     d // strides[i] for d in kwargs["spatial_size"]
                 )
@@ -143,7 +145,7 @@ class UNetDecoder(nn.Module):
         self.in_spatial_size = kwargs.get("spatial_size")
         self.blocks = nn.ModuleList()
         for i in range(len(in_channels) - 1):
-            if "spatial_size" in kwargs:
+            if isinstance(kwargs.get("spatial_size"), Sequence):
                 kwargs["spatial_size"] = tuple(
                     d * strides[i] for d in kwargs["spatial_size"]
                 )

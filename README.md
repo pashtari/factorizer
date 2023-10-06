@@ -5,12 +5,13 @@ This repo is the official implementation of ["Factorizer: A Scalable Interpretab
 
 ## Introduction
 
-**Factorizer** leverages the power of low-rank matrix approximation to construct end-to-end deep models for medical image segmentation. Built upon differentiable matrix factorization layers and matricize operations, Factorizers with U-Shaped architectures can compete favorably with CNN and Transformer baselines in terms of accuracy, scalability, and interpretability. The methods and results for the task of brain tumor segmentation are presented in detail in the [paper](https://arxiv.org/abs/2202.12295).
+**Factorizer** leverages the power of low-rank matrix approximation to construct end-to-end deep models for medical image segmentation. Built upon differentiable matrix factorization layers and matricize operations, Factorizers with U-Shaped architectures can compete favorably with CNN and Transformer baselines in terms of accuracy, scalability, and interpretability. Details on the methods and results for brain tumor segmentation and stroke lesion segmentation can be found in our [paper](https://doi.org/10.1016/j.media.2022.102706).
 
 ![teaser](figures/graphical_abstract.png)
 
 
 ## Installation
+
 First make sure that you have already installed [PyTorch](https://pytorch.org/get-started/locally/) since the details on how to do this depend on whether you have a CPU, GPU, etc. Then, for installing the Factotizer package, do this:
 
 ```bash
@@ -101,7 +102,6 @@ y = factorizer_block(x) # (1, 32, 128, 128, 128)
 ```
 
 **Swin Factorizer Stage Block**
-
 A stack of multiple Swin Factorizer blocks followed by a positional embedding layer, which can be used at each stage of a network after downsampling layers.
 
 ```python

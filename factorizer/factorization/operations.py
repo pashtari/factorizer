@@ -1,9 +1,10 @@
-from typing import Union, Optional, Sequence
+from typing import Dict, Union, Optional, Sequence
+import re
+from functools import reduce
 
 import torch
 from torch import nn
 from torch.nn.modules.utils import _ntuple
-import einops
 from einops.layers.torch import Rearrange
 import opt_einsum as oe
 
@@ -90,22 +91,69 @@ class Reshape(nn.Module):
             self.right = right = right.rstrip().lstrip()
             self.rearrange = Rearrange(equation, **kwargs)
 
-            input_size_ = tuple(s if s else 0 for s in input_size)
-            recipe = einops.einops._reconstruct_from_shape_uncached(
-                self.rearrange.recipe(), input_size_
-            )
-            expr = einops.parsing.ParsedExpression(left)
-            axes = expr.flat_axes_order()
-            self.axes_lengths = {a: r for a, r in zip(axes, recipe[0]) if r}
-            self.output_size = tuple(s if s else None for s in recipe[-1])
+            self.dim_lengths = self.infer_dims(self.left, input_size, kwargs)
+            self.output_size = self.compute_size(self.right, self.dim_lengths)
 
             self.equation_inv = equation_inv = " -> ".join([right, left])
-            self.rearrange_inv = Rearrange(equation_inv, **self.axes_lengths)
+            self.rearrange_inv = Rearrange(equation_inv, **self.dim_lengths)
 
         if shifts is not None:
             self.shifts = shifts
             self.shifts_inv = tuple(-s for s in self.shifts)
             self.dims = dims
+
+    @staticmethod
+    def infer_dims(
+        pattern: str, size: Sequence[Union[int, None]], dim_lengths: Dict[str, int]
+    ) -> Dict[str, Union[int, None]]:
+        # Extract all dimension groups from the pattern
+        groups = re.findall(r"\(([^)]+)\)|(\w+)", pattern)
+
+        inferred_dims = {}
+        for group, s in zip(groups, size):
+            # Flatten the group to a list of dimensions
+            dims = group[0].split() if group[0] else [group[1]]
+
+            # If size is None or not all dimensions are known, add only known dimensions to the result
+            if s is None or len([d for d in dims if d in dim_lengths]) < len(dims) - 1:
+                for d in dims:
+                    if d in dim_lengths:
+                        inferred_dims[d] = dim_lengths[d]
+                continue
+
+            # Calculate the product of known dimensions
+            known_product = reduce(
+                lambda x, y: x * y, (dim_lengths[d] for d in dims if d in dim_lengths), 1
+            )
+
+            # Infer the remaining dimension if possible
+            unknown_dim = s // known_product
+            for d in dims:
+                inferred_dims[d] = dim_lengths.get(d, unknown_dim)
+
+        return inferred_dims
+
+    @staticmethod
+    def compute_size(
+        pattern: str, dim_lengths: Dict[str, int]
+    ) -> Sequence[Union[int, None]]:
+        # Extract all dimension groups from the pattern
+        groups = re.findall(r"\(([^)]+)\)|(\w+)", pattern)
+
+        sizes = []
+        for group in groups:
+            # Flatten the group to a list of dimensions
+            dims = group[0].split() if group[0] else [group[1]]
+
+            # If any dimension in the group is missing from dim_lengths, append None to sizes
+            if any(d not in dim_lengths for d in dims):
+                sizes.append(None)
+            else:
+                # Calculate the product of the dimensions and append to sizes
+                group_size = reduce(lambda x, y: x * y, (dim_lengths[d] for d in dims))
+                sizes.append(group_size)
+
+        return tuple(sizes)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         if hasattr(self, "shifts"):

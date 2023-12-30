@@ -179,9 +179,9 @@ class SegmentationFactorizer(UNet):
     ):
         num_encoder_stages = len(encoder_depth)
         num_decoder_stages = len(decoder_depth)
-        encoder_block = (num_encoder_stages - 1) * [FactorizerStage]
-        bottleneck_block = [(FactorizerStage, {"pos_embed": pos_embed})]
-        encoder_block = num_decoder_stages * [FactorizerStage]
+        encoder_block = (num_encoder_stages - 1) * [(FactorizerStage, kwargs)]
+        bottleneck_block = [(FactorizerStage, {"pos_embed": pos_embed, **kwargs})]
+        encoder_block = num_decoder_stages * [(FactorizerStage, kwargs)]
         block = encoder_block + bottleneck_block + encoder_block
         super().__init__(
             in_channels,

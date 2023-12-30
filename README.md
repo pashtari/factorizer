@@ -1,6 +1,6 @@
 <img src=figures/logo.png width="400">
 
-This repo is the official implementation of ["Factorizer: A Scalable Interpretable Approach to Context Modeling for Medical Image Segmentation"](https://arxiv.org/abs/2202.12295).
+This repo is the official implementation of ["Factorizer: A Scalable Interpretable Approach to Context Modeling for Medical Image Segmentation"](https://doi.org/10.1016/j.media.2022.102706).
 
 
 ## Introduction
@@ -102,6 +102,7 @@ y = factorizer_block(x) # (1, 32, 128, 128, 128)
 ```
 
 **Swin Factorizer Stage Block**
+
 A stack of multiple Swin Factorizer blocks followed by a positional embedding layer, which can be used at each stage of a network after downsampling layers.
 
 ```python
@@ -185,13 +186,17 @@ This repository is released under the Apache 2.0 license as found in the [LICENS
 If you use this code for a paper, please cite:
 
 ```
-@article{ashtari2022factorizer,
-      title={Factorizer: A Scalable Interpretable Approach to Context Modeling for Medical Image Segmentation}, 
-      author={Pooya Ashtari and Diana Sima and Lieven De Lathauwer and Dominique Sappey-Marinierd and Frederik Maes and Sabine Van Huffel},
-      year={2022},
-      eprint={2202.12295},
-      archivePrefix={arXiv},
-      primaryClass={eess.IV}
+@article{ashtari2023factorizer,
+  title     = {Factorizer: A scalable interpretable approach to context modeling for medical image segmentation},
+  author    = {Ashtari, Pooya and Sima, Diana M and De Lathauwer, Lieven and Sappey-Marinier, Dominique and Maes, Frederik and Van Huffel, Sabine},
+  journal   = {Medical image analysis},
+  publisher = {Elsevier},
+  year      = {2023},
+  issn      = {1361-8415},
+  doi       = {https://doi.org/10.1016/j.media.2022.102706},
+  pages     = {102706},
+  volume    = {84},
+
 }
 ```
 

@@ -181,8 +181,8 @@ class SegmentationFactorizer(UNet):
         num_decoder_stages = len(decoder_depth)
         encoder_block = (num_encoder_stages - 1) * [(FactorizerStage, kwargs)]
         bottleneck_block = [(FactorizerStage, {"pos_embed": pos_embed, **kwargs})]
-        encoder_block = num_decoder_stages * [(FactorizerStage, kwargs)]
-        block = encoder_block + bottleneck_block + encoder_block
+        decoder_block = num_decoder_stages * [(FactorizerStage, kwargs)]
+        block = encoder_block + bottleneck_block + decoder_block
         super().__init__(
             in_channels,
             out_channels,

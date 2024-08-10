@@ -90,7 +90,7 @@ class SVDInit(nn.Module):
         self.svd = SVD(size=size, rank=rank)
         self.flops = self.svd.flops["decompose"] + R + 2 * M * R + 2 * N * R
 
-    def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         u, s, v = self.svd.decompose(x)
         s = torch.sqrt(s)  # FLOPS = R
         u = torch.einsum("bir, br -> bir", u, s)  # FLOPS = 2MR
@@ -801,7 +801,7 @@ class EKM(MF):
 
 
 class SVD(nn.Module):
-    """Singular Value Dcomposition."""
+    """Singular Value Decomposition."""
 
     def __init__(
         self,

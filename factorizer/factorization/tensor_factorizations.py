@@ -54,19 +54,19 @@ class RandomTensorInit(nn.Module):
         return factors
 
 
-class MLSVDInit(nn.Module):
+class HOSVDInit(nn.Module):
     def __init__(self, tensor_network: TensorNetwork, nonnegative: bool = False) -> None:
         super().__init__()
         self.tensor_network = tensor_network
         self.nonnegative = nonnegative
 
-        # init MLSVD
-        self.mlsvd = MLSVD(tensor_network.size, rank=tensor_network.rank)
+        # init HOSVD
+        self.hosvd = HOSVD(tensor_network.size, rank=tensor_network.rank)
 
-        self.flops = self.mlsvd.flops["decompose"]
+        self.flops = self.hosvd.flops["decompose"]
 
     def forward(self, x: torch.Tensor) -> Dict[str, torch.Tensor]:
-        factors = self.mlsvd.decompose(x)
+        factors = self.hosvd.decompose(x)
         for k in self.tensor_network.nodes:
             if self.nonnegative:
                 factors[k] = torch.relu(factors[k])
@@ -195,8 +195,8 @@ class CPMultiplicativeUpdate(GeneralizedMultiplicativeUpdate):
 ###################################
 
 
-class MLSVD(TF):
-    """Multilinear Singular Value Decomposition.
+class HOSVD(TF):
+    """Higher-Order Singular Value Decomposition (HOSVD).
 
     X ≈ (G; U1, ..., UM)
     """
@@ -381,7 +381,7 @@ class NTD(TF):
         num_iters: int = 5,
         num_grad_steps: Optional[int] = None,
         trainable_dims: Sequence[int] = (),
-        init: Union[str, Any] = "nnmlsvd",
+        init: Union[str, Any] = "nnhosvd",
         solver: Union[str, Any] = "mu",
         contract_params: Optional[Dict[str, Any]] = None,
         verbose: bool = False,
@@ -391,8 +391,8 @@ class NTD(TF):
 
         if f"{init}_" in dir(nn.init):
             init = (RandomTensorInit, {"method": init})
-        elif init == "nnmlsvd":
-            init = (MLSVDInit, {"nonnegative": True})
+        elif init == "nnhosvd":
+            init = (HOSVDInit, {"nonnegative": True})
 
         if solver == "mu":
             solver = (

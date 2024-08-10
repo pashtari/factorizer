@@ -60,17 +60,8 @@ class FactorizerSubblock(nn.Module):
         # apply activation function
         out = self.act(out)
 
-        # # save the size
-        # shape = out.shape
-
-        # # remove singleton dims (squeeze)
-        # out = out.reshape(*shape[:2], *self.tensorized_size)
-
         # matrix or tensor factorization
         out = self.factorize(out)
-
-        # # back to the original size (unsqueeze)
-        # out = out.reshape(shape)
 
         # detensorize (unfold/fold)
         out = self.tensorize.inverse_forward(out)

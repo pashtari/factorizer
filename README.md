@@ -12,7 +12,7 @@ This repo is the official implementation of ["Factorizer: A Scalable Interpretab
 
 ## Installation
 
-First make sure that you have already installed [PyTorch](https://pytorch.org/get-started/locally/) since the details on how to do this depend on whether you have a CPU, GPU, etc. Then, for installing the Factotizer package, do this:
+First make sure that you have already installed [PyTorch](https://pytorch.org/get-started/locally/) since the details on how to do this depend on whether you have a CPU, GPU, etc. Then, to install the Factotizer package, do this:
 
 ```bash
 $ pip install git+https://github.com/pashtari/factorizer.git

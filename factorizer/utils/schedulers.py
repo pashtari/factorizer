@@ -1,35 +1,36 @@
 import math
 
 from torch.optim import Optimizer
-from torch.optim.lr_scheduler import LambdaLR
+from torch.optim.lr_scheduler import LRScheduler
 
 
-class WarmupCosineSchedule(LambdaLR):
-    """Linear warmup and then cosine decay.
-    Linearly increases learning rate from 0 to 1 over `warmup_steps` training steps.
-    Decreases learning rate from 1. to 0. over remaining steps.
-    """
-
+class WarmupCosineAnnealingLR(LRScheduler):
     def __init__(
         self,
         optimizer: Optimizer,
         warmup_steps: int,
-        total_steps: int,
+        max_steps: int,
+        lr_min: float = 0,
         last_step: int = -1,
-    ) -> None:
-
+    ):
         self.warmup_steps = warmup_steps
-        self.total_steps = total_steps
-        super(WarmupCosineSchedule, self).__init__(
-            optimizer, self.lr_lambda, last_epoch=last_step
-        )
+        self.max_steps = max_steps
+        self.lr_min = lr_min
+        super(WarmupCosineAnnealingLR, self).__init__(optimizer, last_step)
 
-    def lr_lambda(self, step: int) -> float:
-        if step < self.warmup_steps:
-            factor = step / self.warmup_steps
+    def get_lr(self):
+        if self.last_epoch < self.warmup_steps:
+            # Linear warmup
+            slope = self.last_epoch / self.warmup_steps
+            return [
+                self.lr_min + slope * (base_lr - self.lr_min) for base_lr in self.base_lrs
+            ]
         else:
-            progress = step - self.warmup_steps  # progress after warmup
-            w = math.pi / (self.total_steps - self.warmup_steps)  # frequency
-            factor = 0.5 * (1.0 + math.cos(w * progress))
-
-        return factor
+            # Cosine annealing
+            completed_steps = self.last_epoch - self.warmup_steps
+            annealing_steps = self.max_steps - self.warmup_steps
+            cosine_term = (1 + math.cos(math.pi * completed_steps / annealing_steps)) / 2
+            return [
+                self.lr_min + cosine_term * (base_lr - self.lr_min)
+                for base_lr in self.base_lrs
+            ]

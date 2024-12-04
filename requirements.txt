@@ -1,0 +1,7 @@
+einops==0.8.0
+networkx==3.3
+opt_einsum==3.3.0
+plotly==5.21.0
+sympy==1.12
+torch==2.2.2
+torchvision==0.17.0

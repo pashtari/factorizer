@@ -1,75 +1,98 @@
-from typing import Dict, Union, Optional, Sequence
+from typing import Optional, Sequence
 import re
 from functools import reduce
 
 import torch
+from torch import Tensor
 from torch import nn
 from torch.nn.modules.utils import _ntuple
 from einops.layers.torch import Rearrange
-import opt_einsum as oe
 
 
-def t(x: torch.Tensor) -> torch.Tensor:
-    """Transpose a tensor, i.e. "b i j -> b j i"."""
-    return x.transpose(-2, -1)
+def dot(x: Tensor, y: Tensor) -> Tensor:
+    """
+    Computes the batched dot product of two tensors.
+
+    It performs a dot product of `x` and `y` over the last two dimensions, contracting these two dimensions
+    two dimensions into a single scalar dimension for each batch.
+
+    Args:
+        x (Tensor): The first input tensor with shape `(..., M, N)`, where `...` represents any
+            number of leading batch dimensions.
+        y (Tensor): The second input tensor with the same shape as `x`.
+
+    Returns:
+        Tensor: A tensor of shape `(..., 1)`, containing the computed dot products as
+            scalars in last singleton dimension.
+    """
+    return torch.einsum("...mn,...mn->...", x, y).unsqueeze(-1)
 
 
-def dot(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
-    out = (x * y).flatten(-2).sum(-1, keepdim=True)
-    return out
+def norm2(x: Tensor, w: Optional[Tensor] = None) -> Tensor:
+    """
+    Computes the batched L2 (Euclidean) norm of a tensor.
 
+    If `w` is provided, the weighted L2 norm is used instead.
 
-def norm2(x: torch.Tensor, w: Optional[torch.Tensor] = None) -> torch.Tensor:
-    w = torch.ones_like(x) if w is None else w
-    x = x.flatten(1)
-    w = w.flatten(1)
-    out = torch.sum(w * (x**2), dim=1).sqrt()
-    return out
+    Args:
+        x (Tensor): The input tensor with shape `(B, ...)`, where `B` is the batch size.
+        w (Tensor, optional): An optional weight tensor with the same shape as `x`. Defaults to None.
 
+    Returns:
+        Tensor: A vector of length `B`, containing the weighted L2 norms.
+    """
+    y = x.flatten(1).square()
 
-def error(
-    x: torch.Tensor, y: torch.Tensor, w: Optional[torch.Tensor] = None
-) -> torch.Tensor:
-    return norm2(x - y, w)
+    if w is not None:
+        w = w.flatten(1)
+        y *= w
+
+    return torch.sqrt(torch.sum(y, dim=1))
 
 
 def relative_error(
-    x: torch.Tensor, y: torch.Tensor, w: Optional[torch.Tensor] = None, eps: float = 1e-16
-) -> torch.Tensor:
-    numerator = norm2(x - y, w)
-    denominator = norm2(x, w)
-    return numerator / (denominator + eps)
+    x: Tensor,
+    y: Tensor,
+    w: Optional[Tensor] = None,
+    eps: float = 1e-16,
+) -> Tensor:
+    """
+    Computes the batched relative error between two tensors.
 
+    The relative error is computed as the ratio of the L2 norm of the difference between `x` and `y` to the L2 norm of `x`.
+    If `w` is provided, the weighted L2 norm is used instead.
 
-def cp(factor_matrices: Sequence[torch.Tensor]) -> torch.Tensor:
-    args = []
-    legs = ["b"]
-    for m, u in enumerate(factor_matrices):
-        args.append(u)
-        args.append(["b", f"i{m}", "r"])
-        legs.append(f"i{m}")
+    Args:
+        x (Tensor): The first input tensor with shape `(B, ...)`, where `B` is the batch size.
+        y (Tensor): The second input tensor with the same shape as `x`.
+        w (Tensor, optional): An optional weight tensor with the same shape as `x`. Defaults to None.
+        eps (float, optional): A small value to avoid division by zero. Defaults to 1e-16.
 
-    args.append(legs)
-    out = oe.contract(*args)
-    return out
-
-
-def khatri_rao(factor_matrices: Sequence[torch.Tensor]) -> torch.Tensor:
-    args = []
-    legs = ["b"]
-    for m, u in enumerate(factor_matrices):
-        args.append(u)
-        args.append(["b", f"i{m}", "r"])
-        legs.append(f"i{m}")
-
-    legs.append("r")
-    args.append(legs)
-    out = oe.contract(*args)
-    out = torch.flatten(out, start_dim=1, end_dim=-2)
-    return out
+    Returns:
+        Tensor: A vector of length `B`, containing the computed relative errors.
+    """
+    numerator = norm2(x - y, w) + eps
+    denominator = norm2(x, w) + eps
+    return numerator / denominator
 
 
 class Reshape(nn.Module):
+    """A PyTorch module for reshaping tensors using einops-style notation.
+
+    This class provides a flexible way to reshape tensors using einstein notation-style
+    equations, with support for bidirectional transformations (forward and inverse).
+    It also supports cyclic shifting of tensor dimensions, useful for the shifted window approach.
+
+    Args:
+        input_size (Sequence[int]): The expected size of the input tensor.
+        equation (str, optional): An einops-style equation describing the reshape
+            operation (e.g., "b c h w -> b (c h) w"). If None, acts as identity.
+        shifts (Sequence[int], optional): The number of positions to cyclically
+            shift along each dimension.
+        dims (Sequence[int], optional): The dimensions along which to apply shifts.
+        **kwargs: Additional dimension specifications for the einops equation.
+    """
+
     def __init__(
         self,
         input_size: Sequence[int],
@@ -104,8 +127,18 @@ class Reshape(nn.Module):
 
     @staticmethod
     def infer_dims(
-        pattern: str, size: Sequence[Union[int, None]], dim_lengths: Dict[str, int]
-    ) -> Dict[str, Union[int, None]]:
+        pattern: str, size: Sequence[int | None], dim_lengths: dict[str, int]
+    ) -> dict[str, int | None]:
+        """Infers dimension sizes from the pattern and input size.
+
+        Args:
+            pattern (str): The einops pattern string.
+            size (Sequence[int | None]): The input tensor size.
+            dim_lengths (dict[str, int]): Known dimension lengths.
+
+        Returns:
+            dict[str, int | None]: Mapping of dimension names to their sizes.
+        """
         # Extract all dimension groups from the pattern
         groups = re.findall(r"\(([^)]+)\)|(\w+)", pattern)
 
@@ -134,9 +167,16 @@ class Reshape(nn.Module):
         return inferred_dims
 
     @staticmethod
-    def compute_size(
-        pattern: str, dim_lengths: Dict[str, int]
-    ) -> Sequence[Union[int, None]]:
+    def compute_size(pattern: str, dim_lengths: dict[str, int]) -> Sequence[int | None]:
+        """Computes output tensor size from pattern and dimension lengths.
+
+        Args:
+            pattern (str): The einops pattern string.
+            dim_lengths (dict[str, int]): Known dimension lengths.
+
+        Returns:
+            Sequence[int | None]: The computed output size.
+        """
         # Extract all dimension groups from the pattern
         groups = re.findall(r"\(([^)]+)\)|(\w+)", pattern)
 
@@ -155,14 +195,16 @@ class Reshape(nn.Module):
 
         return tuple(sizes)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: Tensor) -> Tensor:
+        """Applies the forward transformation to the input tensor."""
         if hasattr(self, "shifts"):
             x = torch.roll(x, self.shifts, self.dims)
 
         out = self.rearrange(x)
         return out
 
-    def inverse_forward(self, x: torch.Tensor) -> torch.Tensor:
+    def inverse_forward(self, x: Tensor) -> Tensor:
+        """Applies the inverse transformation to the input tensor."""
         out = self.rearrange_inv(x)
         if hasattr(self, "shifts"):
             out = torch.roll(out, self.shifts_inv, self.dims)
@@ -171,16 +213,29 @@ class Reshape(nn.Module):
 
 
 class Matricize(Reshape):
-    """Matricize, e.g. 'b (c1 c2) (h1 h2) (w1 w2) -> (b c1) (h1 w1) c2 (h2 w2)'."""
+    """A module for matricizing tensors.
+
+    This class transforms tensors into a batch of matrices suitable for use with
+    matrix factorization layers, with support for head dimensions, spatial partitioning,
+    and optional tensor shifts.
+
+    Args:
+        input_size (Sequence[int]): The expected size of the input tensor.
+        num_heads (int, optional): Number of heads (channel groups). Either this or
+            `head_dim` must be specified.
+        head_dim (int, optional): Dimension size per head. Either this or
+            `num_heads` must be specified.
+        **kwargs: Additional keyword arguments for the `Reshape` module.
+    """
 
     def __init__(
         self,
         input_size: Sequence[int],
         num_heads: Optional[int] = None,
         head_dim: Optional[int] = None,
-        grid_size: Union[int, Sequence[int], None] = None,
-        patch_size: Union[int, Sequence[int], None] = None,
-        shifts: Union[int, Sequence[int], None] = None,
+        grid_size: Optional[int | Sequence[int]] = None,
+        patch_size: Optional[int | Sequence[int]] = None,
+        shifts: Optional[int | Sequence[int]] = None,
         **kwargs,
     ) -> None:
         assert (num_heads, head_dim) != (
@@ -233,16 +288,39 @@ class Matricize(Reshape):
 
 
 class SWMatricize(nn.Module):
+    """
+    A module for shifted window matricization of tensors.
+
+    This module applies multiple matricize operations with different shifts to the input
+    and concatenates the results.
+
+    Args:
+        input_size (Sequence[int]): The expected size of the input tensor.
+        num_heads (int, optional): Number of heads (channel groups). Either this or
+            `head_dim` must be specified.
+        head_dim (int, optional): Dimension size per head. Either this or
+            `num_heads` must be specified.
+        grid_size (int | Sequence[int], optional): Size of the spatial grid.
+        patch_size (int | Sequence[int], optional): Size of patches to extract.
+        shifts (Sequence[None | int | Sequence[int]], optional): Positions to shift the tensor.
+        **kwargs: Additional keyword arguments for the `Matricize` module.
+
+    Note:
+        Either num_heads or head_dim must be specified.
+        Either grid_size or patch_size must be specified.
+    """
+
     def __init__(
         self,
         input_size: Sequence[int],
         num_heads: Optional[int] = None,
         head_dim: Optional[int] = None,
-        grid_size: Optional[Sequence[int]] = None,
-        patch_size: Optional[Sequence[int]] = None,
-        shifts: Optional[Sequence[Union[Sequence[int], None]]] = None,
+        grid_size: Optional[int | Sequence[int]] = None,
+        patch_size: Optional[int | Sequence[int]] = None,
+        shifts: Optional[Sequence[None | int | Sequence[int]]] = None,
         **kwargs,
     ) -> None:
+
         super().__init__()
         spatial_dim = len(input_size) - 2
         to_ntuple = _ntuple(spatial_dim)
@@ -268,135 +346,16 @@ class SWMatricize(nn.Module):
         self.shifted_windows = nn.ModuleList(shifted_windows)
         self.output_size = self.shifted_windows[0].output_size
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: Tensor) -> Tensor:
         out = []
         for shifted_window in self.shifted_windows:
             out.append(shifted_window(x))
         return torch.cat(out)
 
-    def inverse_forward(self, x: torch.Tensor) -> torch.Tensor:
+    def inverse_forward(self, x: Tensor) -> Tensor:
         b = x.shape[0]
         num_shifts = len(self.shifted_windows)
         out = 0.0
-        for j in range(num_shifts):
-            slc = slice(j * (b // num_shifts), (j + 1) * (b // num_shifts))
-            z = x[None, slc, ...][0]
-            # instead of z = x[slc, ...] in order to make it work in case of MetaTensor
-            out = out + self.shifted_windows[j].inverse_forward(z)
-
-        out = out / num_shifts
-        return out
-
-
-class Tensorize(Reshape):
-    """Tensorize, e.g. 'b (c1 c2) (h1 h2) (w1 w2) -> (b c1) (h1 w1) c2 h2 w2'."""
-
-    def __init__(
-        self,
-        input_size: Sequence[int],
-        num_heads: Optional[int] = None,
-        head_dim: Optional[int] = None,
-        grid_size: Optional[Sequence[int]] = None,
-        patch_size: Optional[Sequence[int]] = None,
-        shifts: Optional[Sequence[int]] = None,
-        **kwargs,
-    ) -> None:
-        assert (num_heads, head_dim) != (
-            None,
-            None,
-        ), "'num_heads' or 'head_dim' must be specified."
-        assert (grid_size, patch_size) != (
-            None,
-            None,
-        ), "'grid_size' or 'kernel_size' must be specified."
-
-        spatial_dim = len(input_size) - 2
-        to_ntuple = _ntuple(spatial_dim)
-
-        left = f'b (h d) {" ".join([f"(g{i} p{i})" for i in range(spatial_dim)])}'
-        right = "(b h) "
-        right = f'({" ".join([f"g{i}" for i in range(spatial_dim)])}) '
-        right += f'd {" ".join([f"p{i}" for i in range(spatial_dim)])}'
-        equation = f"{left} -> {right}"
-
-        dims_lengths = {}
-        if num_heads is not None:
-            dims_lengths["h"] = max(num_heads, 1)
-
-        if head_dim is not None:
-            dims_lengths["d"] = max(head_dim, 1)
-
-        for j, g in enumerate(to_ntuple(grid_size)):
-            if g is not None:
-                dims_lengths[f"g{j}"] = max(g, 1)
-
-        for j, p in enumerate(to_ntuple(patch_size)):
-            if p is not None:
-                dims_lengths[f"p{j}"] = max(p, 1)
-
-        if shifts is not None:
-            dims = tuple(j + 2 for j in range(spatial_dim))
-            shifts = to_ntuple(shifts)
-        else:
-            dims = None
-
-        super().__init__(
-            input_size,
-            equation=equation,
-            shifts=shifts,
-            dims=dims,
-            **dims_lengths,
-            **kwargs,
-        )
-
-
-class SWTensorize(nn.Module):
-    def __init__(
-        self,
-        input_size: Sequence[int],
-        num_heads: Optional[int] = None,
-        head_dim: Optional[int] = None,
-        grid_size: Optional[Sequence[int]] = None,
-        patch_size: Optional[Sequence[int]] = None,
-        shifts: Optional[Sequence[int]] = None,
-        **kwargs,
-    ) -> None:
-        super().__init__()
-        spatial_dim = len(input_size) - 2
-        to_ntuple = _ntuple(spatial_dim)
-        patch_size = to_ntuple(patch_size)
-        grid_size = to_ntuple(grid_size)
-        if shifts is None:
-            shifts = [None, tuple(s // 2 for s in patch_size)]
-
-        shifted_windows = []
-        for s in shifts:
-            shifted_windows.append(
-                Tensorize(
-                    input_size,
-                    num_heads=num_heads,
-                    head_dim=head_dim,
-                    grid_size=grid_size,
-                    patch_size=patch_size,
-                    shifts=s,
-                    **kwargs,
-                )
-            )
-
-        self.shifted_windows = nn.ModuleList(shifted_windows)
-        self.output_size = self.shifted_windows[0].output_size
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        out = []
-        for shifted_window in self.shifted_windows:
-            out.append(shifted_window(x))
-        return torch.cat(out)
-
-    def inverse_forward(self, x: torch.Tensor) -> torch.Tensor:
-        b = x.shape[0]
-        num_shifts = len(self.shifted_windows)
-        out = 0.0
-
         for j in range(num_shifts):
             slc = slice(j * (b // num_shifts), (j + 1) * (b // num_shifts))
             z = x[None, slc, ...][0]

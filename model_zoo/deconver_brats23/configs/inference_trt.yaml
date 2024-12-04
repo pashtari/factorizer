@@ -1,0 +1,5 @@
++imports:
+    - $from monai.networks import trt_compile
+trt_args:
+    dynamic_batchsize: $[1, @inferer#sw_batch_size, @inferer#sw_batch_size]
+models: $[trt_compile(@network, p, args=@trt_args) for p in @ckpt_paths]

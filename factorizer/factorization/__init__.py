@@ -1,4 +1,4 @@
-from .base import *
-from .matrix_factorizations import *
-from .tensor_factorizations import *
+from .matrix_factorization import *
+from .deconvolution import *
+from .kmeans import *
 from .operations import *

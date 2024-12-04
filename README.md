@@ -1,21 +1,21 @@
 <img src=figures/logo.png width="400">
 
-This repo is the official implementation of ["Factorizer: A Scalable Interpretable Approach to Context Modeling for Medical Image Segmentation"](https://doi.org/10.1016/j.media.2022.102706).
-
+This repository is the official implementation of ["Factorizer: A Scalable Interpretable Approach to Context Modeling for Medical Image Segmentation"](https://doi.org/10.1016/j.media.2022.102706).
 
 ## Introduction
 
-**Factorizer** leverages the power of low-rank matrix approximation to construct end-to-end deep models for medical image segmentation. Built upon differentiable matrix factorization layers and matricize operations, Factorizers with U-Shaped architectures can compete favorably with CNN and Transformer baselines in terms of accuracy, scalability, and interpretability. Details on the methods and results for brain tumor segmentation and stroke lesion segmentation can be found in our [paper](https://doi.org/10.1016/j.media.2022.102706).
+**Factorizer** leverages the power of low-rank matrix approximation to construct end-to-end deep models for medical image segmentation. Built upon differentiable matrix factorization layers and matricize operations, Factorizer models with U-shaped architectures can compete favorably with CNN and Transformer baselines in terms of accuracy, scalability, and interpretability. Details on the methods and results for brain tumor segmentation and stroke lesion segmentation can be found in our [paper](https://doi.org/10.1016/j.media.2022.102706).
 
-![teaser](figures/graphical_abstract.png)
-
+![Graphical Abstract](figures/graphical_abstract.png)
 
 ## Installation
 
-First make sure that you have already installed [PyTorch](https://pytorch.org/get-started/locally/) since the details on how to do this depend on whether you have a CPU, GPU, etc. Then, to install the Factotizer package, do this:
+First, ensure that you have [PyTorch](https://pytorch.org/get-started/locally/) installed. The installation details depend on your system configuration (CPU, GPU, etc.); refer to the PyTorch installation guide for more information.
+
+To install the Factorizer package, run:
 
 ```bash
-$ pip install git+https://github.com/pashtari/factorizer.git
+pip install git+https://github.com/pashtari/factorizer.git
 ```
 
 
@@ -35,11 +35,8 @@ nmf = ft.NMF(size=(8, 512), rank=2, num_iters=5, init="uniform", solver="mu")
 
 x = torch.rand((1, 8, 512), requires_grad=True)
 
-y = nmf(x) # (1, 8, 512)
-
-print(f"FLOPS = {nmf.flops}") # FLOPS per sample
+y = nmf(x)  # Output shape: (1, 8, 512)
 ```
-    FLOPS = {'init': 0, 'decompose': 226240, 'reconstruct': 16384}
 
 **Shifted Window Matricize**
 ```python
@@ -47,31 +44,11 @@ sw_matricize = ft.SWMatricize((None, 32, 128, 128, 128), head_dim=8, patch_size=
 
 x = torch.rand((1, 32, 128, 128, 128), requires_grad=True)
 
-y = sw_matricize(x)  # (8, 4096, 8, 512)
+y = sw_matricize(x)  # Output shape: (8, 4096, 8, 512)
 
 z = sw_matricize.inverse_forward(y)
 
-torch.equal(x, z) # True
-```
-
-**Swin Factorizer Subblock (Wrapped NMF)**
-```python
-swin_wrapped_nmf = ft.FactorizerSubblock(
-    in_channels = 32,
-    out_channels = 32,
-    spatial_size = (128, 128, 128),
-    tensorize=(ft.SWMatricize, {"head_dim": 8, "patch_size": 8}),
-    act=nn.ReLU,
-    factorize=ft.NMF,
-    rank=1,
-    num_iters=5,
-    init="uniform",
-    solver="mu",
-)
-
-x = torch.rand((1, 32, 128, 128, 128), requires_grad=True)
-
-y = swin_wrapped_nmf(x) # (1, 32, 128, 128, 128)
+torch.equal(x, z)  # Returns: True
 ```
 
 **Swin Factorizer Block**
@@ -79,62 +56,26 @@ y = swin_wrapped_nmf(x) # (1, 32, 128, 128, 128)
 factorizer_block = ft.FactorizerBlock(
     channels=32,
     spatial_size=(128, 128, 128),
-    nmf=(
-        ft.FactorizerSubblock,
-        {
-            "tensorize": (ft.SWMatricize, {"head_dim": 8, "patch_size": 8}),
-            "act": nn.ReLU,
-            "factorize": ft.NMF,
-            "rank": 1,
-            "num_iters": 5,
-            "num_grad_steps": None,
-            "init": "uniform",
-            "solver": "mu",
-            "dropout": 0.1,
-        },
-    ),
-    mlp=(ft.MLP, {"ratio": 2, "dropout": 0.1}),
+    norm=ft.LayerNorm,
+    reshape=(ft.SWMatricize, {'head_dim': 8, 'patch_size': 8}),
+    act=nn.ReLU,
+    factorize=ft.NMF,
+    rank=1,
+    num_iters=5,
+    init="uniform",
+    solver="hals",
+    mlp_ratio=2,
+    dropout=0.1
 )
 
 x = torch.rand((1, 32, 128, 128, 128), requires_grad=True)
 
-y = factorizer_block(x) # (1, 32, 128, 128, 128)
+y = factorizer_block(x)  # Output shape: (1, 32, 128, 128, 128)
 ```
 
-**Swin Factorizer Stage Block**
-
-A stack of multiple Swin Factorizer blocks followed by a positional embedding layer, which can be used at each stage of a network after downsampling layers.
-
+**Swin Factorizer**
 ```python
-factorizer_stage = ft.FactorizerStage(
-    in_channels=32,
-    out_channels=32,
-    spatial_size=(128, 128, 128),
-    depth=2,
-    nmf=(
-        ft.FactorizerSubblock,
-        {
-            "tensorize": (ft.SWMatricize, {"head_dim": 8, "patch_size": 8}),
-            "act": nn.ReLU,
-            "factorize": ft.NMF,
-            "rank": 1,
-            "num_iters": 5,
-            "init": "uniform",
-            "solver": "mu",
-            "dropout": 0.1,
-        },
-    ),
-    mlp=(ft.MLP, {"ratio": 2, "dropout": 0.1}),
-)
-
-x = torch.rand((1, 32, 128, 128, 128), requires_grad=True)
-
-y = factorizer_stage(x) # (1, 32, 128, 128, 128)
-```
-
-**Swin Factorizer for Segmentation**
-```python
-swin_factorizer = ft.SegmentationFactorizer(
+swin_factorizer = ft.Factorizer(
     in_channels=4,
     out_channels=3,
     spatial_size=(128, 128, 128),
@@ -142,38 +83,22 @@ swin_factorizer = ft.SegmentationFactorizer(
     encoder_width=(32, 64, 128, 256, 512),
     strides=(1, 2, 2, 2, 2),
     decoder_depth=(1, 1, 1, 1),
-    stem=(nn.Conv3d, {"kernel_size": 3, "padding": 1, "bias": False},),
-    downsample=(nn.Conv3d, {"kernel_size": 2, "bias": False}),
-    upsample=(nn.ConvTranspose3d, {"kernel_size": 2}),
-    head=(nn.Conv3d, {"kernel_size": 1}),
-    num_deep_supr=3,
-    dropout=0.1,
-    nmf=(
-        ft.FactorizerSubblock,
-        {
-            "tensorize": (ft.SWMatricize, {"head_dim": 8, "patch_size": 8}),
-            "act": nn.ReLU,
-            "factorize": ft.NMF,
-            "rank": 1,
-            "num_iters": 5,
-            "init": "uniform",
-            "solver": "hals",
-            "dropout": 0.1,
-        },
-    ),
-    mlp=(ft.MLP, {"ratio": 2, "dropout": 0.1}),
+    norm=ft.LayerNorm,
+    reshape=(ft.SWMatricize, {'head_dim': 8, 'patch_size': 8}),
+    act=nn.ReLU,
+    factorize=ft.NMF,
+    rank=1,
+    num_iters=5,
+    init="uniform",
+    solver="hals",
+    mlp_ratio=2,
+    dropout=0.1
 )
 
 x = torch.rand((1, 4, 128, 128, 128))
 
-y = swin_factorizer(x) # len(y) = 3
-
-y[0].shape, y[1].shape, y[2].shape
+y = swin_factorizer(x)  # Output shape: (1, 3, 128, 128, 128)
 ```
-
-    (torch.Size([1, 3, 128, 128, 128]),
-    torch.Size([1, 3, 64, 64, 64]),
-    torch.Size([1, 3, 32, 32, 32]))
 
 
 ## License

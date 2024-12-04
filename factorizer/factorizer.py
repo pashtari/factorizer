@@ -1,61 +1,44 @@
 from torch import nn
 
-from .utils.helpers import wrap_class
-from .layers import LayerNorm, Linear, PositionalEmbedding
+from .utils import partialize
+from .layers import LayerNorm, Linear, MLP, PositionalEmbedding
 from .factorization import Matricize, NMF
 from .unet import UNet
 
 
-class Residual(nn.Module):
-    def __init__(self, fn):
-        super().__init__()
-        self.fn = fn
-
-    def forward(self, x, **kwargs):
-        return self.fn(x, **kwargs) + x
-
-
-class FactorizerSubblock(nn.Module):
-    """Generic Factorizer Sublock."""
+class FactMixer(nn.Module):
+    """Generic matrix/tensor factorization mixing module."""
 
     def __init__(
         self,
         in_channels,
         out_channels,
         spatial_size,
-        tensorize=(Matricize, {"num_heads": 1, "grid_size": 1}),
+        reshape=(Matricize, {"num_heads": 1, "grid_size": 1}),
         act=nn.ReLU,
         factorize=NMF,
         dropout=0.0,
         **kwargs,
     ):
         super().__init__()
-        tensorize = wrap_class(tensorize)
-        act = wrap_class(act)
-        factorize = wrap_class(factorize)
 
         self.in_proj = Linear(in_channels, out_channels, bias=False)
-
-        self.tensorize = tensorize((None, out_channels, *spatial_size))
-
-        self.act = act()
-
-        tensorized_size = self.tensorize.output_size[2:]
-        # tensorized_size = tuple(s for s in tensorized_size if s != 1)  # squeeze size
-        self.tensorized_size = tensorized_size
-        self.factorize = factorize(tensorized_size, **kwargs)
-
+        self.reshape = partialize(reshape)((None, out_channels, *spatial_size))
+        self.act = partialize(act)()
+        # reshaped_size = tuple(s for s in reshaped_size if s != 1)  # squeeze size
+        self.reshaped_size = self.reshape.output_size[2:]
+        self.factorize = partialize(factorize)(self.reshaped_size, **kwargs)
         self.out_proj = Linear(out_channels, out_channels)
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, x):
-        # x: B × C × S1 × S2 × ... × Sp
+        # x: (B, C, S1, S2, ..., Sp)
 
         # input linear projection
         out = self.in_proj(x)
 
-        # tensorize (fold/unfold)
-        out = self.tensorize(out)
+        # reshape (fold/unfold)
+        out = self.reshape(out)
 
         # apply activation function
         out = self.act(out)
@@ -63,8 +46,8 @@ class FactorizerSubblock(nn.Module):
         # matrix or tensor factorization
         out = self.factorize(out)
 
-        # detensorize (unfold/fold)
-        out = self.tensorize.inverse_forward(out)
+        # reshape back (unfold/fold)
+        out = self.reshape.inverse_forward(out)
 
         # output linear projection
         out = self.out_proj(out)
@@ -75,32 +58,23 @@ class FactorizerSubblock(nn.Module):
 
 
 class FactorizerBlock(nn.Module):
-    """Generic Factorizer Block."""
+    """Factorizer Block."""
 
     def __init__(
-        self,
-        channels,
-        spatial_size,
-        **subblocks,
+        self, channels, spatial_size, norm=LayerNorm, dropout=0.0, mlp_ratio=2, **kwargs
     ):
         super().__init__()
-        self.blocks = nn.ModuleDict()
-        for key, value in subblocks.items():
-            subblock = wrap_class(value)
-            self.blocks[key] = Residual(
-                nn.Sequential(
-                    LayerNorm(channels),
-                    subblock(channels, channels, spatial_size=spatial_size),
-                )
-            )
+
+        self.norm1 = partialize(norm)(channels)
+        self.fact = FactMixer(channels, channels, spatial_size, dropout=dropout, **kwargs)
+
+        self.norm2 = partialize(norm)(channels)
+        self.mlp = MLP(channels, ratio=mlp_ratio, dropout=dropout)
 
     def forward(self, x):
-        # x: B × C × S1 × S2 × ... × Sp
-        out = x
-        for blk in self.blocks.values():
-            out = blk(out)
-
-        return out
+        x = x + self.fact(self.norm1(x))
+        x = x + self.mlp(self.norm2(x))
+        return x
 
 
 class FactorizerStage(nn.Module):
@@ -119,16 +93,16 @@ class FactorizerStage(nn.Module):
     ):
         super().__init__()
         if in_channels != out_channels:
-            adapter = wrap_class(adapter)
+            adapter = partialize(adapter)
             self.adapter = adapter(in_channels, out_channels)
 
-        pos_embed = wrap_class(pos_embed)
+        pos_embed = partialize(pos_embed)
         self.pos_embed = pos_embed(out_channels, spatial_size)
         if len(list(self.pos_embed.parameters())) > 0:
             self.pos_drop = nn.Dropout(dropout)
 
         self.blocks = nn.ModuleList()
-        for j in range(depth):
+        for _ in range(depth):
             self.blocks.append(
                 FactorizerBlock(
                     out_channels,
@@ -138,7 +112,7 @@ class FactorizerStage(nn.Module):
             )
 
     def forward(self, x):
-        # x: B × C × S1 × S2 × ... × Sp
+        # x: (B, C, S1, S2, ..., Sp)
         out = self.adapter(x) if hasattr(self, "adapter") else x
         out = self.pos_embed(out) if hasattr(self, "pos_embed") else out
         out = self.pos_drop(out) if hasattr(self, "pos_drop") else out
@@ -148,14 +122,14 @@ class FactorizerStage(nn.Module):
         return out
 
 
-class SegmentationFactorizer(UNet):
+class Factorizer(UNet):
     """Factorizer for Segmentation."""
 
     def __init__(
         self,
         in_channels,
         out_channels,
-        spatial_size=None,
+        spatial_size,
         encoder_depth=(1, 1, 1, 1, 1),
         encoder_width=(32, 64, 128, 256, 512),
         strides=(1, 2, 2, 2, 2),
@@ -165,9 +139,14 @@ class SegmentationFactorizer(UNet):
         upsample=None,
         head=None,
         pos_embed=PositionalEmbedding,
-        num_deep_supr=1,
+        num_deep_supr=False,
         **kwargs,
     ):
+        if stem is None:
+            stem = (
+                getattr(nn, f"Conv{len(spatial_size)}d"),
+                {"kernel_size": 3, "padding": 1, "bias": False},
+            )
         num_encoder_stages = len(encoder_depth)
         num_decoder_stages = len(decoder_depth)
         encoder_block = (num_encoder_stages - 1) * [(FactorizerStage, kwargs)]
@@ -177,6 +156,7 @@ class SegmentationFactorizer(UNet):
         super().__init__(
             in_channels,
             out_channels,
+            spatial_dims=len(spatial_size),
             spatial_size=spatial_size,
             encoder_depth=encoder_depth,
             encoder_width=encoder_width,

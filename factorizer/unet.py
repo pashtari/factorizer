@@ -1,9 +1,10 @@
 from typing import Sequence
+import math
 
 import torch
 from torch import nn
 
-from .utils.helpers import as_tuple, prod, wrap_class
+from .utils.helpers import as_tuple, partialize
 from .layers.conv import DoubleConv
 
 
@@ -21,7 +22,7 @@ class UNetStage(nn.Module):
 
     def __init__(self, in_channels, out_channels, depth=1, block=DoubleConv, **kwargs):
         super().__init__()
-        block = wrap_class(block)
+        block = partialize(block)
         self.blocks = nn.Sequential(block(in_channels, out_channels, **kwargs))
 
         for j in range(1, depth):
@@ -46,9 +47,9 @@ class UNetEncoderBlock(nn.Module):
         **kwargs,
     ):
         super().__init__()
-        block = wrap_class(block)
-        downsample = nn.Identity if prod(as_tuple(stride)) == 1 else downsample
-        downsample = wrap_class(downsample)
+        block = partialize(block)
+        downsample = nn.Identity if math.prod(as_tuple(stride)) == 1 else downsample
+        downsample = partialize(downsample)
         self.downsample = downsample(in_channels, out_channels, stride=2)
         self.block = block(out_channels, out_channels, depth=depth, **kwargs)
 
@@ -117,8 +118,8 @@ class UNetDecoderBlock(nn.Module):
         **kwargs,
     ):
         super().__init__()
-        upsample = wrap_class(upsample)
-        block = wrap_class(block)
+        upsample = partialize(upsample)
+        block = partialize(block)
         self.upsample = upsample(in_channels, out_channels, stride=stride)
         self.block = block(2 * out_channels, out_channels, depth=depth, **kwargs)
 
@@ -180,6 +181,7 @@ class UNet(nn.Module):
         self,
         in_channels,
         out_channels,
+        spatial_dims=3,
         spatial_size=None,
         encoder_depth=(1, 1, 1, 1, 1),
         encoder_width=(32, 64, 128, 256, 512),
@@ -190,15 +192,16 @@ class UNet(nn.Module):
         block=None,
         upsample=None,
         head=None,
-        num_deep_supr=1,
+        num_deep_supr=False,
         **kwargs,
     ):
         super().__init__()
+
+        self.spatial_dims = spatial_dims
         self.spatial_size = spatial_size
-        if spatial_size is not None:
-            spatial_dims = len(spatial_size)
-            conv = getattr(nn, f"Conv{spatial_dims}d")
-            tconv = getattr(nn, f"ConvTranspose{spatial_dims}d")
+
+        conv = getattr(nn, f"Conv{self.spatial_dims}d")
+        tconv = getattr(nn, f"ConvTranspose{self.spatial_dims}d")
 
         if stem in (None, nn.Identity):
             stem = nn.Identity
@@ -222,8 +225,8 @@ class UNet(nn.Module):
         if head is None:
             head = (conv, {"kernel_size": 1})
 
-        stem = wrap_class(stem)
-        head = wrap_class(head)
+        stem = partialize(stem)
+        head = partialize(head)
 
         self.stem = stem(in_channels, stem_width)
         self.encoder = UNetEncoder(
@@ -245,11 +248,14 @@ class UNet(nn.Module):
             spatial_size=self.encoder.out_spatial_size,
             **kwargs,
         )
-
-        self.num_deep_supr = num_deep_supr
-        self.heads = nn.ModuleList()
-        for j in range(num_deep_supr):
-            self.heads.append(head(encoder_width[j], out_channels))
+        if num_deep_supr in (False, None):
+            self.num_deep_supr = False
+            self.head = head(encoder_width[0], out_channels)
+        else:
+            self.num_deep_supr = 3 if num_deep_supr == True else num_deep_supr
+            self.heads = nn.ModuleList()
+            for j in range(num_deep_supr):
+                self.heads.append(head(encoder_width[j], out_channels))
 
     def forward_features(self, x):
         out = self.stem(x)
@@ -260,8 +266,11 @@ class UNet(nn.Module):
     def forward(self, x):
         y = self.forward_features(x)
 
-        out = []
-        for j, head in enumerate(self.heads):
-            out.append(head(y[j]))
+        if self.num_deep_supr:
+            out = []
+            for j, head in enumerate(self.heads):
+                out.append(head(y[j]))
+        else:
+            out = self.head(y[0])
 
         return out

@@ -1,0 +1,100 @@
+{
+    "schema": "https://github.com/Project-MONAI/MONAI-extra-test-data/releases/download/0.8.1/meta_schema_20220324.json",
+    "version": "0.5.1",
+    "changelog": {
+        "0.0.1": "Initial version"
+    },
+    "monai_version": "1.4.0",
+    "pytorch_version": "2.2.0",
+    "numpy_version": "2.1.2",
+    "required_packages_version": {
+        "nibabel": "5.2.1",
+        "pytorch-ignite": "0.4.11",
+        "scikit-learn": "1.2.0",
+        "tensorboard": "2.16.2"
+    },
+    "name": "Brain Tumor Segmentation (BraTS) 2023 Challenge",
+    "task": "Adult Glioma Segmentation",
+    "description": "A pre-trained Deconver model for volumetric (3D) segmentation of brain tumor subregions from multi-parametric MRI (mpMRI) scans based on the BraTS 2023 dataset.",
+    "authors": "Pooya Ashtari",
+    "copyright": "Copyright © 2023 Pooya Ashtari",
+    "data_source": "https://www.med.upenn.edu/cbica/brats/",
+    "data_type": "NIfTI",
+    "image_classes": "4-channel MRI data: T1-weighted (T1), T1-weighted contrast-enhanced (T1c), T2-weighted (T2), and Fluid Attenuated Inversion Recovery (FLAIR) images. All images are resampled to a 1x1x1 mm voxel size.",
+    "label_classes": {
+        "description": "3-channel segmentation labels with the following definitions:",
+        "channels": {
+            "0": "Enhancing tumor (ET)",
+            "1": "Tumor core (TC)",
+            "2": "Whole tumor (WT)"
+        }
+    },
+    "pred_classes": {
+        "description": "3-channel prediction outputs, corresponding to the label channels:",
+        "channels": {
+            "0": "Enhancing tumor (ET)",
+            "1": "Tumor core (TC)",
+            "2": "Whole tumor (WT)"
+        }
+    },
+    "eval_metrics": {
+        "val_mean_dice": 0.8518,
+        "val_mean_dice_tc": 0.8559,
+        "val_mean_dice_wt": 0.9026,
+        "val_mean_dice_et": 0.7905
+    },
+    "intended_use": "This model is intended for research purposes only and is not approved for clinical or diagnostic use.",
+    "references": [
+        "Ashtari, P., et al. (2023). Deconver: Under Preparation"
+    ],
+    "network_data_format": {
+        "inputs": {
+            "image": {
+                "type": "image",
+                "format": "magnitude",
+                "modality": "MRI",
+                "num_channels": 4,
+                "spatial_shape": [
+                    "16*n",
+                    "16*n",
+                    "16*n"
+                ],
+                "dtype": "float32",
+                "value_range": [
+                    0,
+                    1
+                ],
+                "is_patch_data": true,
+                "channel_def": {
+                    "0": "T1",
+                    "1": "T1c",
+                    "2": "T2",
+                    "3": "FLAIR"
+                }
+            }
+        },
+        "outputs": {
+            "pred": {
+                "type": "image",
+                "format": "segmentation",
+                "num_channels": 3,
+                "spatial_shape": [
+                    "16*n",
+                    "16*n",
+                    "16*n"
+                ],
+                "dtype": "float32",
+                "value_range": [
+                    0,
+                    1
+                ],
+                "is_patch_data": true,
+                "channel_def": {
+                    "0": "enhancing tumor",
+                    "1": "tumor core",
+                    "2": "whole tumor"
+                }
+            }
+        }
+    }
+}

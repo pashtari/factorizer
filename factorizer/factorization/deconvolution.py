@@ -57,21 +57,17 @@ class Initializer(nn.Module):
         # Initialize h0 parameter
         h0 = torch.empty(channels, source_channels, *kernel_size)
         nn.init.kaiming_uniform_(h0, a=math.sqrt(5))
-        h0.abs_()
         self.h0 = nn.Parameter(h0)
 
         # Initialize linear layer
         self.linear = Linear(channels, groups * source_channels)
-        with torch.no_grad():
-            for param in self.linear.parameters():
-                param.abs_()
 
     def forward(self, x: Tensor) -> tuple[Tensor, Tensor]:
         batch = x.shape[0]
         h_shape = (batch, *self.h0.shape)
         h = self.h0.expand(h_shape)
         s = self.linear(x)
-        return s, h
+        return F.relu(s), F.relu(h)
 
 
 class Deconv(nn.Module):

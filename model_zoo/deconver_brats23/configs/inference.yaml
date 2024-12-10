@@ -37,6 +37,7 @@ network_def:
     encoder_width: [32, 64, 128, 256, 512]
     strides: [1, 2, 2, 2, 2]
     decoder_depth: [1, 1, 1, 1]
+    norm: $nn.InstanceNorm3d
     act: $nn.ReLU
     groups: -1
     ratio: 1

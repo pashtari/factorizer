@@ -12,7 +12,7 @@ datalist_path: $os.path.join(@bundle_root, 'configs/datalist.json')
 ckpt_name: model.pt
 ckpt_path: $os.path.join(@bundle_root, 'models', @ckpt_name)
 logs_dir: $os.path.join(@bundle_root, 'logs')
-output_dir: "$datetime.datetime.now().strftime(os.path.join(@logs_dir, 'train_fold{0}_%y%m%d_%H%M%S'.format(@fold)))"
+output_dir: "$datetime.datetime.now().strftime(os.path.join(@logs_dir, 'train_fold{0}_%y%m%d_%H%M%S%f'.format(@fold)))"
 
 # datalist
 datalist: $monai.data.load_decathlon_datalist(@datalist_path, True, 'training', @data_dir)
@@ -22,13 +22,13 @@ val_datalist: $[x for x in @datalist if x['fold'] == @fold]
 
 # hyperparameters
 val_interval: 10
-ckpt_interval: 1
-rand_prob: 0.5
 batch_size: 2
 num_epochs: 300
 num_workers: 4
 persistent_workers: true
-learning_rate: 0.0004
+learning_rate: 0.00001
+warmup_steps: $@num_epochs//100
+warmup_multiplier: 0.1
 weight_decay: 1.0e-05
 num_classes: 4
 amp: false
@@ -46,6 +46,7 @@ network_def:
     encoder_width: [32, 64, 128, 256, 512]
     strides: [1, 2, 2, 2, 2]
     decoder_depth: [1, 1, 1, 1]
+    norm: $nn.InstanceNorm3d
     act: $nn.ReLU
     groups: -1
     ratio: 1
@@ -73,9 +74,9 @@ optimizer:
 lr_scheduler:
     _target_: monai.optimizers.WarmupCosineSchedule
     optimizer: "$@optimizer"
-    warmup_steps: $@num_epochs//100
+    warmup_steps: "@warmup_steps"
     t_total: "$@num_epochs + 1"
-    warmup_multiplier: 0.1
+    warmup_multiplier: "@warmup_multiplier"
 
 # transforms
 deterministic_transforms:
@@ -365,6 +366,8 @@ ckpt_saver:
     save_dir: "@output_dir"
     save_dict: "@state_dict"
     epoch_level: true
+    save_interval: 1
+    n_saved: 1
 
 initialize:
     - "$print('Output Directory: ', @output_dir)"

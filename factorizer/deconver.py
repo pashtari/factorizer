@@ -22,7 +22,8 @@ class DeconvMixer(nn.Module):
         self.in_proj = Linear(in_channels, out_channels, bias=False)
         self.deconv = Deconv(out_channels, **kwargs)
         self.act = partialize(act)()
-        self.out_proj = Linear(out_channels, out_channels)
+        deconv_out_channels = self.deconv.groups * self.deconv.source_channels
+        self.out_proj = Linear(deconv_out_channels, out_channels)
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, x):

@@ -7,7 +7,7 @@ imports:
 
 # paths
 bundle_root: .
-data_dir: ~/BraTS23 # must be overridden on the command line
+data_dir: ~/BraTS23-GLI # must be overridden on the command line
 datalist_path: $os.path.join(@bundle_root, 'configs/datalist.json')
 ckpt_dir: $os.path.join(@bundle_root, 'models')
 ckpt_paths: $list(glob.glob(os.path.join(@ckpt_dir, '*.pt')))
@@ -46,7 +46,7 @@ network_def:
     num_grad_steps: null
     init: uniform
     solver: hals
-    mlp_ratio: 2
+    mlp_ratio: 3
     dropout: 0.1
 
 network: "$@network_def.to(@device)"

@@ -1,6 +1,6 @@
 # SegResNet for Brain Tumor Segmentation
 
-This repository provides a MONAI bundle for SegResNet to perform 3D volumetric segmentation of brain tumor subregions from multi-parametric MRI (mpMRI) scans. It uses data from the [BraTS 2023 - Adult Glioma Challenge](https://www.synapse.org/Synapse:syn51156910/). SegResNet is detailed in [this paper](https://doi.org/10.1007/978-3-030-11726-9_28).
+This repository provides a MONAI bundle for SegResNet [1] to perform 3D volumetric segmentation of brain tumor subregions from multi-parametric MRI (mpMRI) scans. It uses data from the [BraTS 2023 - Adult Glioma Challenge](https://www.synapse.org/Synapse:syn51156910/).
 
 ## Overview
 
@@ -72,12 +72,12 @@ This creates the JSON datalist [`configs/datalist.json`](configs/datalist.json) 
 
 ## Training
 
-The training configuration follows the methodology described in the SegResNet paper [1]. Key settings include:
+The training configuration follows the methodology described in the Deconver paper [2]. Key settings include:
 
 - **GPU Requirement**: At least 32GB (16GB) for a batch size of 2 (1)
 - **Model Input Size**: 128 x 128 x 128
 - **Optimizer**: AdamW
-- **Initial Learning Rate**: 4e-4
+- **Initial Learning Rate**: 1e-4
 - **Loss Function**: DiceCELoss
 
 ### Single-GPU Training
@@ -112,7 +112,6 @@ bash inference.sh --data_dir /path/to/data
 
 The predictions will be saved in `~/outputs` by default.
 
-
 ## SLURM Support
 
 All training ([`train.sh`](train.sh), [`train_multigpu.sh`](train_multigpu.sh)), evaluation ([`evaluate.sh`](evaluate.sh)), and inference ([`inference.sh`](inference.sh)) scripts are SLURM-compatible for submission on HPC clusters. Each script contains example SLURM configurations.
@@ -140,3 +139,4 @@ This software is provided for research purposes only. It is not intended for cli
 
 [1] Myronenko, A. (2018). 3D MRI brain tumor segmentation using autoencoder regularization. *International MICCAI Brainlesion Workshop*. Springer, Cham. [https://doi.org/10.1007/978-3-030-11726-9_28](https://doi.org/10.1007/978-3-030-11726-9_28)
 
+[2] Ashtari, P., et al. (2023). Deconver: Under Preparation.

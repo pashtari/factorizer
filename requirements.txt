@@ -3,5 +3,5 @@ networkx==3.3
 opt_einsum==3.3.0
 plotly==5.21.0
 sympy==1.12
-torch==2.2.2
+torch==2.2.0
 torchvision==0.17.0

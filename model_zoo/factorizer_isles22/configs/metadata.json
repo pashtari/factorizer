@@ -1,0 +1,86 @@
+{
+    "schema": "https://github.com/Project-MONAI/MONAI-extra-test-data/releases/download/0.8.1/meta_schema_20220324.json",
+    "version": "0.0.1",
+    "changelog": {
+        "0.0.1": "initialize the model bundle"
+    },
+    "monai_version": "1.4.0",
+    "pytorch_version": "2.4.1",
+    "numpy_version": "5.3.2",
+    "optional_packages_version": {
+        "pytorch-ignite": "0.5.1",
+        "nibabel": "5.3.2",
+        "scikit-learn": "1.5.2",
+        "tensorboard": "2.18.0"
+    },
+    "name": "Ischemic Stroke Lesion Segmentation (ISLES) 2022",
+    "task": "Ischemic Stroke Lesion Segmentation",
+    "description": "A pre-trained Swin Factorizer model for volumetric (3D) segmentation of ischemic stroke lesions from multi-sequence MRI scans based on the ISLES 2022 dataset.",
+    "authors": "Pooya Ashtari",
+    "copyright": "Copyright © 2023 Pooya Ashtari",
+    "data_source": "https://www.isles-challenge.org/",
+    "data_type": "NIfTI",
+    "image_classes": "2-channel MRI data: Diffusion Weighted Imaging (DWI) and Apparent Diffusion Coefficient (ADC) images.",
+    "label_classes": {
+        "description": "Binary segmentation labels for ischemic stroke lesions:",
+        "channels": {
+            "0": "Ischemic stroke lesion"
+        }
+    },
+    "pred_classes": {
+        "description": "Binary prediction outputs for ischemic stroke lesions:",
+        "channels": {
+            "0": "Ischemic stroke lesion"
+        }
+    },
+    "eval_metrics": {
+        "val_mean_dice": 0.750
+    },
+    "intended_use": "This model is intended for research purposes only and is not approved for clinical or diagnostic use.",
+    "references": [
+        "Ashtari, P., et al. (2023). Factorizer: A scalable interpretable approach to context modeling for medical image segmentation. Medical Image Analysis, 84, 102706. https://doi.org/10.1016/j.media.2022.102706"
+    ],
+    "network_data_format": {
+        "inputs": {
+            "image": {
+                "type": "image",
+                "format": "magnitude",
+                "modality": "MRI",
+                "num_channels": 2,
+                "spatial_shape": [
+                    "16*n",
+                    "16*n",
+                    "16*n"
+                ],
+                "dtype": "float32",
+                "value_range": [],
+                "is_patch_data": true,
+                "channel_def": {
+                    "0": "DWI",
+                    "1": "ADC"
+                }
+            }
+        },
+        "outputs": {
+            "pred": {
+                "type": "image",
+                "format": "segmentation",
+                "num_channels": 1,
+                "spatial_shape": [
+                    "16*n",
+                    "16*n",
+                    "16*n"
+                ],
+                "dtype": "float32",
+                "value_range": [
+                    0,
+                    1
+                ],
+                "is_patch_data": true,
+                "channel_def": {
+                    "0": "ischemic stroke lesion"
+                }
+            }
+        }
+    }
+}

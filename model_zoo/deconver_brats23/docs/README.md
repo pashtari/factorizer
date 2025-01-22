@@ -112,7 +112,6 @@ bash inference.sh --data_dir /path/to/data
 
 The predictions will be saved in `~/outputs` by default.
 
-
 ## SLURM Support
 
 All training ([`train.sh`](train.sh), [`train_multigpu.sh`](train_multigpu.sh)), evaluation ([`evaluate.sh`](evaluate.sh)), and inference ([`inference.sh`](inference.sh)) scripts are SLURM-compatible for submission on HPC clusters. Each script contains example SLURM configurations.
@@ -139,4 +138,3 @@ This software is provided for research purposes only. It is not intended for cli
 ## References
 
 [1] Ashtari, P., et al. (2023). Deconver: Under Preparation.
-

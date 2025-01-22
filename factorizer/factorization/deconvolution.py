@@ -79,9 +79,9 @@ class Deconv(nn.Module):
         kernel_size=Sequence[int],
         source_channels: Optional[int] = None,
         ratio: float = 1,
-        groups: int = 1,
+        groups: int = -1,
         update_source=True,
-        update_filter=True,
+        update_filter=False,
         eps: float = 1e-16,
         num_iters: int = 2,
         num_grad_iters: Optional[int] = None,
@@ -205,9 +205,7 @@ class Deconv(nn.Module):
 
         s, h = self.iterative_update(x, s, h)
 
-        x_hat = self.conv(s, h)
-
         if self.groups != 1:
-            x_hat = self.merge_channels(x_hat)
+            s = self.merge_channels(s)
 
-        return x_hat
+        return s

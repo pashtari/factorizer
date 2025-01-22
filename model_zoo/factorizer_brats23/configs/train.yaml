@@ -23,13 +23,13 @@ val_datalist: $[x for x in @datalist if x['fold'] == @fold]
 # hyperparameters
 val_interval: 10
 batch_size: 2
-num_epochs: 300
+num_epochs: 200
 num_workers: 4
 persistent_workers: true
-learning_rate: 0.00001
+learning_rate: 0.0001
 warmup_steps: $@num_epochs//100
 warmup_multiplier: 0.1
-weight_decay: 1.0e-05
+weight_decay: 0.00001
 num_classes: 4
 amp: false
 device: $torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -55,7 +55,7 @@ network_def:
     num_grad_steps: null
     init: uniform
     solver: hals
-    mlp_ratio: 2
+    mlp_ratio: 3
     dropout: 0.1
 
 network: "$@network_def.to(@device)"

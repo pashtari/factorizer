@@ -1,0 +1,13 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch>=2.2.0
+torchvision>=0.17.0
+pytorch_ignite==0.5.1
+
+scipy
+sklearn
+pyyaml
+tensorboard
+nibabel
+monai[fire]==1.4.0
+
+-e ../../../../factorizer

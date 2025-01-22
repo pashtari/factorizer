@@ -28,7 +28,7 @@ class FactMixer(nn.Module):
         # reshaped_size = tuple(s for s in reshaped_size if s != 1)  # squeeze size
         self.reshaped_size = self.reshape.output_size[2:]
         self.factorize = partialize(factorize)(self.reshaped_size, **kwargs)
-        self.out_proj = Linear(out_channels, out_channels)
+        self.out_proj = Linear(in_channels, out_channels, out_channels)
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, x):

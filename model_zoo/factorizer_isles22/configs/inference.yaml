@@ -1,0 +1,154 @@
+imports:
+    - $import os
+    - $import glob
+    - $from torch import nn
+    - $import scripts
+    - $import factorizer
+
+# paths
+bundle_root: .
+data_dir: ~/ISLES22 # must be overridden on the command line
+datalist_path: $os.path.join(@bundle_root, 'configs/datalist.json')
+ckpt_dir: $os.path.join(@bundle_root, 'models')
+ckpt_paths: $list(glob.glob(os.path.join(@ckpt_dir, '*.pt')))
+output_dir: $os.path.join(@bundle_root, 'outputs')
+output_ext: .nii.gz
+output_dtype: uint8
+output_postfix: pred
+
+# datalist
+test_datalist: $monai.data.load_decathlon_datalist(@datalist_path, True, 'test', @data_dir)
+
+# hyperparameters
+num_workers: 4
+amp: false
+device: $torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+roi_size: [128, 128, 128]
+pix_size: [1.0, 1.0, 1.0]
+
+# network
+network_def:
+    _target_: factorizer.Factorizer
+    in_channels: 2
+    out_channels: 1
+    spatial_size: "@roi_size"
+    encoder_depth: [1, 1, 1, 1, 1]
+    encoder_width: [32, 64, 128, 256, 512]
+    strides: [1, 2, 2, 2, 2]
+    decoder_depth: [1, 1, 1, 1]
+    norm: $factorizer.LayerNorm
+    reshape: [$factorizer.SWMatricize, { head_dim: 8, patch_size: 8 }]
+    act: $nn.ReLU
+    factorize: $factorizer.NMF
+    rank: 1
+    num_iters: 5
+    num_grad_steps: null
+    init: uniform
+    solver: hals
+    mlp_ratio: 3
+    dropout: 0.1
+
+network: "$@network_def.to(@device)"
+
+preprocessing:
+    _target_: Compose
+    transforms:
+        - _target_: LoadImaged
+          keys: image
+          image_only: true
+          ensure_channel_first: true
+        - _target_: CropForegroundd
+          keys: image
+          source_key: image
+          margin: 10
+        - _target_: Orientationd
+          keys: image
+          axcodes: RAS
+        - _target_: NormalizeIntensityd
+          keys: image
+          nonzero: true
+          channel_wise: true
+        - _target_: Spacingd
+          keys: image
+          pixdim: "@pix_size"
+          mode: bilinear
+          align_corners: true
+        - _target_: EnsureTyped
+          keys: image
+          dtype: $torch.float32"
+          track_meta: true
+
+dataset:
+    _target_: Dataset
+    data: "@test_datalist"
+    transform: "@preprocessing"
+
+dataloader:
+    _target_: DataLoader
+    dataset: "@dataset"
+    batch_size: 1
+    num_workers: "@num_workers"
+
+inferer:
+    _target_: SlidingWindowInfererAdapt
+    roi_size: "@roi_size"
+    sw_batch_size: 2
+    overlap: 0.5
+    mode: gaussian
+    cache_roi_weight_map: true
+
+postprocessing:
+    _target_: Compose
+    transforms:
+        - _target_: MeanEnsembled
+          keys: $[f'pred_{j}' for j in range(len(@ckpt_path))]
+          output_key: pred
+        - _target_: Activationsd
+          keys: pred
+          sigmoid: true
+        - _target_: Invertd
+          keys: pred
+          transform: "@preprocessing"
+          orig_keys: image
+          meta_keys: pred_meta_dict
+          nearest_interp: false
+          to_tensor: true
+        - _target_: AsDiscreted
+          keys: pred
+          threshold: 0.5
+        - _target_: SaveImaged
+          keys: pred
+          meta_keys: pred_meta_dict
+          output_dir: "@output_dir"
+          output_ext: "@output_ext"
+          output_dtype: "@output_dtype"
+          output_postfix: "@output_postfix"
+          separate_folder: "@separate_folder"
+          resample: "false"
+          squeeze_end_dims: "true"
+
+handlers:
+    - _target_: StatsHandler
+      iteration_log: false
+
+state_dicts: "$scripts.load_checkpoints({'model': @network}, @ckpt_paths, checkpoint_options={'map_location': 'cpu'})"
+models: $[sd['model'] for sd in @state_dicts]
+
+evaluator:
+    _target_: EnsembleEvaluator
+    device: "@device"
+    val_data_loader: "@dataloader"
+    networks: "@models"
+    inferer: "@inferer"
+    postprocessing: "@postprocessing"
+    val_handlers: "@handlers"
+    amp: "@amp"
+
+initialize:
+    - "$print('Output Directory: ', @output_dir)"
+    - $monai.utils.set_determinism(seed=123)
+    - $setattr(torch.backends.cudnn, 'benchmark', True)
+    - $@ckpt_loader(@evaluator)
+
+run:
+    - $@evaluator.run()

@@ -1,7 +1,7 @@
 
 # Deconver for Ischemic Stroke Lesion Segmentation
 
-This repository provides a MONAI bundle for Deconver to perform 3D volumetric segmentation of ischemic stroke lesions from multi-modal MRI scans. It uses data from the [ISLES 2022 Challenge](https://isles-challenge.org/) on ischemic stroke lesion segmentation. The model is detailed in [this paper](https://www.sciencedirect.com/science/article/pii/S1361841522003346).
+This repository provides a MONAI bundle for Deconver [1] to perform 3D volumetric segmentation of ischemic stroke lesions from multi-modal MRI scans. It uses data from the [ISLES 2022 Challenge](https://isles-challenge.org/) on ischemic stroke lesion segmentation.
 
 ## Overview
 

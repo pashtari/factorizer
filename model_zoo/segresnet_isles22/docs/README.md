@@ -1,7 +1,7 @@
 
 # SegResNet for Ischemic Stroke Lesion Segmentation
 
-This repository provides a MONAI bundle for SegResNet [1] to perform 3D volumetric segmentation of ischemic stroke lesions from multi-modal MRI scans. It uses data from the [ISLES 2022 Challenge](https://isles-challenge.org/) on ischemic stroke lesion segmentation. The model is detailed in [this paper](https://www.sciencedirect.com/science/article/pii/S1361841522003346).
+This repository provides a MONAI bundle for SegResNet [1] to perform 3D volumetric segmentation of ischemic stroke lesions from multi-modal MRI scans. It uses data from the [ISLES 2022 Challenge](https://isles-challenge.org/) on ischemic stroke lesion segmentation.
 
 ## Overview
 
@@ -124,4 +124,6 @@ This software is provided for research purposes only. It is not intended for cli
 
 ## References
 
-[1] Ashtari, P., et al. (2023). Deconver: Under Preparation.
+[1] Myronenko, A. (2018). 3D MRI brain tumor segmentation using autoencoder regularization. *International MICCAI Brainlesion Workshop*. Springer, Cham. [https://doi.org/10.1007/978-3-030-11726-9_28](https://doi.org/10.1007/978-3-030-11726-9_28)
+
+[2] Ashtari, P., et al. (2023). Deconver: Under Preparation.

@@ -21,13 +21,14 @@ class TestDeconverModules(unittest.TestCase):
 
         deconv = ft.Deconv(
             channels=channels,
-            ratio=1,
-            groups=-1,
+            ratio=4,
+            groups=2,
             kernel_size=(3, 3, 3),
             update_source=True,
             update_filter=True,
             num_iters=5,
             num_grad_iters=None,
+            verbose=True,
         ).to(self.device)
 
         # Parameter count

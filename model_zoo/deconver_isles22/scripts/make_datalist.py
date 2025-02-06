@@ -47,7 +47,7 @@ def make_datalist():
 
 def lesion_volume(mask):
     """Computes lesion volume from a segmentation mask."""
-    lesion_num_voxels = torch.sum(mask == 11)
+    lesion_num_voxels = torch.sum(mask == 1)
     voxel_size = np.prod(mask.meta["pixdim"][1:4])
     lesion_vol = lesion_num_voxels * voxel_size
     return lesion_vol.item()

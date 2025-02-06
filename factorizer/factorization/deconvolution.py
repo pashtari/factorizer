@@ -7,6 +7,7 @@ import torch
 from torch import Tensor
 from torch import nn
 import torch.nn.functional as F
+
 from torch.func import vmap
 from einops.layers.torch import Rearrange
 
@@ -17,12 +18,26 @@ from ..layers import Linear
 CONV = {d: getattr(F, f"conv{d}d") for d in range(1, 4)}
 
 
-@vmap
-def conv(input: Tensor, weight: Tensor, **kwargs) -> Tensor:
-    spatial_dims = input.ndim - 1
-    input = input.unsqueeze(0)
-    out = CONV[spatial_dims](input, weight, **kwargs).squeeze(0)
-    return out
+def conv(input: Tensor, weight: Tensor, groups: int = 1, **kwargs) -> Tensor:
+    batch_size = input.shape[0]
+    spatial_dims = input.ndim - 2
+
+    # Reshape input and weight for batch computation
+    input_reshaped = input.reshape(1, batch_size * input.shape[1], *input.shape[2:])
+    weight_reshaped = weight.reshape(
+        batch_size * weight.shape[1], weight.shape[2], *weight.shape[3:]
+    )
+
+    # Adjust groups for batch computation
+    groups = groups * batch_size
+
+    # Perform convolution
+    output = CONV[spatial_dims](input_reshaped, weight_reshaped, groups=groups, **kwargs)
+
+    # Reshape output back to batch form
+    output = output.reshape(batch_size, -1, *output.shape[2:])
+
+    return output
 
 
 @vmap
@@ -30,8 +45,8 @@ def sconv(input1: Tensor, input2: Tensor, **kwargs) -> Tensor:
     spatial_dims = input1.ndim - 1
     input1 = input1.unsqueeze(1)
     input2 = input2.unsqueeze(1)
-    out = CONV[spatial_dims](input1, input2, **kwargs)
-    return out
+    output = CONV[spatial_dims](input1, input2, **kwargs)
+    return output
 
 
 def t(x: Tensor) -> Tensor:

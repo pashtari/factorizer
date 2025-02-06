@@ -1,0 +1,233 @@
+[
+    {
+        "model": "Deconver (groups=1, ratio=1, kernel_size=3)",
+        "flops": "209.19 G",
+        "macs": "101.54 GMACs",
+        "params": "18.68 M",
+        "latency": "10.47 s"
+    },
+    {
+        "model": "Deconver (groups=1, ratio=1, kernel_size=5)",
+        "flops": "209.28 G",
+        "macs": "101.54 GMACs",
+        "params": "61.43 M",
+        "latency": "25.71 s"
+    },
+    {
+        "model": "Deconver (groups=1, ratio=1, kernel_size=7)",
+        "flops": "209.47 G",
+        "macs": "101.54 GMACs",
+        "params": "156.52 M",
+        "latency": "74.76 s"
+    },
+    {
+        "model": "Deconver (groups=1, ratio=4, kernel_size=3)",
+        "flops": "183.81 G",
+        "macs": "89.25 GMACs",
+        "params": "9.19 M",
+        "latency": "7.22 s"
+    },
+    {
+        "model": "Deconver (groups=1, ratio=4, kernel_size=5)",
+        "flops": "183.83 G",
+        "macs": "89.25 GMACs",
+        "params": "19.87 M",
+        "latency": "11.77 s"
+    },
+    {
+        "model": "Deconver (groups=1, ratio=4, kernel_size=7)",
+        "flops": "183.88 G",
+        "macs": "89.25 GMACs",
+        "params": "43.65 M",
+        "latency": "24.5 s"
+    },
+    {
+        "model": "Deconver (groups=1, ratio=8, kernel_size=3)",
+        "flops": "179.58 G",
+        "macs": "87.21 GMACs",
+        "params": "7.6 M",
+        "latency": "6.76 s"
+    },
+    {
+        "model": "Deconver (groups=1, ratio=8, kernel_size=5)",
+        "flops": "179.59 G",
+        "macs": "87.21 GMACs",
+        "params": "12.95 M",
+        "latency": "10.59 s"
+    },
+    {
+        "model": "Deconver (groups=1, ratio=8, kernel_size=7)",
+        "flops": "179.61 G",
+        "macs": "87.21 GMACs",
+        "params": "24.84 M",
+        "latency": "19.42 s"
+    },
+    {
+        "model": "Deconver (groups=4, ratio=1, kernel_size=3)",
+        "flops": "209.17 G",
+        "macs": "101.54 GMACs",
+        "params": "9.84 M",
+        "latency": "8.59 s"
+    },
+    {
+        "model": "Deconver (groups=4, ratio=1, kernel_size=5)",
+        "flops": "209.19 G",
+        "macs": "101.54 GMACs",
+        "params": "20.53 M",
+        "latency": "14.09 s"
+    },
+    {
+        "model": "Deconver (groups=4, ratio=1, kernel_size=7)",
+        "flops": "209.24 G",
+        "macs": "101.54 GMACs",
+        "params": "44.3 M",
+        "latency": "28.39 s"
+    },
+    {
+        "model": "Deconver (groups=4, ratio=4, kernel_size=3)",
+        "flops": "183.8 G",
+        "macs": "89.25 GMACs",
+        "params": "6.98 M",
+        "latency": "10.65 s"
+    },
+    {
+        "model": "Deconver (groups=4, ratio=4, kernel_size=5)",
+        "flops": "183.81 G",
+        "macs": "89.25 GMACs",
+        "params": "9.65 M",
+        "latency": "34.72 s"
+    },
+    {
+        "model": "Deconver (groups=4, ratio=4, kernel_size=7)",
+        "flops": "183.82 G",
+        "macs": "89.25 GMACs",
+        "params": "15.59 M",
+        "latency": "83.94 s"
+    },
+    {
+        "model": "Deconver (groups=4, ratio=8, kernel_size=3)",
+        "flops": "179.57 G",
+        "macs": "87.21 GMACs",
+        "params": "6.5 M",
+        "latency": "9.19 s"
+    },
+    {
+        "model": "Deconver (groups=4, ratio=8, kernel_size=5)",
+        "flops": "179.58 G",
+        "macs": "87.21 GMACs",
+        "params": "7.84 M",
+        "latency": "29.93 s"
+    },
+    {
+        "model": "Deconver (groups=4, ratio=8, kernel_size=7)",
+        "flops": "179.58 G",
+        "macs": "87.21 GMACs",
+        "params": "10.81 M",
+        "latency": "72.97 s"
+    },
+    {
+        "model": "Deconver (groups=8, ratio=1, kernel_size=3)",
+        "flops": "209.17 G",
+        "macs": "101.54 GMACs",
+        "params": "8.37 M",
+        "latency": "15.64 s"
+    },
+    {
+        "model": "Deconver (groups=8, ratio=1, kernel_size=5)",
+        "flops": "209.18 G",
+        "macs": "101.54 GMACs",
+        "params": "13.71 M",
+        "latency": "36.88 s"
+    },
+    {
+        "model": "Deconver (groups=8, ratio=1, kernel_size=7)",
+        "flops": "209.2 G",
+        "macs": "101.54 GMACs",
+        "params": "25.6 M",
+        "latency": "116.85 s"
+    },
+    {
+        "model": "Deconver (groups=8, ratio=4, kernel_size=3)",
+        "flops": "183.8 G",
+        "macs": "89.25 GMACs",
+        "params": "6.61 M",
+        "latency": "17.14 s"
+    },
+    {
+        "model": "Deconver (groups=8, ratio=4, kernel_size=5)",
+        "flops": "183.81 G",
+        "macs": "89.25 GMACs",
+        "params": "7.95 M",
+        "latency": "40.58 s"
+    },
+    {
+        "model": "Deconver (groups=8, ratio=4, kernel_size=7)",
+        "flops": "183.81 G",
+        "macs": "89.25 GMACs",
+        "params": "10.92 M",
+        "latency": "98.55 s"
+    },
+    {
+        "model": "Deconver (groups=-1, ratio=1, kernel_size=3)",
+        "flops": "209.17 G",
+        "macs": "101.54 GMACs",
+        "params": "6.94 M",
+        "latency": "12.39 s"
+    },
+    {
+        "model": "Deconver (groups=-1, ratio=1, kernel_size=5)",
+        "flops": "209.17 G",
+        "macs": "101.54 GMACs",
+        "params": "7.08 M",
+        "latency": "13.71 s"
+    },
+    {
+        "model": "Deconver (groups=-1, ratio=1, kernel_size=7)",
+        "flops": "209.17 G",
+        "macs": "101.54 GMACs",
+        "params": "7.4 M",
+        "latency": "19.92 s"
+    },
+    {
+        "model": "Factorizer",
+        "flops": "435.48 G",
+        "macs": "213.82 GMACs",
+        "params": "6.73 M",
+        "latency": "16.19 s"
+    },
+    {
+        "model": "SegResNet",
+        "flops": "1.18 T",
+        "macs": "584.59 GMACs",
+        "params": "18.97 M",
+        "latency": "5.56 s"
+    },
+    {
+        "model": "DynUNet",
+        "flops": "1.92 T",
+        "macs": "954.76 GMACs",
+        "params": "22.57 M",
+        "latency": "5.26 s"
+    },
+    {
+        "model": "UNETR",
+        "flops": "359.54 G",
+        "macs": "173.64 GMACs",
+        "params": "124.5 M",
+        "latency": "2.44 s"
+    },
+    {
+        "model": "SwinUNETR V1",
+        "flops": "1.44 T",
+        "macs": "714.85 GMACs",
+        "params": "15.7 M",
+        "latency": "8.94 s"
+    },
+    {
+        "model": "SwinUNETR V2",
+        "flops": "1.5 T",
+        "macs": "746.2 GMACs",
+        "params": "18.35 M",
+        "latency": "7.54 s"
+    }
+]

@@ -1,0 +1,89 @@
+{
+    "schema": "https://github.com/Project-MONAI/MONAI-extra-test-data/releases/download/0.8.1/meta_schema_20220324.json",
+    "version": "0.5.1",
+    "changelog": {
+        "0.0.1": "Initial version"
+    },
+    "monai_version": "1.4.0",
+    "pytorch_version": "2.2.0",
+    "numpy_version": "2.1.2",
+    "required_packages_version": {
+        "nibabel": "5.2.1",
+        "pytorch-ignite": "0.4.11",
+        "scikit-learn": "1.2.0",
+        "tensorboard": "2.16.2"
+    },
+    "name": "Retinal Vessel Segmentation from Fundus Images",
+    "task": "Retinal Vessel Segmentation",
+    "description": "A pre-trained SegResNet model for retinal vessel segmentation from fundus images based on the FIVES dataset.",
+    "authors": "Pooya Ashtari",
+    "copyright": "Copyright © 2023 Pooya Ashtari",
+    "data_source": "https://figshare.com/articles/figure/FIVES_A_Fundus_Image_Dataset_for_AI-based_Vessel_Segmentation/19688169",
+    "data_type": "PNG",
+    "image_classes": "An RGB image with three channels: red, green, and blue",
+    "label_classes": {
+        "description": "Binary segmentation labels for retinal vessels:",
+        "channels": {
+            "0": "Retinal vessel"
+        }
+    },
+    "pred_classes": {
+        "description": "Binary prediction outputs for retinal vessels:",
+        "channels": {
+            "0": "Retinal vessel"
+        }
+    },
+    "eval_metrics": {
+        "val_mean_dice": 0.8518
+    },
+    "intended_use": "This model is intended for research purposes only and is not approved for clinical or diagnostic use.",
+    "references": [
+        "Myronenko, A. (2018). 3D MRI brain tumor segmentation using autoencoder regularization. International MICCAI Brainlesion Workshop. Springer, Cham. https://arxiv.org/abs/1810.11654"
+    ],
+    "network_data_format": {
+        "inputs": {
+            "image": {
+                "type": "image",
+                "format": "magnitude",
+                "modality": "RGB",
+                "num_channels": 3,
+                "spatial_shape": [
+                    "16*n",
+                    "16*n",
+                    "16*n"
+                ],
+                "dtype": "float32",
+                "value_range": [
+
+                ],
+                "is_patch_data": true,
+                "channel_def": {
+                    "0": "red",
+                    "1": "green",
+                    "2": "blue"
+                }
+            }
+        },
+        "outputs": {
+            "pred": {
+                "type": "image",
+                "format": "segmentation",
+                "num_channels": 1,
+                "spatial_shape": [
+                    "16*n",
+                    "16*n",
+                    "16*n"
+                ],
+                "dtype": "float32",
+                "value_range": [
+                    0,
+                    1
+                ],
+                "is_patch_data": true,
+                "channel_def": {
+                    "0": "retinal vessel"
+                }
+            }
+        }
+    }
+}

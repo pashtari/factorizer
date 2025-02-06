@@ -7,7 +7,7 @@
                 "sub-strokecase0001/ses-0001/dwi/sub-strokecase0001_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0001/ses-0001/sub-strokecase0001_ses-0001_msk.nii.gz",
-            "fold": 2
+            "fold": 1
         },
         {
             "id": "sub-strokecase0002_ses-0001",
@@ -16,7 +16,7 @@
                 "sub-strokecase0002/ses-0001/dwi/sub-strokecase0002_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0002/ses-0001/sub-strokecase0002_ses-0001_msk.nii.gz",
-            "fold": 0
+            "fold": 4
         },
         {
             "id": "sub-strokecase0003_ses-0001",
@@ -25,7 +25,7 @@
                 "sub-strokecase0003/ses-0001/dwi/sub-strokecase0003_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0003/ses-0001/sub-strokecase0003_ses-0001_msk.nii.gz",
-            "fold": 1
+            "fold": 3
         },
         {
             "id": "sub-strokecase0004_ses-0001",
@@ -34,7 +34,7 @@
                 "sub-strokecase0004/ses-0001/dwi/sub-strokecase0004_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0004/ses-0001/sub-strokecase0004_ses-0001_msk.nii.gz",
-            "fold": 1
+            "fold": 0
         },
         {
             "id": "sub-strokecase0005_ses-0001",
@@ -52,7 +52,7 @@
                 "sub-strokecase0006/ses-0001/dwi/sub-strokecase0006_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0006/ses-0001/sub-strokecase0006_ses-0001_msk.nii.gz",
-            "fold": 3
+            "fold": 2
         },
         {
             "id": "sub-strokecase0007_ses-0001",
@@ -61,7 +61,7 @@
                 "sub-strokecase0007/ses-0001/dwi/sub-strokecase0007_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0007/ses-0001/sub-strokecase0007_ses-0001_msk.nii.gz",
-            "fold": 3
+            "fold": 4
         },
         {
             "id": "sub-strokecase0008_ses-0001",
@@ -70,7 +70,7 @@
                 "sub-strokecase0008/ses-0001/dwi/sub-strokecase0008_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0008/ses-0001/sub-strokecase0008_ses-0001_msk.nii.gz",
-            "fold": 3
+            "fold": 1
         },
         {
             "id": "sub-strokecase0009_ses-0001",
@@ -79,7 +79,7 @@
                 "sub-strokecase0009/ses-0001/dwi/sub-strokecase0009_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0009/ses-0001/sub-strokecase0009_ses-0001_msk.nii.gz",
-            "fold": 0
+            "fold": 3
         },
         {
             "id": "sub-strokecase0010_ses-0001",
@@ -88,7 +88,7 @@
                 "sub-strokecase0010/ses-0001/dwi/sub-strokecase0010_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0010/ses-0001/sub-strokecase0010_ses-0001_msk.nii.gz",
-            "fold": 2
+            "fold": 0
         },
         {
             "id": "sub-strokecase0011_ses-0001",
@@ -106,7 +106,7 @@
                 "sub-strokecase0012/ses-0001/dwi/sub-strokecase0012_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0012/ses-0001/sub-strokecase0012_ses-0001_msk.nii.gz",
-            "fold": 4
+            "fold": 1
         },
         {
             "id": "sub-strokecase0013_ses-0001",
@@ -124,7 +124,7 @@
                 "sub-strokecase0014/ses-0001/dwi/sub-strokecase0014_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0014/ses-0001/sub-strokecase0014_ses-0001_msk.nii.gz",
-            "fold": 4
+            "fold": 0
         },
         {
             "id": "sub-strokecase0015_ses-0001",
@@ -133,7 +133,7 @@
                 "sub-strokecase0015/ses-0001/dwi/sub-strokecase0015_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0015/ses-0001/sub-strokecase0015_ses-0001_msk.nii.gz",
-            "fold": 1
+            "fold": 4
         },
         {
             "id": "sub-strokecase0016_ses-0001",
@@ -142,7 +142,7 @@
                 "sub-strokecase0016/ses-0001/dwi/sub-strokecase0016_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0016/ses-0001/sub-strokecase0016_ses-0001_msk.nii.gz",
-            "fold": 4
+            "fold": 3
         },
         {
             "id": "sub-strokecase0017_ses-0001",
@@ -151,7 +151,7 @@
                 "sub-strokecase0017/ses-0001/dwi/sub-strokecase0017_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0017/ses-0001/sub-strokecase0017_ses-0001_msk.nii.gz",
-            "fold": 3
+            "fold": 0
         },
         {
             "id": "sub-strokecase0018_ses-0001",
@@ -160,7 +160,7 @@
                 "sub-strokecase0018/ses-0001/dwi/sub-strokecase0018_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0018/ses-0001/sub-strokecase0018_ses-0001_msk.nii.gz",
-            "fold": 0
+            "fold": 2
         },
         {
             "id": "sub-strokecase0019_ses-0001",
@@ -169,7 +169,7 @@
                 "sub-strokecase0019/ses-0001/dwi/sub-strokecase0019_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0019/ses-0001/sub-strokecase0019_ses-0001_msk.nii.gz",
-            "fold": 3
+            "fold": 4
         },
         {
             "id": "sub-strokecase0020_ses-0001",
@@ -205,7 +205,7 @@
                 "sub-strokecase0023/ses-0001/dwi/sub-strokecase0023_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0023/ses-0001/sub-strokecase0023_ses-0001_msk.nii.gz",
-            "fold": 2
+            "fold": 1
         },
         {
             "id": "sub-strokecase0024_ses-0001",
@@ -214,7 +214,7 @@
                 "sub-strokecase0024/ses-0001/dwi/sub-strokecase0024_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0024/ses-0001/sub-strokecase0024_ses-0001_msk.nii.gz",
-            "fold": 1
+            "fold": 2
         },
         {
             "id": "sub-strokecase0025_ses-0001",
@@ -232,7 +232,7 @@
                 "sub-strokecase0026/ses-0001/dwi/sub-strokecase0026_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0026/ses-0001/sub-strokecase0026_ses-0001_msk.nii.gz",
-            "fold": 0
+            "fold": 4
         },
         {
             "id": "sub-strokecase0027_ses-0001",
@@ -241,7 +241,7 @@
                 "sub-strokecase0027/ses-0001/dwi/sub-strokecase0027_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0027/ses-0001/sub-strokecase0027_ses-0001_msk.nii.gz",
-            "fold": 1
+            "fold": 0
         },
         {
             "id": "sub-strokecase0028_ses-0001",
@@ -250,7 +250,7 @@
                 "sub-strokecase0028/ses-0001/dwi/sub-strokecase0028_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0028/ses-0001/sub-strokecase0028_ses-0001_msk.nii.gz",
-            "fold": 0
+            "fold": 1
         },
         {
             "id": "sub-strokecase0029_ses-0001",
@@ -259,7 +259,7 @@
                 "sub-strokecase0029/ses-0001/dwi/sub-strokecase0029_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0029/ses-0001/sub-strokecase0029_ses-0001_msk.nii.gz",
-            "fold": 0
+            "fold": 3
         },
         {
             "id": "sub-strokecase0030_ses-0001",
@@ -268,7 +268,7 @@
                 "sub-strokecase0030/ses-0001/dwi/sub-strokecase0030_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0030/ses-0001/sub-strokecase0030_ses-0001_msk.nii.gz",
-            "fold": 2
+            "fold": 1
         },
         {
             "id": "sub-strokecase0031_ses-0001",
@@ -277,7 +277,7 @@
                 "sub-strokecase0031/ses-0001/dwi/sub-strokecase0031_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0031/ses-0001/sub-strokecase0031_ses-0001_msk.nii.gz",
-            "fold": 4
+            "fold": 0
         },
         {
             "id": "sub-strokecase0032_ses-0001",
@@ -286,7 +286,7 @@
                 "sub-strokecase0032/ses-0001/dwi/sub-strokecase0032_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0032/ses-0001/sub-strokecase0032_ses-0001_msk.nii.gz",
-            "fold": 0
+            "fold": 3
         },
         {
             "id": "sub-strokecase0033_ses-0001",
@@ -295,7 +295,7 @@
                 "sub-strokecase0033/ses-0001/dwi/sub-strokecase0033_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0033/ses-0001/sub-strokecase0033_ses-0001_msk.nii.gz",
-            "fold": 2
+            "fold": 1
         },
         {
             "id": "sub-strokecase0034_ses-0001",
@@ -304,7 +304,7 @@
                 "sub-strokecase0034/ses-0001/dwi/sub-strokecase0034_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0034/ses-0001/sub-strokecase0034_ses-0001_msk.nii.gz",
-            "fold": 4
+            "fold": 0
         },
         {
             "id": "sub-strokecase0035_ses-0001",
@@ -313,7 +313,7 @@
                 "sub-strokecase0035/ses-0001/dwi/sub-strokecase0035_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0035/ses-0001/sub-strokecase0035_ses-0001_msk.nii.gz",
-            "fold": 0
+            "fold": 2
         },
         {
             "id": "sub-strokecase0036_ses-0001",
@@ -331,7 +331,7 @@
                 "sub-strokecase0037/ses-0001/dwi/sub-strokecase0037_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0037/ses-0001/sub-strokecase0037_ses-0001_msk.nii.gz",
-            "fold": 0
+            "fold": 3
         },
         {
             "id": "sub-strokecase0038_ses-0001",
@@ -349,7 +349,7 @@
                 "sub-strokecase0039/ses-0001/dwi/sub-strokecase0039_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0039/ses-0001/sub-strokecase0039_ses-0001_msk.nii.gz",
-            "fold": 3
+            "fold": 0
         },
         {
             "id": "sub-strokecase0040_ses-0001",
@@ -358,7 +358,7 @@
                 "sub-strokecase0040/ses-0001/dwi/sub-strokecase0040_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0040/ses-0001/sub-strokecase0040_ses-0001_msk.nii.gz",
-            "fold": 3
+            "fold": 4
         },
         {
             "id": "sub-strokecase0041_ses-0001",
@@ -367,7 +367,7 @@
                 "sub-strokecase0041/ses-0001/dwi/sub-strokecase0041_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0041/ses-0001/sub-strokecase0041_ses-0001_msk.nii.gz",
-            "fold": 2
+            "fold": 3
         },
         {
             "id": "sub-strokecase0042_ses-0001",
@@ -376,7 +376,7 @@
                 "sub-strokecase0042/ses-0001/dwi/sub-strokecase0042_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0042/ses-0001/sub-strokecase0042_ses-0001_msk.nii.gz",
-            "fold": 1
+            "fold": 3
         },
         {
             "id": "sub-strokecase0043_ses-0001",
@@ -385,7 +385,7 @@
                 "sub-strokecase0043/ses-0001/dwi/sub-strokecase0043_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0043/ses-0001/sub-strokecase0043_ses-0001_msk.nii.gz",
-            "fold": 2
+            "fold": 3
         },
         {
             "id": "sub-strokecase0044_ses-0001",
@@ -394,7 +394,7 @@
                 "sub-strokecase0044/ses-0001/dwi/sub-strokecase0044_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0044/ses-0001/sub-strokecase0044_ses-0001_msk.nii.gz",
-            "fold": 3
+            "fold": 2
         },
         {
             "id": "sub-strokecase0045_ses-0001",
@@ -403,7 +403,7 @@
                 "sub-strokecase0045/ses-0001/dwi/sub-strokecase0045_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0045/ses-0001/sub-strokecase0045_ses-0001_msk.nii.gz",
-            "fold": 4
+            "fold": 1
         },
         {
             "id": "sub-strokecase0046_ses-0001",
@@ -412,7 +412,7 @@
                 "sub-strokecase0046/ses-0001/dwi/sub-strokecase0046_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0046/ses-0001/sub-strokecase0046_ses-0001_msk.nii.gz",
-            "fold": 0
+            "fold": 4
         },
         {
             "id": "sub-strokecase0047_ses-0001",
@@ -421,7 +421,7 @@
                 "sub-strokecase0047/ses-0001/dwi/sub-strokecase0047_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0047/ses-0001/sub-strokecase0047_ses-0001_msk.nii.gz",
-            "fold": 2
+            "fold": 4
         },
         {
             "id": "sub-strokecase0048_ses-0001",
@@ -439,7 +439,7 @@
                 "sub-strokecase0049/ses-0001/dwi/sub-strokecase0049_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0049/ses-0001/sub-strokecase0049_ses-0001_msk.nii.gz",
-            "fold": 3
+            "fold": 2
         },
         {
             "id": "sub-strokecase0050_ses-0001",
@@ -448,7 +448,7 @@
                 "sub-strokecase0050/ses-0001/dwi/sub-strokecase0050_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0050/ses-0001/sub-strokecase0050_ses-0001_msk.nii.gz",
-            "fold": 0
+            "fold": 3
         },
         {
             "id": "sub-strokecase0051_ses-0001",
@@ -457,7 +457,7 @@
                 "sub-strokecase0051/ses-0001/dwi/sub-strokecase0051_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0051/ses-0001/sub-strokecase0051_ses-0001_msk.nii.gz",
-            "fold": 2
+            "fold": 4
         },
         {
             "id": "sub-strokecase0052_ses-0001",
@@ -466,7 +466,7 @@
                 "sub-strokecase0052/ses-0001/dwi/sub-strokecase0052_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0052/ses-0001/sub-strokecase0052_ses-0001_msk.nii.gz",
-            "fold": 4
+            "fold": 3
         },
         {
             "id": "sub-strokecase0053_ses-0001",
@@ -484,7 +484,7 @@
                 "sub-strokecase0054/ses-0001/dwi/sub-strokecase0054_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0054/ses-0001/sub-strokecase0054_ses-0001_msk.nii.gz",
-            "fold": 2
+            "fold": 3
         },
         {
             "id": "sub-strokecase0055_ses-0001",
@@ -493,7 +493,7 @@
                 "sub-strokecase0055/ses-0001/dwi/sub-strokecase0055_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0055/ses-0001/sub-strokecase0055_ses-0001_msk.nii.gz",
-            "fold": 2
+            "fold": 4
         },
         {
             "id": "sub-strokecase0056_ses-0001",
@@ -502,7 +502,7 @@
                 "sub-strokecase0056/ses-0001/dwi/sub-strokecase0056_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0056/ses-0001/sub-strokecase0056_ses-0001_msk.nii.gz",
-            "fold": 1
+            "fold": 2
         },
         {
             "id": "sub-strokecase0057_ses-0001",
@@ -511,7 +511,7 @@
                 "sub-strokecase0057/ses-0001/dwi/sub-strokecase0057_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0057/ses-0001/sub-strokecase0057_ses-0001_msk.nii.gz",
-            "fold": 4
+            "fold": 2
         },
         {
             "id": "sub-strokecase0058_ses-0001",
@@ -520,7 +520,7 @@
                 "sub-strokecase0058/ses-0001/dwi/sub-strokecase0058_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0058/ses-0001/sub-strokecase0058_ses-0001_msk.nii.gz",
-            "fold": 3
+            "fold": 4
         },
         {
             "id": "sub-strokecase0059_ses-0001",
@@ -529,7 +529,7 @@
                 "sub-strokecase0059/ses-0001/dwi/sub-strokecase0059_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0059/ses-0001/sub-strokecase0059_ses-0001_msk.nii.gz",
-            "fold": 3
+            "fold": 1
         },
         {
             "id": "sub-strokecase0060_ses-0001",
@@ -538,7 +538,7 @@
                 "sub-strokecase0060/ses-0001/dwi/sub-strokecase0060_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0060/ses-0001/sub-strokecase0060_ses-0001_msk.nii.gz",
-            "fold": 4
+            "fold": 0
         },
         {
             "id": "sub-strokecase0061_ses-0001",
@@ -547,7 +547,7 @@
                 "sub-strokecase0061/ses-0001/dwi/sub-strokecase0061_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0061/ses-0001/sub-strokecase0061_ses-0001_msk.nii.gz",
-            "fold": 4
+            "fold": 2
         },
         {
             "id": "sub-strokecase0062_ses-0001",
@@ -565,7 +565,7 @@
                 "sub-strokecase0063/ses-0001/dwi/sub-strokecase0063_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0063/ses-0001/sub-strokecase0063_ses-0001_msk.nii.gz",
-            "fold": 2
+            "fold": 3
         },
         {
             "id": "sub-strokecase0064_ses-0001",
@@ -574,7 +574,7 @@
                 "sub-strokecase0064/ses-0001/dwi/sub-strokecase0064_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0064/ses-0001/sub-strokecase0064_ses-0001_msk.nii.gz",
-            "fold": 1
+            "fold": 3
         },
         {
             "id": "sub-strokecase0065_ses-0001",
@@ -592,7 +592,7 @@
                 "sub-strokecase0066/ses-0001/dwi/sub-strokecase0066_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0066/ses-0001/sub-strokecase0066_ses-0001_msk.nii.gz",
-            "fold": 3
+            "fold": 4
         },
         {
             "id": "sub-strokecase0067_ses-0001",
@@ -601,7 +601,7 @@
                 "sub-strokecase0067/ses-0001/dwi/sub-strokecase0067_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0067/ses-0001/sub-strokecase0067_ses-0001_msk.nii.gz",
-            "fold": 4
+            "fold": 1
         },
         {
             "id": "sub-strokecase0068_ses-0001",
@@ -610,7 +610,7 @@
                 "sub-strokecase0068/ses-0001/dwi/sub-strokecase0068_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0068/ses-0001/sub-strokecase0068_ses-0001_msk.nii.gz",
-            "fold": 2
+            "fold": 4
         },
         {
             "id": "sub-strokecase0069_ses-0001",
@@ -619,7 +619,7 @@
                 "sub-strokecase0069/ses-0001/dwi/sub-strokecase0069_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0069/ses-0001/sub-strokecase0069_ses-0001_msk.nii.gz",
-            "fold": 3
+            "fold": 2
         },
         {
             "id": "sub-strokecase0070_ses-0001",
@@ -628,7 +628,7 @@
                 "sub-strokecase0070/ses-0001/dwi/sub-strokecase0070_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0070/ses-0001/sub-strokecase0070_ses-0001_msk.nii.gz",
-            "fold": 4
+            "fold": 1
         },
         {
             "id": "sub-strokecase0071_ses-0001",
@@ -646,7 +646,7 @@
                 "sub-strokecase0072/ses-0001/dwi/sub-strokecase0072_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0072/ses-0001/sub-strokecase0072_ses-0001_msk.nii.gz",
-            "fold": 3
+            "fold": 0
         },
         {
             "id": "sub-strokecase0073_ses-0001",
@@ -664,7 +664,7 @@
                 "sub-strokecase0074/ses-0001/dwi/sub-strokecase0074_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0074/ses-0001/sub-strokecase0074_ses-0001_msk.nii.gz",
-            "fold": 1
+            "fold": 2
         },
         {
             "id": "sub-strokecase0075_ses-0001",
@@ -673,7 +673,7 @@
                 "sub-strokecase0075/ses-0001/dwi/sub-strokecase0075_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0075/ses-0001/sub-strokecase0075_ses-0001_msk.nii.gz",
-            "fold": 4
+            "fold": 1
         },
         {
             "id": "sub-strokecase0076_ses-0001",
@@ -682,7 +682,7 @@
                 "sub-strokecase0076/ses-0001/dwi/sub-strokecase0076_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0076/ses-0001/sub-strokecase0076_ses-0001_msk.nii.gz",
-            "fold": 1
+            "fold": 0
         },
         {
             "id": "sub-strokecase0077_ses-0001",
@@ -691,7 +691,7 @@
                 "sub-strokecase0077/ses-0001/dwi/sub-strokecase0077_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0077/ses-0001/sub-strokecase0077_ses-0001_msk.nii.gz",
-            "fold": 0
+            "fold": 1
         },
         {
             "id": "sub-strokecase0078_ses-0001",
@@ -709,7 +709,7 @@
                 "sub-strokecase0079/ses-0001/dwi/sub-strokecase0079_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0079/ses-0001/sub-strokecase0079_ses-0001_msk.nii.gz",
-            "fold": 1
+            "fold": 2
         },
         {
             "id": "sub-strokecase0080_ses-0001",
@@ -718,7 +718,7 @@
                 "sub-strokecase0080/ses-0001/dwi/sub-strokecase0080_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0080/ses-0001/sub-strokecase0080_ses-0001_msk.nii.gz",
-            "fold": 1
+            "fold": 3
         },
         {
             "id": "sub-strokecase0081_ses-0001",
@@ -727,7 +727,7 @@
                 "sub-strokecase0081/ses-0001/dwi/sub-strokecase0081_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0081/ses-0001/sub-strokecase0081_ses-0001_msk.nii.gz",
-            "fold": 0
+            "fold": 1
         },
         {
             "id": "sub-strokecase0082_ses-0001",
@@ -736,7 +736,7 @@
                 "sub-strokecase0082/ses-0001/dwi/sub-strokecase0082_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0082/ses-0001/sub-strokecase0082_ses-0001_msk.nii.gz",
-            "fold": 1
+            "fold": 3
         },
         {
             "id": "sub-strokecase0083_ses-0001",
@@ -745,7 +745,7 @@
                 "sub-strokecase0083/ses-0001/dwi/sub-strokecase0083_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0083/ses-0001/sub-strokecase0083_ses-0001_msk.nii.gz",
-            "fold": 3
+            "fold": 2
         },
         {
             "id": "sub-strokecase0084_ses-0001",
@@ -754,7 +754,7 @@
                 "sub-strokecase0084/ses-0001/dwi/sub-strokecase0084_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0084/ses-0001/sub-strokecase0084_ses-0001_msk.nii.gz",
-            "fold": 4
+            "fold": 1
         },
         {
             "id": "sub-strokecase0085_ses-0001",
@@ -763,7 +763,7 @@
                 "sub-strokecase0085/ses-0001/dwi/sub-strokecase0085_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0085/ses-0001/sub-strokecase0085_ses-0001_msk.nii.gz",
-            "fold": 3
+            "fold": 2
         },
         {
             "id": "sub-strokecase0086_ses-0001",
@@ -772,7 +772,7 @@
                 "sub-strokecase0086/ses-0001/dwi/sub-strokecase0086_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0086/ses-0001/sub-strokecase0086_ses-0001_msk.nii.gz",
-            "fold": 1
+            "fold": 4
         },
         {
             "id": "sub-strokecase0087_ses-0001",
@@ -790,7 +790,7 @@
                 "sub-strokecase0088/ses-0001/dwi/sub-strokecase0088_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0088/ses-0001/sub-strokecase0088_ses-0001_msk.nii.gz",
-            "fold": 2
+            "fold": 0
         },
         {
             "id": "sub-strokecase0089_ses-0001",
@@ -799,7 +799,7 @@
                 "sub-strokecase0089/ses-0001/dwi/sub-strokecase0089_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0089/ses-0001/sub-strokecase0089_ses-0001_msk.nii.gz",
-            "fold": 4
+            "fold": 0
         },
         {
             "id": "sub-strokecase0090_ses-0001",
@@ -808,7 +808,7 @@
                 "sub-strokecase0090/ses-0001/dwi/sub-strokecase0090_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0090/ses-0001/sub-strokecase0090_ses-0001_msk.nii.gz",
-            "fold": 2
+            "fold": 0
         },
         {
             "id": "sub-strokecase0091_ses-0001",
@@ -835,7 +835,7 @@
                 "sub-strokecase0093/ses-0001/dwi/sub-strokecase0093_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0093/ses-0001/sub-strokecase0093_ses-0001_msk.nii.gz",
-            "fold": 0
+            "fold": 2
         },
         {
             "id": "sub-strokecase0094_ses-0001",
@@ -844,7 +844,7 @@
                 "sub-strokecase0094/ses-0001/dwi/sub-strokecase0094_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0094/ses-0001/sub-strokecase0094_ses-0001_msk.nii.gz",
-            "fold": 0
+            "fold": 2
         },
         {
             "id": "sub-strokecase0095_ses-0001",
@@ -853,7 +853,7 @@
                 "sub-strokecase0095/ses-0001/dwi/sub-strokecase0095_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0095/ses-0001/sub-strokecase0095_ses-0001_msk.nii.gz",
-            "fold": 0
+            "fold": 3
         },
         {
             "id": "sub-strokecase0096_ses-0001",
@@ -862,7 +862,7 @@
                 "sub-strokecase0096/ses-0001/dwi/sub-strokecase0096_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0096/ses-0001/sub-strokecase0096_ses-0001_msk.nii.gz",
-            "fold": 4
+            "fold": 1
         },
         {
             "id": "sub-strokecase0097_ses-0001",
@@ -871,7 +871,7 @@
                 "sub-strokecase0097/ses-0001/dwi/sub-strokecase0097_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0097/ses-0001/sub-strokecase0097_ses-0001_msk.nii.gz",
-            "fold": 0
+            "fold": 3
         },
         {
             "id": "sub-strokecase0098_ses-0001",
@@ -880,7 +880,7 @@
                 "sub-strokecase0098/ses-0001/dwi/sub-strokecase0098_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0098/ses-0001/sub-strokecase0098_ses-0001_msk.nii.gz",
-            "fold": 1
+            "fold": 3
         },
         {
             "id": "sub-strokecase0099_ses-0001",
@@ -889,7 +889,7 @@
                 "sub-strokecase0099/ses-0001/dwi/sub-strokecase0099_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0099/ses-0001/sub-strokecase0099_ses-0001_msk.nii.gz",
-            "fold": 4
+            "fold": 1
         },
         {
             "id": "sub-strokecase0100_ses-0001",
@@ -898,7 +898,7 @@
                 "sub-strokecase0100/ses-0001/dwi/sub-strokecase0100_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0100/ses-0001/sub-strokecase0100_ses-0001_msk.nii.gz",
-            "fold": 2
+            "fold": 0
         },
         {
             "id": "sub-strokecase0101_ses-0001",
@@ -907,7 +907,7 @@
                 "sub-strokecase0101/ses-0001/dwi/sub-strokecase0101_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0101/ses-0001/sub-strokecase0101_ses-0001_msk.nii.gz",
-            "fold": 1
+            "fold": 2
         },
         {
             "id": "sub-strokecase0102_ses-0001",
@@ -916,7 +916,7 @@
                 "sub-strokecase0102/ses-0001/dwi/sub-strokecase0102_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0102/ses-0001/sub-strokecase0102_ses-0001_msk.nii.gz",
-            "fold": 1
+            "fold": 3
         },
         {
             "id": "sub-strokecase0103_ses-0001",
@@ -925,7 +925,7 @@
                 "sub-strokecase0103/ses-0001/dwi/sub-strokecase0103_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0103/ses-0001/sub-strokecase0103_ses-0001_msk.nii.gz",
-            "fold": 2
+            "fold": 1
         },
         {
             "id": "sub-strokecase0104_ses-0001",
@@ -934,7 +934,7 @@
                 "sub-strokecase0104/ses-0001/dwi/sub-strokecase0104_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0104/ses-0001/sub-strokecase0104_ses-0001_msk.nii.gz",
-            "fold": 3
+            "fold": 2
         },
         {
             "id": "sub-strokecase0105_ses-0001",
@@ -943,7 +943,7 @@
                 "sub-strokecase0105/ses-0001/dwi/sub-strokecase0105_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0105/ses-0001/sub-strokecase0105_ses-0001_msk.nii.gz",
-            "fold": 1
+            "fold": 0
         },
         {
             "id": "sub-strokecase0106_ses-0001",
@@ -952,7 +952,7 @@
                 "sub-strokecase0106/ses-0001/dwi/sub-strokecase0106_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0106/ses-0001/sub-strokecase0106_ses-0001_msk.nii.gz",
-            "fold": 0
+            "fold": 3
         },
         {
             "id": "sub-strokecase0107_ses-0001",
@@ -961,7 +961,7 @@
                 "sub-strokecase0107/ses-0001/dwi/sub-strokecase0107_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0107/ses-0001/sub-strokecase0107_ses-0001_msk.nii.gz",
-            "fold": 2
+            "fold": 3
         },
         {
             "id": "sub-strokecase0108_ses-0001",
@@ -970,7 +970,7 @@
                 "sub-strokecase0108/ses-0001/dwi/sub-strokecase0108_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0108/ses-0001/sub-strokecase0108_ses-0001_msk.nii.gz",
-            "fold": 3
+            "fold": 4
         },
         {
             "id": "sub-strokecase0109_ses-0001",
@@ -979,7 +979,7 @@
                 "sub-strokecase0109/ses-0001/dwi/sub-strokecase0109_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0109/ses-0001/sub-strokecase0109_ses-0001_msk.nii.gz",
-            "fold": 1
+            "fold": 0
         },
         {
             "id": "sub-strokecase0110_ses-0001",
@@ -988,7 +988,7 @@
                 "sub-strokecase0110/ses-0001/dwi/sub-strokecase0110_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0110/ses-0001/sub-strokecase0110_ses-0001_msk.nii.gz",
-            "fold": 2
+            "fold": 0
         },
         {
             "id": "sub-strokecase0111_ses-0001",
@@ -997,7 +997,7 @@
                 "sub-strokecase0111/ses-0001/dwi/sub-strokecase0111_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0111/ses-0001/sub-strokecase0111_ses-0001_msk.nii.gz",
-            "fold": 0
+            "fold": 1
         },
         {
             "id": "sub-strokecase0112_ses-0001",
@@ -1006,7 +1006,7 @@
                 "sub-strokecase0112/ses-0001/dwi/sub-strokecase0112_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0112/ses-0001/sub-strokecase0112_ses-0001_msk.nii.gz",
-            "fold": 4
+            "fold": 0
         },
         {
             "id": "sub-strokecase0113_ses-0001",
@@ -1015,7 +1015,7 @@
                 "sub-strokecase0113/ses-0001/dwi/sub-strokecase0113_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0113/ses-0001/sub-strokecase0113_ses-0001_msk.nii.gz",
-            "fold": 3
+            "fold": 2
         },
         {
             "id": "sub-strokecase0114_ses-0001",
@@ -1024,7 +1024,7 @@
                 "sub-strokecase0114/ses-0001/dwi/sub-strokecase0114_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0114/ses-0001/sub-strokecase0114_ses-0001_msk.nii.gz",
-            "fold": 4
+            "fold": 2
         },
         {
             "id": "sub-strokecase0115_ses-0001",
@@ -1042,7 +1042,7 @@
                 "sub-strokecase0116/ses-0001/dwi/sub-strokecase0116_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0116/ses-0001/sub-strokecase0116_ses-0001_msk.nii.gz",
-            "fold": 0
+            "fold": 3
         },
         {
             "id": "sub-strokecase0117_ses-0001",
@@ -1051,7 +1051,7 @@
                 "sub-strokecase0117/ses-0001/dwi/sub-strokecase0117_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0117/ses-0001/sub-strokecase0117_ses-0001_msk.nii.gz",
-            "fold": 0
+            "fold": 3
         },
         {
             "id": "sub-strokecase0118_ses-0001",
@@ -1069,7 +1069,7 @@
                 "sub-strokecase0119/ses-0001/dwi/sub-strokecase0119_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0119/ses-0001/sub-strokecase0119_ses-0001_msk.nii.gz",
-            "fold": 0
+            "fold": 1
         },
         {
             "id": "sub-strokecase0120_ses-0001",
@@ -1078,7 +1078,7 @@
                 "sub-strokecase0120/ses-0001/dwi/sub-strokecase0120_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0120/ses-0001/sub-strokecase0120_ses-0001_msk.nii.gz",
-            "fold": 2
+            "fold": 3
         },
         {
             "id": "sub-strokecase0121_ses-0001",
@@ -1087,7 +1087,7 @@
                 "sub-strokecase0121/ses-0001/dwi/sub-strokecase0121_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0121/ses-0001/sub-strokecase0121_ses-0001_msk.nii.gz",
-            "fold": 2
+            "fold": 3
         },
         {
             "id": "sub-strokecase0122_ses-0001",
@@ -1096,7 +1096,7 @@
                 "sub-strokecase0122/ses-0001/dwi/sub-strokecase0122_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0122/ses-0001/sub-strokecase0122_ses-0001_msk.nii.gz",
-            "fold": 3
+            "fold": 2
         },
         {
             "id": "sub-strokecase0123_ses-0001",
@@ -1105,7 +1105,7 @@
                 "sub-strokecase0123/ses-0001/dwi/sub-strokecase0123_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0123/ses-0001/sub-strokecase0123_ses-0001_msk.nii.gz",
-            "fold": 4
+            "fold": 0
         },
         {
             "id": "sub-strokecase0124_ses-0001",
@@ -1114,7 +1114,7 @@
                 "sub-strokecase0124/ses-0001/dwi/sub-strokecase0124_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0124/ses-0001/sub-strokecase0124_ses-0001_msk.nii.gz",
-            "fold": 1
+            "fold": 2
         },
         {
             "id": "sub-strokecase0125_ses-0001",
@@ -1132,7 +1132,7 @@
                 "sub-strokecase0126/ses-0001/dwi/sub-strokecase0126_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0126/ses-0001/sub-strokecase0126_ses-0001_msk.nii.gz",
-            "fold": 3
+            "fold": 0
         },
         {
             "id": "sub-strokecase0127_ses-0001",
@@ -1141,7 +1141,7 @@
                 "sub-strokecase0127/ses-0001/dwi/sub-strokecase0127_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0127/ses-0001/sub-strokecase0127_ses-0001_msk.nii.gz",
-            "fold": 3
+            "fold": 0
         },
         {
             "id": "sub-strokecase0128_ses-0001",
@@ -1150,7 +1150,7 @@
                 "sub-strokecase0128/ses-0001/dwi/sub-strokecase0128_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0128/ses-0001/sub-strokecase0128_ses-0001_msk.nii.gz",
-            "fold": 1
+            "fold": 2
         },
         {
             "id": "sub-strokecase0129_ses-0001",
@@ -1159,7 +1159,7 @@
                 "sub-strokecase0129/ses-0001/dwi/sub-strokecase0129_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0129/ses-0001/sub-strokecase0129_ses-0001_msk.nii.gz",
-            "fold": 0
+            "fold": 3
         },
         {
             "id": "sub-strokecase0130_ses-0001",
@@ -1168,7 +1168,7 @@
                 "sub-strokecase0130/ses-0001/dwi/sub-strokecase0130_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0130/ses-0001/sub-strokecase0130_ses-0001_msk.nii.gz",
-            "fold": 1
+            "fold": 2
         },
         {
             "id": "sub-strokecase0131_ses-0001",
@@ -1177,7 +1177,7 @@
                 "sub-strokecase0131/ses-0001/dwi/sub-strokecase0131_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0131/ses-0001/sub-strokecase0131_ses-0001_msk.nii.gz",
-            "fold": 3
+            "fold": 0
         },
         {
             "id": "sub-strokecase0132_ses-0001",
@@ -1186,7 +1186,7 @@
                 "sub-strokecase0132/ses-0001/dwi/sub-strokecase0132_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0132/ses-0001/sub-strokecase0132_ses-0001_msk.nii.gz",
-            "fold": 2
+            "fold": 0
         },
         {
             "id": "sub-strokecase0133_ses-0001",
@@ -1195,7 +1195,7 @@
                 "sub-strokecase0133/ses-0001/dwi/sub-strokecase0133_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0133/ses-0001/sub-strokecase0133_ses-0001_msk.nii.gz",
-            "fold": 0
+            "fold": 4
         },
         {
             "id": "sub-strokecase0134_ses-0001",
@@ -1204,7 +1204,7 @@
                 "sub-strokecase0134/ses-0001/dwi/sub-strokecase0134_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0134/ses-0001/sub-strokecase0134_ses-0001_msk.nii.gz",
-            "fold": 4
+            "fold": 3
         },
         {
             "id": "sub-strokecase0135_ses-0001",
@@ -1213,7 +1213,7 @@
                 "sub-strokecase0135/ses-0001/dwi/sub-strokecase0135_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0135/ses-0001/sub-strokecase0135_ses-0001_msk.nii.gz",
-            "fold": 3
+            "fold": 0
         },
         {
             "id": "sub-strokecase0136_ses-0001",
@@ -1258,7 +1258,7 @@
                 "sub-strokecase0140/ses-0001/dwi/sub-strokecase0140_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0140/ses-0001/sub-strokecase0140_ses-0001_msk.nii.gz",
-            "fold": 0
+            "fold": 4
         },
         {
             "id": "sub-strokecase0141_ses-0001",
@@ -1267,7 +1267,7 @@
                 "sub-strokecase0141/ses-0001/dwi/sub-strokecase0141_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0141/ses-0001/sub-strokecase0141_ses-0001_msk.nii.gz",
-            "fold": 2
+            "fold": 0
         },
         {
             "id": "sub-strokecase0142_ses-0001",
@@ -1285,7 +1285,7 @@
                 "sub-strokecase0143/ses-0001/dwi/sub-strokecase0143_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0143/ses-0001/sub-strokecase0143_ses-0001_msk.nii.gz",
-            "fold": 2
+            "fold": 1
         },
         {
             "id": "sub-strokecase0144_ses-0001",
@@ -1294,7 +1294,7 @@
                 "sub-strokecase0144/ses-0001/dwi/sub-strokecase0144_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0144/ses-0001/sub-strokecase0144_ses-0001_msk.nii.gz",
-            "fold": 1
+            "fold": 2
         },
         {
             "id": "sub-strokecase0145_ses-0001",
@@ -1312,7 +1312,7 @@
                 "sub-strokecase0146/ses-0001/dwi/sub-strokecase0146_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0146/ses-0001/sub-strokecase0146_ses-0001_msk.nii.gz",
-            "fold": 2
+            "fold": 4
         },
         {
             "id": "sub-strokecase0147_ses-0001",
@@ -1321,7 +1321,7 @@
                 "sub-strokecase0147/ses-0001/dwi/sub-strokecase0147_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0147/ses-0001/sub-strokecase0147_ses-0001_msk.nii.gz",
-            "fold": 4
+            "fold": 3
         },
         {
             "id": "sub-strokecase0148_ses-0001",
@@ -1330,7 +1330,7 @@
                 "sub-strokecase0148/ses-0001/dwi/sub-strokecase0148_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0148/ses-0001/sub-strokecase0148_ses-0001_msk.nii.gz",
-            "fold": 4
+            "fold": 1
         },
         {
             "id": "sub-strokecase0149_ses-0001",
@@ -1339,7 +1339,7 @@
                 "sub-strokecase0149/ses-0001/dwi/sub-strokecase0149_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0149/ses-0001/sub-strokecase0149_ses-0001_msk.nii.gz",
-            "fold": 1
+            "fold": 4
         },
         {
             "id": "sub-strokecase0150_ses-0001",
@@ -1348,7 +1348,7 @@
                 "sub-strokecase0150/ses-0001/dwi/sub-strokecase0150_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0150/ses-0001/sub-strokecase0150_ses-0001_msk.nii.gz",
-            "fold": 3
+            "fold": 1
         },
         {
             "id": "sub-strokecase0151_ses-0001",
@@ -1357,7 +1357,7 @@
                 "sub-strokecase0151/ses-0001/dwi/sub-strokecase0151_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0151/ses-0001/sub-strokecase0151_ses-0001_msk.nii.gz",
-            "fold": 1
+            "fold": 0
         },
         {
             "id": "sub-strokecase0152_ses-0001",
@@ -1366,7 +1366,7 @@
                 "sub-strokecase0152/ses-0001/dwi/sub-strokecase0152_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0152/ses-0001/sub-strokecase0152_ses-0001_msk.nii.gz",
-            "fold": 0
+            "fold": 4
         },
         {
             "id": "sub-strokecase0153_ses-0001",
@@ -1375,7 +1375,7 @@
                 "sub-strokecase0153/ses-0001/dwi/sub-strokecase0153_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0153/ses-0001/sub-strokecase0153_ses-0001_msk.nii.gz",
-            "fold": 3
+            "fold": 0
         },
         {
             "id": "sub-strokecase0154_ses-0001",
@@ -1384,7 +1384,7 @@
                 "sub-strokecase0154/ses-0001/dwi/sub-strokecase0154_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0154/ses-0001/sub-strokecase0154_ses-0001_msk.nii.gz",
-            "fold": 0
+            "fold": 2
         },
         {
             "id": "sub-strokecase0155_ses-0001",
@@ -1393,7 +1393,7 @@
                 "sub-strokecase0155/ses-0001/dwi/sub-strokecase0155_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0155/ses-0001/sub-strokecase0155_ses-0001_msk.nii.gz",
-            "fold": 2
+            "fold": 0
         },
         {
             "id": "sub-strokecase0156_ses-0001",
@@ -1402,7 +1402,7 @@
                 "sub-strokecase0156/ses-0001/dwi/sub-strokecase0156_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0156/ses-0001/sub-strokecase0156_ses-0001_msk.nii.gz",
-            "fold": 3
+            "fold": 4
         },
         {
             "id": "sub-strokecase0157_ses-0001",
@@ -1411,7 +1411,7 @@
                 "sub-strokecase0157/ses-0001/dwi/sub-strokecase0157_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0157/ses-0001/sub-strokecase0157_ses-0001_msk.nii.gz",
-            "fold": 0
+            "fold": 3
         },
         {
             "id": "sub-strokecase0158_ses-0001",
@@ -1420,7 +1420,7 @@
                 "sub-strokecase0158/ses-0001/dwi/sub-strokecase0158_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0158/ses-0001/sub-strokecase0158_ses-0001_msk.nii.gz",
-            "fold": 4
+            "fold": 1
         },
         {
             "id": "sub-strokecase0159_ses-0001",
@@ -1429,7 +1429,7 @@
                 "sub-strokecase0159/ses-0001/dwi/sub-strokecase0159_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0159/ses-0001/sub-strokecase0159_ses-0001_msk.nii.gz",
-            "fold": 3
+            "fold": 0
         },
         {
             "id": "sub-strokecase0160_ses-0001",
@@ -1438,7 +1438,7 @@
                 "sub-strokecase0160/ses-0001/dwi/sub-strokecase0160_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0160/ses-0001/sub-strokecase0160_ses-0001_msk.nii.gz",
-            "fold": 1
+            "fold": 4
         },
         {
             "id": "sub-strokecase0161_ses-0001",
@@ -1456,7 +1456,7 @@
                 "sub-strokecase0162/ses-0001/dwi/sub-strokecase0162_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0162/ses-0001/sub-strokecase0162_ses-0001_msk.nii.gz",
-            "fold": 4
+            "fold": 1
         },
         {
             "id": "sub-strokecase0163_ses-0001",
@@ -1465,7 +1465,7 @@
                 "sub-strokecase0163/ses-0001/dwi/sub-strokecase0163_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0163/ses-0001/sub-strokecase0163_ses-0001_msk.nii.gz",
-            "fold": 0
+            "fold": 3
         },
         {
             "id": "sub-strokecase0164_ses-0001",
@@ -1474,7 +1474,7 @@
                 "sub-strokecase0164/ses-0001/dwi/sub-strokecase0164_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0164/ses-0001/sub-strokecase0164_ses-0001_msk.nii.gz",
-            "fold": 1
+            "fold": 0
         },
         {
             "id": "sub-strokecase0165_ses-0001",
@@ -1492,7 +1492,7 @@
                 "sub-strokecase0166/ses-0001/dwi/sub-strokecase0166_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0166/ses-0001/sub-strokecase0166_ses-0001_msk.nii.gz",
-            "fold": 3
+            "fold": 4
         },
         {
             "id": "sub-strokecase0167_ses-0001",
@@ -1519,7 +1519,7 @@
                 "sub-strokecase0169/ses-0001/dwi/sub-strokecase0169_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0169/ses-0001/sub-strokecase0169_ses-0001_msk.nii.gz",
-            "fold": 3
+            "fold": 1
         },
         {
             "id": "sub-strokecase0170_ses-0001",
@@ -1528,7 +1528,7 @@
                 "sub-strokecase0170/ses-0001/dwi/sub-strokecase0170_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0170/ses-0001/sub-strokecase0170_ses-0001_msk.nii.gz",
-            "fold": 0
+            "fold": 2
         },
         {
             "id": "sub-strokecase0171_ses-0001",
@@ -1537,7 +1537,7 @@
                 "sub-strokecase0171/ses-0001/dwi/sub-strokecase0171_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0171/ses-0001/sub-strokecase0171_ses-0001_msk.nii.gz",
-            "fold": 2
+            "fold": 4
         },
         {
             "id": "sub-strokecase0172_ses-0001",
@@ -1546,7 +1546,7 @@
                 "sub-strokecase0172/ses-0001/dwi/sub-strokecase0172_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0172/ses-0001/sub-strokecase0172_ses-0001_msk.nii.gz",
-            "fold": 1
+            "fold": 3
         },
         {
             "id": "sub-strokecase0173_ses-0001",
@@ -1555,7 +1555,7 @@
                 "sub-strokecase0173/ses-0001/dwi/sub-strokecase0173_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0173/ses-0001/sub-strokecase0173_ses-0001_msk.nii.gz",
-            "fold": 2
+            "fold": 4
         },
         {
             "id": "sub-strokecase0174_ses-0001",
@@ -1564,7 +1564,7 @@
                 "sub-strokecase0174/ses-0001/dwi/sub-strokecase0174_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0174/ses-0001/sub-strokecase0174_ses-0001_msk.nii.gz",
-            "fold": 4
+            "fold": 1
         },
         {
             "id": "sub-strokecase0175_ses-0001",
@@ -1582,7 +1582,7 @@
                 "sub-strokecase0176/ses-0001/dwi/sub-strokecase0176_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0176/ses-0001/sub-strokecase0176_ses-0001_msk.nii.gz",
-            "fold": 4
+            "fold": 1
         },
         {
             "id": "sub-strokecase0177_ses-0001",
@@ -1600,7 +1600,7 @@
                 "sub-strokecase0178/ses-0001/dwi/sub-strokecase0178_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0178/ses-0001/sub-strokecase0178_ses-0001_msk.nii.gz",
-            "fold": 3
+            "fold": 0
         },
         {
             "id": "sub-strokecase0179_ses-0001",
@@ -1609,7 +1609,7 @@
                 "sub-strokecase0179/ses-0001/dwi/sub-strokecase0179_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0179/ses-0001/sub-strokecase0179_ses-0001_msk.nii.gz",
-            "fold": 1
+            "fold": 2
         },
         {
             "id": "sub-strokecase0180_ses-0001",
@@ -1618,7 +1618,7 @@
                 "sub-strokecase0180/ses-0001/dwi/sub-strokecase0180_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0180/ses-0001/sub-strokecase0180_ses-0001_msk.nii.gz",
-            "fold": 0
+            "fold": 1
         },
         {
             "id": "sub-strokecase0181_ses-0001",
@@ -1627,7 +1627,7 @@
                 "sub-strokecase0181/ses-0001/dwi/sub-strokecase0181_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0181/ses-0001/sub-strokecase0181_ses-0001_msk.nii.gz",
-            "fold": 4
+            "fold": 1
         },
         {
             "id": "sub-strokecase0182_ses-0001",
@@ -1636,7 +1636,7 @@
                 "sub-strokecase0182/ses-0001/dwi/sub-strokecase0182_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0182/ses-0001/sub-strokecase0182_ses-0001_msk.nii.gz",
-            "fold": 0
+            "fold": 4
         },
         {
             "id": "sub-strokecase0183_ses-0001",
@@ -1645,7 +1645,7 @@
                 "sub-strokecase0183/ses-0001/dwi/sub-strokecase0183_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0183/ses-0001/sub-strokecase0183_ses-0001_msk.nii.gz",
-            "fold": 3
+            "fold": 4
         },
         {
             "id": "sub-strokecase0184_ses-0001",
@@ -1654,7 +1654,7 @@
                 "sub-strokecase0184/ses-0001/dwi/sub-strokecase0184_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0184/ses-0001/sub-strokecase0184_ses-0001_msk.nii.gz",
-            "fold": 2
+            "fold": 1
         },
         {
             "id": "sub-strokecase0185_ses-0001",
@@ -1663,7 +1663,7 @@
                 "sub-strokecase0185/ses-0001/dwi/sub-strokecase0185_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0185/ses-0001/sub-strokecase0185_ses-0001_msk.nii.gz",
-            "fold": 1
+            "fold": 0
         },
         {
             "id": "sub-strokecase0186_ses-0001",
@@ -1672,7 +1672,7 @@
                 "sub-strokecase0186/ses-0001/dwi/sub-strokecase0186_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0186/ses-0001/sub-strokecase0186_ses-0001_msk.nii.gz",
-            "fold": 1
+            "fold": 0
         },
         {
             "id": "sub-strokecase0187_ses-0001",
@@ -1681,7 +1681,7 @@
                 "sub-strokecase0187/ses-0001/dwi/sub-strokecase0187_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0187/ses-0001/sub-strokecase0187_ses-0001_msk.nii.gz",
-            "fold": 4
+            "fold": 1
         },
         {
             "id": "sub-strokecase0188_ses-0001",
@@ -1699,7 +1699,7 @@
                 "sub-strokecase0189/ses-0001/dwi/sub-strokecase0189_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0189/ses-0001/sub-strokecase0189_ses-0001_msk.nii.gz",
-            "fold": 1
+            "fold": 2
         },
         {
             "id": "sub-strokecase0190_ses-0001",
@@ -1717,7 +1717,7 @@
                 "sub-strokecase0191/ses-0001/dwi/sub-strokecase0191_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0191/ses-0001/sub-strokecase0191_ses-0001_msk.nii.gz",
-            "fold": 0
+            "fold": 3
         },
         {
             "id": "sub-strokecase0192_ses-0001",
@@ -1753,7 +1753,7 @@
                 "sub-strokecase0195/ses-0001/dwi/sub-strokecase0195_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0195/ses-0001/sub-strokecase0195_ses-0001_msk.nii.gz",
-            "fold": 0
+            "fold": 4
         },
         {
             "id": "sub-strokecase0196_ses-0001",
@@ -1762,7 +1762,7 @@
                 "sub-strokecase0196/ses-0001/dwi/sub-strokecase0196_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0196/ses-0001/sub-strokecase0196_ses-0001_msk.nii.gz",
-            "fold": 3
+            "fold": 4
         },
         {
             "id": "sub-strokecase0197_ses-0001",
@@ -1780,7 +1780,7 @@
                 "sub-strokecase0198/ses-0001/dwi/sub-strokecase0198_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0198/ses-0001/sub-strokecase0198_ses-0001_msk.nii.gz",
-            "fold": 4
+            "fold": 1
         },
         {
             "id": "sub-strokecase0199_ses-0001",
@@ -1798,7 +1798,7 @@
                 "sub-strokecase0200/ses-0001/dwi/sub-strokecase0200_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0200/ses-0001/sub-strokecase0200_ses-0001_msk.nii.gz",
-            "fold": 4
+            "fold": 1
         },
         {
             "id": "sub-strokecase0201_ses-0001",
@@ -1807,7 +1807,7 @@
                 "sub-strokecase0201/ses-0001/dwi/sub-strokecase0201_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0201/ses-0001/sub-strokecase0201_ses-0001_msk.nii.gz",
-            "fold": 4
+            "fold": 0
         },
         {
             "id": "sub-strokecase0202_ses-0001",
@@ -1816,7 +1816,7 @@
                 "sub-strokecase0202/ses-0001/dwi/sub-strokecase0202_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0202/ses-0001/sub-strokecase0202_ses-0001_msk.nii.gz",
-            "fold": 1
+            "fold": 4
         },
         {
             "id": "sub-strokecase0203_ses-0001",
@@ -1825,7 +1825,7 @@
                 "sub-strokecase0203/ses-0001/dwi/sub-strokecase0203_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0203/ses-0001/sub-strokecase0203_ses-0001_msk.nii.gz",
-            "fold": 1
+            "fold": 3
         },
         {
             "id": "sub-strokecase0204_ses-0001",
@@ -1834,7 +1834,7 @@
                 "sub-strokecase0204/ses-0001/dwi/sub-strokecase0204_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0204/ses-0001/sub-strokecase0204_ses-0001_msk.nii.gz",
-            "fold": 2
+            "fold": 4
         },
         {
             "id": "sub-strokecase0205_ses-0001",
@@ -1843,7 +1843,7 @@
                 "sub-strokecase0205/ses-0001/dwi/sub-strokecase0205_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0205/ses-0001/sub-strokecase0205_ses-0001_msk.nii.gz",
-            "fold": 1
+            "fold": 4
         },
         {
             "id": "sub-strokecase0206_ses-0001",
@@ -1861,7 +1861,7 @@
                 "sub-strokecase0207/ses-0001/dwi/sub-strokecase0207_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0207/ses-0001/sub-strokecase0207_ses-0001_msk.nii.gz",
-            "fold": 3
+            "fold": 4
         },
         {
             "id": "sub-strokecase0208_ses-0001",
@@ -1870,7 +1870,7 @@
                 "sub-strokecase0208/ses-0001/dwi/sub-strokecase0208_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0208/ses-0001/sub-strokecase0208_ses-0001_msk.nii.gz",
-            "fold": 4
+            "fold": 3
         },
         {
             "id": "sub-strokecase0209_ses-0001",
@@ -1879,7 +1879,7 @@
                 "sub-strokecase0209/ses-0001/dwi/sub-strokecase0209_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0209/ses-0001/sub-strokecase0209_ses-0001_msk.nii.gz",
-            "fold": 3
+            "fold": 1
         },
         {
             "id": "sub-strokecase0210_ses-0001",
@@ -1888,7 +1888,7 @@
                 "sub-strokecase0210/ses-0001/dwi/sub-strokecase0210_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0210/ses-0001/sub-strokecase0210_ses-0001_msk.nii.gz",
-            "fold": 4
+            "fold": 1
         },
         {
             "id": "sub-strokecase0211_ses-0001",
@@ -1897,7 +1897,7 @@
                 "sub-strokecase0211/ses-0001/dwi/sub-strokecase0211_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0211/ses-0001/sub-strokecase0211_ses-0001_msk.nii.gz",
-            "fold": 4
+            "fold": 1
         },
         {
             "id": "sub-strokecase0212_ses-0001",
@@ -1906,7 +1906,7 @@
                 "sub-strokecase0212/ses-0001/dwi/sub-strokecase0212_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0212/ses-0001/sub-strokecase0212_ses-0001_msk.nii.gz",
-            "fold": 4
+            "fold": 0
         },
         {
             "id": "sub-strokecase0213_ses-0001",
@@ -1915,7 +1915,7 @@
                 "sub-strokecase0213/ses-0001/dwi/sub-strokecase0213_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0213/ses-0001/sub-strokecase0213_ses-0001_msk.nii.gz",
-            "fold": 3
+            "fold": 1
         },
         {
             "id": "sub-strokecase0214_ses-0001",
@@ -1924,7 +1924,7 @@
                 "sub-strokecase0214/ses-0001/dwi/sub-strokecase0214_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0214/ses-0001/sub-strokecase0214_ses-0001_msk.nii.gz",
-            "fold": 1
+            "fold": 4
         },
         {
             "id": "sub-strokecase0215_ses-0001",
@@ -1933,7 +1933,7 @@
                 "sub-strokecase0215/ses-0001/dwi/sub-strokecase0215_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0215/ses-0001/sub-strokecase0215_ses-0001_msk.nii.gz",
-            "fold": 0
+            "fold": 3
         },
         {
             "id": "sub-strokecase0216_ses-0001",
@@ -1942,7 +1942,7 @@
                 "sub-strokecase0216/ses-0001/dwi/sub-strokecase0216_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0216/ses-0001/sub-strokecase0216_ses-0001_msk.nii.gz",
-            "fold": 1
+            "fold": 4
         },
         {
             "id": "sub-strokecase0217_ses-0001",
@@ -1951,7 +1951,7 @@
                 "sub-strokecase0217/ses-0001/dwi/sub-strokecase0217_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0217/ses-0001/sub-strokecase0217_ses-0001_msk.nii.gz",
-            "fold": 0
+            "fold": 3
         },
         {
             "id": "sub-strokecase0218_ses-0001",
@@ -1960,7 +1960,7 @@
                 "sub-strokecase0218/ses-0001/dwi/sub-strokecase0218_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0218/ses-0001/sub-strokecase0218_ses-0001_msk.nii.gz",
-            "fold": 1
+            "fold": 4
         },
         {
             "id": "sub-strokecase0219_ses-0001",
@@ -1969,7 +1969,7 @@
                 "sub-strokecase0219/ses-0001/dwi/sub-strokecase0219_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0219/ses-0001/sub-strokecase0219_ses-0001_msk.nii.gz",
-            "fold": 4
+            "fold": 2
         },
         {
             "id": "sub-strokecase0220_ses-0001",
@@ -1978,7 +1978,7 @@
                 "sub-strokecase0220/ses-0001/dwi/sub-strokecase0220_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0220/ses-0001/sub-strokecase0220_ses-0001_msk.nii.gz",
-            "fold": 3
+            "fold": 0
         },
         {
             "id": "sub-strokecase0221_ses-0001",
@@ -1987,7 +1987,7 @@
                 "sub-strokecase0221/ses-0001/dwi/sub-strokecase0221_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0221/ses-0001/sub-strokecase0221_ses-0001_msk.nii.gz",
-            "fold": 4
+            "fold": 3
         },
         {
             "id": "sub-strokecase0222_ses-0001",
@@ -1996,7 +1996,7 @@
                 "sub-strokecase0222/ses-0001/dwi/sub-strokecase0222_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0222/ses-0001/sub-strokecase0222_ses-0001_msk.nii.gz",
-            "fold": 3
+            "fold": 4
         },
         {
             "id": "sub-strokecase0223_ses-0001",
@@ -2014,7 +2014,7 @@
                 "sub-strokecase0224/ses-0001/dwi/sub-strokecase0224_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0224/ses-0001/sub-strokecase0224_ses-0001_msk.nii.gz",
-            "fold": 2
+            "fold": 4
         },
         {
             "id": "sub-strokecase0225_ses-0001",
@@ -2032,7 +2032,7 @@
                 "sub-strokecase0226/ses-0001/dwi/sub-strokecase0226_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0226/ses-0001/sub-strokecase0226_ses-0001_msk.nii.gz",
-            "fold": 3
+            "fold": 1
         },
         {
             "id": "sub-strokecase0227_ses-0001",
@@ -2041,7 +2041,7 @@
                 "sub-strokecase0227/ses-0001/dwi/sub-strokecase0227_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0227/ses-0001/sub-strokecase0227_ses-0001_msk.nii.gz",
-            "fold": 4
+            "fold": 3
         },
         {
             "id": "sub-strokecase0228_ses-0001",
@@ -2050,7 +2050,7 @@
                 "sub-strokecase0228/ses-0001/dwi/sub-strokecase0228_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0228/ses-0001/sub-strokecase0228_ses-0001_msk.nii.gz",
-            "fold": 0
+            "fold": 2
         },
         {
             "id": "sub-strokecase0229_ses-0001",
@@ -2059,7 +2059,7 @@
                 "sub-strokecase0229/ses-0001/dwi/sub-strokecase0229_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0229/ses-0001/sub-strokecase0229_ses-0001_msk.nii.gz",
-            "fold": 1
+            "fold": 3
         },
         {
             "id": "sub-strokecase0230_ses-0001",
@@ -2068,7 +2068,7 @@
                 "sub-strokecase0230/ses-0001/dwi/sub-strokecase0230_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0230/ses-0001/sub-strokecase0230_ses-0001_msk.nii.gz",
-            "fold": 2
+            "fold": 1
         },
         {
             "id": "sub-strokecase0231_ses-0001",
@@ -2086,7 +2086,7 @@
                 "sub-strokecase0232/ses-0001/dwi/sub-strokecase0232_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0232/ses-0001/sub-strokecase0232_ses-0001_msk.nii.gz",
-            "fold": 3
+            "fold": 2
         },
         {
             "id": "sub-strokecase0233_ses-0001",
@@ -2113,7 +2113,7 @@
                 "sub-strokecase0235/ses-0001/dwi/sub-strokecase0235_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0235/ses-0001/sub-strokecase0235_ses-0001_msk.nii.gz",
-            "fold": 2
+            "fold": 4
         },
         {
             "id": "sub-strokecase0236_ses-0001",
@@ -2140,7 +2140,7 @@
                 "sub-strokecase0238/ses-0001/dwi/sub-strokecase0238_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0238/ses-0001/sub-strokecase0238_ses-0001_msk.nii.gz",
-            "fold": 1
+            "fold": 4
         },
         {
             "id": "sub-strokecase0239_ses-0001",
@@ -2149,7 +2149,7 @@
                 "sub-strokecase0239/ses-0001/dwi/sub-strokecase0239_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0239/ses-0001/sub-strokecase0239_ses-0001_msk.nii.gz",
-            "fold": 4
+            "fold": 2
         },
         {
             "id": "sub-strokecase0240_ses-0001",
@@ -2158,7 +2158,7 @@
                 "sub-strokecase0240/ses-0001/dwi/sub-strokecase0240_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0240/ses-0001/sub-strokecase0240_ses-0001_msk.nii.gz",
-            "fold": 4
+            "fold": 2
         },
         {
             "id": "sub-strokecase0241_ses-0001",
@@ -2167,7 +2167,7 @@
                 "sub-strokecase0241/ses-0001/dwi/sub-strokecase0241_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0241/ses-0001/sub-strokecase0241_ses-0001_msk.nii.gz",
-            "fold": 2
+            "fold": 4
         },
         {
             "id": "sub-strokecase0242_ses-0001",
@@ -2176,7 +2176,7 @@
                 "sub-strokecase0242/ses-0001/dwi/sub-strokecase0242_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0242/ses-0001/sub-strokecase0242_ses-0001_msk.nii.gz",
-            "fold": 4
+            "fold": 0
         },
         {
             "id": "sub-strokecase0243_ses-0001",
@@ -2185,7 +2185,7 @@
                 "sub-strokecase0243/ses-0001/dwi/sub-strokecase0243_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0243/ses-0001/sub-strokecase0243_ses-0001_msk.nii.gz",
-            "fold": 0
+            "fold": 3
         },
         {
             "id": "sub-strokecase0244_ses-0001",
@@ -2194,7 +2194,7 @@
                 "sub-strokecase0244/ses-0001/dwi/sub-strokecase0244_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0244/ses-0001/sub-strokecase0244_ses-0001_msk.nii.gz",
-            "fold": 3
+            "fold": 1
         },
         {
             "id": "sub-strokecase0245_ses-0001",
@@ -2203,7 +2203,7 @@
                 "sub-strokecase0245/ses-0001/dwi/sub-strokecase0245_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0245/ses-0001/sub-strokecase0245_ses-0001_msk.nii.gz",
-            "fold": 1
+            "fold": 2
         },
         {
             "id": "sub-strokecase0246_ses-0001",
@@ -2212,7 +2212,7 @@
                 "sub-strokecase0246/ses-0001/dwi/sub-strokecase0246_ses-0001_adc.nii.gz"
             ],
             "label": "derivatives/sub-strokecase0246/ses-0001/sub-strokecase0246_ses-0001_msk.nii.gz",
-            "fold": 2
+            "fold": 4
         },
         {
             "id": "sub-strokecase0247_ses-0001",

@@ -28,6 +28,7 @@ val_postprocessing:
           output_dtype: uint8
           resample: false
           squeeze_end_dims: true
+
 val_handlers:
     - _target_: CheckpointLoader
       load_path: "@ckpt_path"

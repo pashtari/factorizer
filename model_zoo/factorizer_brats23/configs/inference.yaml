@@ -47,7 +47,6 @@ network_def:
     init: uniform
     solver: hals
     mlp_ratio: 3
-    dropout: 0.1
 
 network: "$@network_def.to(@device)"
 

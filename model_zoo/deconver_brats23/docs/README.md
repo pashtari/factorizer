@@ -1,6 +1,6 @@
 # Deconver for Brain Tumor Segmentation
 
-This repository provides a MONAI bundle for Deconver to perform 3D volumetric segmentation of brain tumor subregions from multi-parametric MRI (mpMRI) scans. It uses data from the [BraTS 2023 - Adult Glioma Challenge](https://www.synapse.org/Synapse:syn51156910/). The model is detailed in [this paper](https://www.sciencedirect.com/science/article/pii/S1361841522003346).
+This repository provides a MONAI bundle for Deconver [1] to perform 3D volumetric segmentation of brain tumor subregions from multi-parametric MRI (mpMRI) scans. It uses data from the [BraTS 2023 - Adult Glioma Challenge](https://www.synapse.org/Synapse:syn51156910/).
 
 ## Overview
 
@@ -77,7 +77,7 @@ The training configuration follows the methodology described in the Deconver pap
 - **GPU Requirement**: At least 32GB (16GB) for a batch size of 2 (1)
 - **Model Input Size**: 128 x 128 x 128
 - **Optimizer**: AdamW
-- **Initial Learning Rate**: 4e-4
+- **Initial Learning Rate**: 1e-4
 - **Loss Function**: DiceCELoss
 
 ### Single-GPU Training

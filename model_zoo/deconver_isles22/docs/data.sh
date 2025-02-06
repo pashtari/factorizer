@@ -11,7 +11,7 @@ usage() {
     cat <<EOF
 Usage: $0 [--data_dir <data_directory>] [-h|--help]
 
-Downloads and extracts the ISLES'22 data file.
+Downloads and extracts the ISLES'22 data files.
 
 Options:
   --data_dir    Path to data directory [required]
@@ -82,10 +82,10 @@ if [[ -z "$DATA_DIR" ]]; then
 fi
 
 # Ensure unzip is available
-log info "Check if unzip is installed..."
+log info "Checking if 'unzip' is installed..."
 
 if ! command -v unzip > /dev/null 2>&1; then
-    echo "unzip is not installed. Please install it first"
+    log error "'unzip' is not installed. Please install it first."
     exit 1
 fi
 

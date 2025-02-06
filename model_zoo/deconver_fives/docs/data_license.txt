@@ -1,0 +1,14 @@
+Third Party Licenses
+-----------------------------------------------------------------------
+
+/*********************************************************************/
+i. FIVES: A Fundus Image Dataset for Artificial Intelligence based Vessel Segmentation
+    https://www.nature.com/articles/s41597-022-01564-3
+    https://figshare.com/articles/figure/FIVES_A_Fundus_Image_Dataset_for_AI-based_Vessel_Segmentation/19688169
+/*********************************************************************/
+
+Data Usage Agreement / Citations
+
+Detailed descriptions can be found in the original paper, and please cite it if utilizing any part of the dataset: 
+
+[1] Jin, K., Huang, X., Zhou, J. et al. FIVES: A Fundus Image Dataset for Artificial Intelligence based Vessel Segmentation. Sci Data 9, 475 (2022). https://doi.org/10.1038/s41597-022-01564-3 

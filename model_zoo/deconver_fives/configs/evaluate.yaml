@@ -1,0 +1,50 @@
+# paths
+output_dir: "$datetime.datetime.now().strftime(os.path.join(@logs_dir, 'val_fold{0}_%y%m%d_%H%M%S'.format(@fold)))"
+save_pred_dir: $os.path.join(@output_dir, 'predictions')
+
+val_postprocessing:
+    _target_: Compose
+    transforms:
+        - _target_: Activationsd
+          keys: pred
+          sigmoid: true
+        - _target_: Invertd
+          keys: pred
+          transform: "@val_preprocessing"
+          orig_keys: image
+          meta_keys: pred_meta_dict
+          nearest_interp: false
+          to_tensor: true
+          device: "@device"
+        - _target_: AsDiscreted
+          keys: pred
+          threshold: 0.5
+        - _target_: SaveImaged
+          _disabled_: "@save_pred_dir"
+          keys: pred_combined
+          meta_keys: pred_meta_dict
+          output_dir: "@save_pred_dir"
+          output_postfix: seg
+          output_dtype: uint8
+          resample: false
+
+val_handlers:
+    - _target_: CheckpointLoader
+      load_path: "@ckpt_path"
+      load_dict":
+          model: "@network"
+    - _target_: StatsHandler
+      iteration_log: false
+    - _target_: MetricsSaver
+      save_dir: $os.path.join(@output_dir, 'metrics')
+      metrics: "*"
+      metric_details: "*"
+      batch_transform: $monai.handlers.from_engine(['image_meta_dict'])
+      summary_ops: "*"
+
+initialize:
+    - "$print('Output Directory: ', @output_dir)"
+    - $setattr(torch.backends.cudnn, 'benchmark', True)
+
+run:
+    - $@evaluator.run()

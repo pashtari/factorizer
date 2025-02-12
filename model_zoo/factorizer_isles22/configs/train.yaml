@@ -23,8 +23,8 @@ val_datalist: $[x for x in @datalist if x['fold'] == @fold]
 # hyperparameters
 val_interval: 10
 batch_size: 2
-num_epochs: 500
-num_workers: 4
+num_epochs: 300
+num_workers: 8
 persistent_workers: true
 learning_rate: 0.0001
 warmup_steps: $@num_epochs//100
@@ -166,14 +166,17 @@ val_preprocessing:
 
 # datasets
 train_dataset:
-    _target_: Dataset
+    _target_: CacheDataset
     data: "@train_datalist"
     transform: "@train_preprocessing"
+    cache_rate: 1.0
+    num_workers: "@num_workers"
 
 val_dataset:
-    _target_: Dataset
+    _target_: CacheDataset
     data: "@val_datalist"
     transform: "@val_preprocessing"
+    cache_rate: 1.0
 
 # dataloaders
 train_dataloader:

@@ -4,6 +4,7 @@ from functools import reduce
 
 import torch
 from torch import Tensor
+import torch.nn.functional as F
 from torch import nn
 from torch.nn.modules.utils import _ntuple
 from einops.layers.torch import Rearrange
@@ -50,6 +51,51 @@ def norm2(x: Tensor, w: Optional[Tensor] = None) -> Tensor:
     return torch.sqrt(torch.sum(y, dim=1))
 
 
+def softmax(x: torch.Tensor, dim: int | Sequence[int]) -> torch.Tensor:
+    """
+    Computes the softmax of a tensor over specified dimensions.
+
+    This function calculates the softmax of the input tensor `x` along the specified
+    dimensions `dim`. This is computed by flattening the specified dimensions and applying softmax across them.
+
+    Args:
+        x (Tensor): The input tensor.
+        dim (int | Sequence[int]): The dimension or dimensions over which to apply
+            the softmax operation.
+
+    Returns:
+        torch.Tensor: A tensor of the same shape as `x`, with the softmax computed
+        along the specified dimensions.
+    """
+
+    # Convert dim to a list of nonnegative integers
+    dims = [dim] if isinstance(dim, int) else dim
+    dims = [d if d >= 0 else x.ndim + d for d in dims]
+
+    # Single dimension case
+    if len(dims) == 1:
+        return F.softmax(x, dim=dims[0])
+
+    # 1. Group target dimensions via permutation
+    non_target_dims = [d for d in range(x.ndim) if d not in dims]
+    perm = non_target_dims + dims
+
+    # 2. Compute inverse permutation to restore original order
+    inverse_perm = [0] * x.ndim
+    for i, p in enumerate(perm):
+        inverse_perm[p] = i
+
+    # 3. Permute, flatten, and apply softmax
+    x_permuted = x.permute(perm)
+    start_dim = len(non_target_dims)
+    flattened = x_permuted.flatten(start_dim=start_dim)
+
+    # 4. Apply softmax and restore original shape
+    return (
+        F.softmax(flattened, dim=start_dim).view(x_permuted.shape).permute(inverse_perm)
+    )
+
+
 def relative_error(
     x: Tensor,
     y: Tensor,
@@ -74,6 +120,28 @@ def relative_error(
     numerator = norm2(x - y, w) + eps
     denominator = norm2(x, w) + eps
     return numerator / denominator
+
+
+def kl_divergence(
+    x: Tensor,
+    y: Tensor,
+    eps: float = 1e-16,
+):
+    """
+    Computes the batched Kullback-Leibler (KL) divergence between two tensors.
+
+    Args:
+        x (Tensor): The first input tensor with shape `(B, ...)`, where `B` is the batch size.
+        y (Tensor): The second input tensor with the same shape as `x`.
+        eps (float, optional): A small value to avoid division by zero and log(0). Defaults to 1e-16.
+
+    Returns:
+        Tensor: A vector of length `B`, containing the computed KL divergences.
+    """
+    x = x.clamp(min=eps)  # Avoid log(0)
+    y = y.clamp(min=eps)  # Avoid division by zero
+    kl_div = (x * torch.log(x / y) - x + y).flatten(1).mean(-1)
+    return kl_div
 
 
 class Reshape(nn.Module):

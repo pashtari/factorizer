@@ -20,7 +20,7 @@ output_postfix: pred
 test_datalist: $monai.data.load_decathlon_datalist(@datalist_path, True, 'test', @data_dir)
 
 # hyperparameters
-num_workers: 4
+num_workers: 8
 num_classes: 4
 amp: false
 device: $torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')

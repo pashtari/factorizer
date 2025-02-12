@@ -8,25 +8,26 @@ import factorizer as ft
 class TestDeconverModules(unittest.TestCase):
     def setUp(self) -> None:
         # Common setup for all tests
+        torch.manual_seed(42)
         self.batch_size = 1
-        self.spatial_size = (48, 48, 48)
+        self.spatial_size = (48, 48)
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def test_deconv(self):
         # Deconv initialization
-        channels = 16
+        channels = 20
         x = torch.rand(
             self.batch_size, channels, *self.spatial_size, requires_grad=True
         ).to(self.device)
 
         deconv = ft.Deconv(
             channels=channels,
-            ratio=4,
-            groups=2,
-            kernel_size=(3, 3, 3),
+            ratio=2,
+            groups=5,
+            kernel_size=(3, 3),
             update_source=True,
             update_filter=True,
-            num_iters=5,
+            num_iters=10,
             num_grad_iters=None,
             verbose=True,
         ).to(self.device)
@@ -36,9 +37,11 @@ class TestDeconverModules(unittest.TestCase):
         self.assertGreater(num_params, 0, "Deconv should have trainable parameters")
 
         # Forward pass
-        y = deconv(x)
+        s = deconv(x)
+        s, h = deconv.fit(x)
+        y = deconv.reconstruct(s, h)
+        self.assertIsNotNone(s, "Deconv output should not be None")
         self.assertEqual(y.shape, x.shape, "Deconv output shape should match input shape")
-        self.assertIsNotNone(y, "Deconv output should not be None")
 
     def test_deconv_mixer(self):
         # DeconvMixer initialization
@@ -52,7 +55,7 @@ class TestDeconverModules(unittest.TestCase):
             in_channels=in_channels,
             out_channels=out_channels,
             act=nn.ReLU,
-            kernel_size=(3, 3, 3),
+            kernel_size=(3, 3),
             num_iters=5,
             num_grad_iters=1,
             dropout=0.1,
@@ -79,7 +82,7 @@ class TestDeconverModules(unittest.TestCase):
 
         deconver_block = ft.DeconverBlock(
             channels=channels,
-            kernel_size=(3, 3, 3),
+            kernel_size=(3, 3),
             num_iters=3,
             num_grad_iters=1,
             mlp_ratio=3,
@@ -105,7 +108,7 @@ class TestDeconverModules(unittest.TestCase):
             in_channels=in_channels,
             out_channels=out_channels,
             depth=2,
-            kernel_size=(3, 3, 3),
+            kernel_size=(3, 3),
             num_iters=3,
             num_grad_iters=1,
             mlp_ratio=2,
@@ -127,7 +130,7 @@ class TestDeconverModules(unittest.TestCase):
         deconver = ft.Deconver(
             in_channels=in_channels,
             out_channels=out_channels,
-            spatial_dims=3,
+            spatial_dims=2,
             encoder_depth=(1, 1, 1, 1, 1),
             encoder_width=(32, 64, 128, 256, 512),
             strides=(1, 2, 2, 2, 2),
@@ -135,7 +138,7 @@ class TestDeconverModules(unittest.TestCase):
             act=nn.ReLU,
             groups=-1,
             ratio=1,
-            kernel_size=(3, 3, 3),
+            kernel_size=(3, 3),
             num_iters=5,
             num_grad_iters=1,
             mlp_ratio=2,

@@ -86,7 +86,7 @@ class Initializer(nn.Module):
 
 
 class Deconv(nn.Module):
-    """Blind deconvolution layer."""
+    """Deconvolution layer."""
 
     def __init__(
         self,
@@ -130,6 +130,11 @@ class Deconv(nn.Module):
         self.conv = partial(conv, padding=padding, **kwargs)
         self.sconv = partial(sconv, padding=padding, **kwargs)
 
+    def normalize_h(self, h: Tensor) -> Tensor:
+        return (h + self.eps) / (
+            h.sum([d for d in range(h.ndim) if d not in (0, 2)], keepdim=True) + self.eps
+        )
+
     def update_s(self, x: Tensor, s: Tensor, h: Tensor) -> Tensor:
         # x ≈ conv(s,h) --> s = ?
         numerator = self.conv(x, t(flip(h))) + self.eps
@@ -152,7 +157,6 @@ class Deconv(nn.Module):
         return s, h
 
     def context(self, it: int) -> Any:
-        # get context at each iteration it
         if it < self.num_iters - self.num_grad_iters + 1:
             context = torch.no_grad()
         else:
@@ -161,7 +165,6 @@ class Deconv(nn.Module):
         return context
 
     def iterative_update(self, x: Tensor, s: Tensor, h: Tensor) -> tuple[Tensor, Tensor]:
-        # iterate
         for it in range(1, self.num_iters + 1):
             with self.context(it):
                 if self.verbose:
@@ -174,15 +177,20 @@ class Deconv(nn.Module):
 
     def fit(self, x: Tensor) -> tuple[Tensor, Tensor]:
         # x: (B, C, ...)
+
+        # Initialize source and filter tensors
         s, h = self.init(x)
 
+        # Split channels if grouping is enabled
         if self.groups != 1:
             x = self.split_channels(x)
             s = self.split_channels(s)
             h = self.split_channels(h)
 
+        # Perform iterative update on source and filter tensors
         s, h = self.iterative_update(x, s, h)
 
+        # Merge channels back if they were split
         if self.groups != 1:
             s = self.merge_channels(s)
             h = self.merge_channels(h)
@@ -190,12 +198,15 @@ class Deconv(nn.Module):
         return s, h
 
     def reconstruct(self, s: Tensor, h: Tensor) -> Tensor:
+        # Split channels if grouping is enabled
         if self.groups != 1:
             s = self.split_channels(s)
             h = self.split_channels(h)
 
+        # Compute the reconstructed input tensor
         x_hat = self.conv(s, h)
 
+        # Merge channels back if they were split
         if self.groups != 1:
             x_hat = self.merge_channels(x_hat)
 
@@ -211,15 +222,20 @@ class Deconv(nn.Module):
 
     def forward(self, x: Tensor) -> Tensor:
         # x: (B, C, ...)
+
+        # Initialize source and filter tensors
         s, h = self.init(x)
 
+        # Split channels if grouping is enabled
         if self.groups != 1:
             x = self.split_channels(x)
             s = self.split_channels(s)
             h = self.split_channels(h)
 
+        # Perform iterative update on source and filter tensors
         s, h = self.iterative_update(x, s, h)
 
+        # Merge channels back if they were split
         if self.groups != 1:
             s = self.merge_channels(s)
 

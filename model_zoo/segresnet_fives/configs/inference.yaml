@@ -28,17 +28,13 @@ pix_size: [1.0, 1.0]
 
 # network
 network_def:
-    _target_: DynUNet
+    _target_: SegResNet
     spatial_dims: 2
     in_channels: 3
     out_channels: 1
-    kernel_size: [3, 3, 3, 3, 3]
-    strides: [1, 2, 2, 2, 2]
-    upsample_kernel_size: [2, 2, 2, 2]
-    filters: [32, 64, 128, 256, 512]
-    norm_name: instance
-    act_name: LeakyReLU
-    res_block: false
+    init_filters: 32
+    blocks_down: [1, 2, 2, 4]
+    blocks_up: [1, 1, 1]
 
 network: "$@network_def.to(@device)"
 

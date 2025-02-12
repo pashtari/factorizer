@@ -23,7 +23,7 @@ val_datalist: $[x for x in @datalist if x['fold'] == @fold]
 # hyperparameters
 val_interval: 10
 batch_size: 2
-num_epochs: 300
+num_epochs: 500
 num_workers: 8
 persistent_workers: true
 learning_rate: 0.0001
@@ -32,8 +32,8 @@ warmup_multiplier: 0.1
 weight_decay: 0.00001
 amp: false
 device: $torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-roi_size: [128, 128, 128]
-pix_size: [1.0, 1.0, 1.0]
+roi_size: [64, 64, 64]
+pix_size: [2.0, 2.0, 2.0]
 
 # network
 network_def:

@@ -9,7 +9,7 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=4
 #SBATCH --gres=gpu:2
-#SBATCH --time=25:00:00
+#SBATCH --time=03:00:00
 #SBATCH --partition=gpu_a100
 
 set -euo pipefail

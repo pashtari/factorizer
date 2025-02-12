@@ -38,7 +38,11 @@ network_def:
     strides: [1, 2, 2, 2, 2]
     decoder_depth: [1, 1, 1, 1]
     norm: $factorizer.LayerNorm
-    reshape: [$factorizer.SWMatricize, { head_dim: 8, patch_size: 8 }]
+    reshape:
+        [
+            $factorizer.SWMatricize,
+            { head_dim: 8, patch_size: 8, shifts: [null, 2, 4, 6] },
+        ]
     act: $nn.ReLU
     factorize: $factorizer.NMF
     rank: 1

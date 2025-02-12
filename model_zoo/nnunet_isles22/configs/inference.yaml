@@ -23,8 +23,8 @@ test_datalist: $monai.data.load_decathlon_datalist(@datalist_path, True, 'test',
 num_workers: 8
 amp: false
 device: $torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-roi_size: [128, 128, 128]
-pix_size: [1.0, 1.0, 1.0]
+roi_size: [64, 64, 64]
+pix_size: [2.0, 2.0, 2.0]
 
 # network
 network_def:

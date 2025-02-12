@@ -68,7 +68,7 @@ This creates the JSON datalist [`configs/datalist.json`](configs/datalist.json) 
 The training configuration follows the methodology described in the Deconver paper [1]. Key settings include:
 
 - **GPU Requirement**: At least 32GB (16GB) for a batch size of 2 (1)
-- **Model Input Size**: 128 x 128 x 128
+- **Model Input Size**: 64 x 64 x 64
 - **Optimizer**: AdamW
 - **Initial Learning Rate**: 1e-4
 - **Loss Function**: DiceCELoss

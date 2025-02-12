@@ -23,7 +23,7 @@ val_datalist: $[x for x in @datalist if x['fold'] == @fold]
 # hyperparameters
 val_interval: 10
 batch_size: 2
-num_epochs: 300
+num_epochs: 500
 num_workers: 8
 persistent_workers: true
 learning_rate: 0.0001

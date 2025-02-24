@@ -58,7 +58,7 @@ network_def:
     num_grad_steps: null
     init: uniform
     solver: hals
-    mlp_ratio: 3
+    mlp_ratio: 4
 
 network: "$@network_def.to(@device)"
 

@@ -53,7 +53,7 @@ network_def:
     kernel_size: [3, 3, 3]
     num_iters: 1
     num_grad_iters: null
-    mlp_ratio: 3
+    mlp_ratio: 4
 
 network: "$@network_def.to(@device)"
 

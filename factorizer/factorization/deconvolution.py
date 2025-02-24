@@ -93,8 +93,8 @@ class Deconv(nn.Module):
         channels: int,
         kernel_size=Sequence[int],
         source_channels: Optional[int] = None,
-        ratio: float = 1,
-        groups: int = -1,
+        ratio: float = 4,
+        groups: int = 8,
         update_source=True,
         update_filter=False,
         eps: float = 1e-16,
@@ -108,10 +108,8 @@ class Deconv(nn.Module):
         self.channels = channels
         self.groups = channels if groups == -1 else groups
         assert self.channels % self.groups == 0, "`channels` must be divisible by groups"
-        self.source_channels = (
-            channels // (self.groups * ratio)
-            if source_channels is None
-            else source_channels
+        self.source_channels = round(
+            channels * ratio / self.groups if source_channels is None else source_channels
         )
         self.kernel_size = kernel_size
         self.init = Initializer(

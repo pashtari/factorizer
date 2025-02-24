@@ -1,0 +1,334 @@
+imports:
+    - $import os
+    - $import datetime
+    - $from torch import nn
+    - $import ignite
+
+# paths
+bundle_root: .
+data_dir: ~/ISLES22 # must be overridden on the command line
+datalist_path: $os.path.join(@bundle_root, 'configs/datalist.json')
+ckpt_name: model.pt
+ckpt_path: $os.path.join(@bundle_root, 'models', @ckpt_name)
+logs_dir: $os.path.join(@bundle_root, 'logs')
+output_dir: "$datetime.datetime.now().strftime(os.path.join(@logs_dir, 'train_fold{0}_%y%m%d_%H%M%S%f'.format(@fold)))"
+
+# datalist
+datalist: $monai.data.load_decathlon_datalist(@datalist_path, True, 'training', @data_dir)
+fold: 0
+train_datalist: $[x for x in @datalist if x['fold'] != @fold]
+val_datalist: $[x for x in @datalist if x['fold'] == @fold]
+
+# hyperparameters
+val_interval: 10
+batch_size: 8
+num_epochs: 500
+num_workers: 4
+persistent_workers: true
+learning_rate: 0.0001
+warmup_steps: $@num_epochs//100
+warmup_multiplier: 0.1
+weight_decay: 0.00001
+amp: false
+device: $torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+roi_size: [64, 64, 64]
+pix_size: [2.0, 2.0, 2.0]
+
+# network
+network_def:
+    _target_: SwinUNETR
+    img_size: "@roi_size"
+    in_channels: 2
+    out_channels: 1
+    feature_size: 24
+    use_checkpoint: false
+    spatial_dims: 3
+    use_v2: false
+
+network: "$@network_def.to(@device)"
+
+# loss and optimizer
+loss:
+    _target_: DiceCELoss
+    sigmoid: true
+    squared_pred: true
+
+optimizer:
+    _target_: torch.optim.AdamW
+    params: $@network.parameters()
+    lr: "@learning_rate"
+    weight_decay: "@weight_decay"
+
+lr_scheduler:
+    _target_: monai.optimizers.WarmupCosineSchedule
+    optimizer: "$@optimizer"
+    warmup_steps: "@warmup_steps"
+    t_total: "$@num_epochs + 1"
+    warmup_multiplier: "@warmup_multiplier"
+
+# transforms
+deterministic_transforms:
+    - _target_: LoadImaged
+      keys: [image, label]
+      image_only: true
+      ensure_channel_first: true
+    - _target_: CropForegroundd
+      keys: [image, label]
+      source_key: image
+      margin: 10
+    - _target_: Orientationd
+      keys: [image, label]
+      axcodes: RAS
+    - _target_: NormalizeIntensityd
+      keys: image
+      nonzero: true
+      channel_wise: true
+    - _target_: Spacingd
+      keys: [image, label]
+      pixdim: "@pix_size"
+      mode: [bilinear, nearest]
+      align_corners: [true, true]
+    - _target_: EnsureTyped
+      keys: [image, label]
+      dtype: [$torch.float32, $torch.uint8]
+      track_meta: true
+    - _target_: SpatialPadd
+      keys: [image, label]
+      spatial_size: "@roi_size"
+      mode: [constant, constant]
+
+random_transforms:
+    - _target_: RandSpatialCropd
+      keys: [image, label]
+      roi_size: "@roi_size"
+      random_size: false
+    - _target_: RandAffined
+      keys: [image, label]
+      prob: 0.2
+      spatial_size: "@roi_size"
+      rotate_range: [0.26, 0.26, 0.26]
+      scale_range: [0.2, 0.2, 0.2]
+      mode: [bilinear, nearest]
+      cache_grid: true
+      padding_mode: border
+    - _target_: RandGaussianNoised
+      keys: image
+      prob: 0.2
+      mean: 0.0
+      std: 0.1
+    - _target_: RandGaussianSmoothd
+      keys: image
+      prob: 0.2
+      sigma_x: [0.5, 1.0]
+      sigma_y: [0.5, 1.0]
+      sigma_z: [0.5, 1.0]
+    - _target_: RandScaleIntensityd
+      keys: image
+      prob: 0.2
+      factors: 0.3
+    - _target_: RandShiftIntensityd
+      keys: image
+      prob: 0.2
+      offsets: 0.1
+    - _target_: RandFlipd
+      keys: [image, label]
+      prob: 0.5
+      spatial_axis: 0
+    - _target_: RandFlipd
+      keys: [image, label]
+      prob: 0.5
+      spatial_axis: 1
+    - _target_: RandFlipd
+      keys: [image, label]
+      prob: 0.5
+      spatial_axis: 2
+
+# preprocessing
+train_preprocessing:
+    _target_: Compose
+    transforms: $@deterministic_transforms + @random_transforms
+
+val_preprocessing:
+    _target_: Compose
+    transforms: $@deterministic_transforms
+
+# datasets
+train_dataset:
+    _target_: Dataset
+    data: "@train_datalist"
+    transform: "@train_preprocessing"
+
+val_dataset:
+    _target_: Dataset
+    data: "@val_datalist"
+    transform: "@val_preprocessing"
+
+# dataloaders
+train_dataloader:
+    _target_: DataLoader
+    dataset: "@train_dataset"
+    batch_size: "@batch_size"
+    shuffle: true
+    num_workers: "@num_workers"
+    pin_memory: true
+    persistent_workers: $@persistent_workers and @num_workers > 0
+
+val_dataloader:
+    _target_: DataLoader
+    dataset: "@val_dataset"
+    batch_size: 1
+    shuffle: false
+    num_workers: "@num_workers"
+    pin_memory: true
+
+# inferers
+train_inferer:
+    _target_: SimpleInferer
+
+val_inferer:
+    _target_: SlidingWindowInfererAdapt
+    roi_size: "@roi_size"
+    sw_batch_size: 8
+    overlap: 0.5
+    mode: gaussian
+    cache_roi_weight_map: true
+
+# postprocessing
+train_postprocessing:
+    _target_: Compose
+    transforms:
+        - _target_: Activationsd
+          keys: pred
+          sigmoid: true
+        - _target_: AsDiscreted
+          keys: pred
+          threshold: 0.5
+
+val_postprocessing:
+    _target_: Compose
+    transforms:
+        - _target_: Activationsd
+          keys: pred
+          sigmoid: true
+        - _target_: AsDiscreted
+          keys: pred
+          threshold: 0.5
+
+# metrics
+train_key_metric:
+    train_mean_dice:
+        _target_: scripts.MeanDice
+        include_background: true
+        ignore_empty: false
+        output_transform: $monai.handlers.from_engine(['pred', 'label'])
+
+val_key_metric:
+    val_mean_dice:
+        _target_: scripts.MeanDice
+        include_background: true
+        ignore_empty: false
+        output_transform: $monai.handlers.from_engine(['pred', 'label'])
+
+additional_metrics:
+    val_mean_hd:
+        _target_: scripts.MeanHausdorffDistance
+        include_background: true
+        percentile: 95
+        output_transform: $monai.handlers.from_engine(['pred', 'label'])
+
+# evaluator
+val_handlers:
+    - _target_: StatsHandler
+      iteration_log: false
+    - _target_: TensorBoardStatsHandler
+      log_dir: $os.path.join(@output_dir, 'tb')
+      iteration_log: false
+    - _target_: TensorBoardImageHandler
+      log_dir: $os.path.join(@output_dir, 'tb')
+      batch_transform: $monai.handlers.from_engine(["image", "label"])
+      output_transform: $monai.handlers.from_engine(["pred"])
+      frame_dim: -1
+
+evaluator:
+    _target_: SupervisedEvaluator
+    device: "@device"
+    val_data_loader: "@val_dataloader"
+    network: "@network"
+    inferer: "@val_inferer"
+    postprocessing: "@val_postprocessing"
+    key_val_metric: "@val_key_metric"
+    additional_metrics: "@additional_metrics"
+    val_handlers: "@val_handlers"
+    amp: "@amp"
+
+# trainer
+metriclogger:
+    _target_: MetricLogger
+    evaluator: "@evaluator"
+
+train_handlers:
+    - _target_: scripts.LogModelInfoHandler
+      model: "@network"
+    - "@metriclogger"
+    - _target_: LrScheduleHandler
+      lr_scheduler: "@lr_scheduler"
+      print_lr: true
+    - _target_: ValidationHandler
+      validator: "@evaluator"
+      epoch_level: true
+      interval: "@val_interval"
+    - _target_: StatsHandler
+      tag_name: train_loss
+      output_transform: $monai.handlers.from_engine(['loss'], first=True)
+    - _target_: TensorBoardStatsHandler
+      log_dir: $os.path.join(@output_dir, 'tb')
+      tag_name: train_loss
+      output_transform: $monai.handlers.from_engine(['loss'], first=True)
+    - _target_: LogfileHandler
+      output_dir: "@output_dir"
+
+trainer:
+    _target_: SupervisedTrainer
+    max_epochs: "@num_epochs"
+    device: "@device"
+    train_data_loader: "@train_dataloader"
+    network: "@network"
+    loss_function: "@loss"
+    optimizer: "@optimizer"
+    inferer: "@train_inferer"
+    postprocessing: "@train_postprocessing"
+    key_train_metric: "@train_key_metric"
+    train_handlers: "@train_handlers"
+    amp: "@amp"
+
+state_dict:
+    trainer: "@trainer"
+    model: "@network"
+    optimizer: "@optimizer"
+    lr_scheduler: "@lr_scheduler"
+    logger: "@metriclogger"
+
+ckpt_loader:
+    _target_: CheckpointLoader
+    _disabled_: $not os.path.exists(@ckpt_path)
+    load_path: "@ckpt_path"
+    load_dict: "@state_dict"
+
+ckpt_saver:
+    _target_: CheckpointSaver
+    file_prefix: $f"model_fold={@fold}"
+    save_dir: "@output_dir"
+    save_dict: "@state_dict"
+    epoch_level: true
+    save_interval: 1
+    n_saved: 1
+
+initialize:
+    - "$print('Output Directory: ', @output_dir)"
+    - $monai.utils.set_determinism(seed=123)
+    - $setattr(torch.backends.cudnn, 'benchmark', True)
+    - $@ckpt_loader.attach(@trainer) if os.path.exists(@ckpt_path) else None
+    - $@ckpt_saver.attach(@trainer)
+
+run:
+    - $@trainer.run()

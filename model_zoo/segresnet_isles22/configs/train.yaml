@@ -3,7 +3,6 @@ imports:
     - $import datetime
     - $from torch import nn
     - $import ignite
-    - $import factorizer
 
 # paths
 bundle_root: .
@@ -21,8 +20,8 @@ train_datalist: $[x for x in @datalist if x['fold'] != @fold]
 val_datalist: $[x for x in @datalist if x['fold'] == @fold]
 
 # hyperparameters
-val_interval: 10
-batch_size: 2
+val_interval: 20
+batch_size: 8
 num_epochs: 500
 num_workers: 8
 persistent_workers: true
@@ -191,7 +190,7 @@ train_inferer:
 val_inferer:
     _target_: SlidingWindowInfererAdapt
     roi_size: "@roi_size"
-    sw_batch_size: 2
+    sw_batch_size: "@batch_size"
     overlap: 0.5
     mode: gaussian
     cache_roi_weight_map: true

@@ -20,7 +20,7 @@ train_datalist: $[x for x in @datalist if x['fold'] != @fold]
 val_datalist: $[x for x in @datalist if x['fold'] == @fold]
 
 # hyperparameters
-val_interval: 10
+val_interval: 20
 batch_size: 2
 num_epochs: 500
 num_workers: 8

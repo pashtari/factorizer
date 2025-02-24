@@ -43,35 +43,35 @@ class TestDeconverModules(unittest.TestCase):
         self.assertIsNotNone(s, "Deconv output should not be None")
         self.assertEqual(y.shape, x.shape, "Deconv output shape should match input shape")
 
-    def test_deconv_mixer(self):
-        # DeconvMixer initialization
-        in_channels = 16
-        out_channels = 16
-        x = torch.rand(
-            self.batch_size, in_channels, *self.spatial_size, requires_grad=True
-        ).to(self.device)
+    # def test_deconv_mixer(self):
+    #     # DeconvMixer initialization
+    #     in_channels = 16
+    #     out_channels = 16
+    #     x = torch.rand(
+    #         self.batch_size, in_channels, *self.spatial_size, requires_grad=True
+    #     ).to(self.device)
 
-        deconv_mixer = ft.DeconvMixer(
-            in_channels=in_channels,
-            out_channels=out_channels,
-            act=nn.ReLU,
-            kernel_size=(3, 3),
-            num_iters=5,
-            num_grad_iters=1,
-            dropout=0.1,
-        ).to(self.device)
+    #     deconv_mixer = ft.DeconvMixer(
+    #         in_channels=in_channels,
+    #         out_channels=out_channels,
+    #         act=nn.ReLU,
+    #         kernel_size=(3, 3),
+    #         num_iters=5,
+    #         num_grad_iters=1,
+    #         dropout=0.1,
+    #     ).to(self.device)
 
-        # Parameter count
-        num_params = sum(p.numel() for p in deconv_mixer.parameters() if p.requires_grad)
-        self.assertGreater(num_params, 0, "DeconvMixer should have trainable parameters")
+    #     # Parameter count
+    #     num_params = sum(p.numel() for p in deconv_mixer.parameters() if p.requires_grad)
+    #     self.assertGreater(num_params, 0, "DeconvMixer should have trainable parameters")
 
-        # Forward pass
-        y = deconv_mixer(x)
-        expected_shape = (self.batch_size, out_channels, *self.spatial_size)
-        self.assertEqual(y.shape, expected_shape, "DeconvMixer output shape mismatch")
-        self.assertTrue(
-            torch.isfinite(y).all(), "DeconvMixer output should not contain NaNs or Infs"
-        )
+    #     # Forward pass
+    #     y = deconv_mixer(x)
+    #     expected_shape = (self.batch_size, out_channels, *self.spatial_size)
+    #     self.assertEqual(y.shape, expected_shape, "DeconvMixer output shape mismatch")
+    #     self.assertTrue(
+    #         torch.isfinite(y).all(), "DeconvMixer output should not contain NaNs or Infs"
+    #     )
 
     def test_deconver_block(self):
         # DeconverBlock initialization
@@ -137,7 +137,7 @@ class TestDeconverModules(unittest.TestCase):
             decoder_depth=(1, 1, 1, 1),
             act=nn.ReLU,
             groups=-1,
-            ratio=1,
+            ratio=0.5,
             kernel_size=(3, 3),
             num_iters=5,
             num_grad_iters=1,

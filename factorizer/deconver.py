@@ -49,7 +49,7 @@ class DeconvMixer(nn.Module):
 class DeconverBlock(nn.Module):
     """Deconver Block."""
 
-    def __init__(self, channels, norm=LayerNorm, dropout=0.0, mlp_ratio=3.0, **kwargs):
+    def __init__(self, channels, norm=LayerNorm, dropout=0.0, mlp_ratio=4, **kwargs):
         super().__init__()
 
         self.norm1 = partialize(norm)(channels)
@@ -63,6 +63,29 @@ class DeconverBlock(nn.Module):
         out = out + self.dcm(self.norm1(out))
         out = out + self.mlp(self.norm2(out))
         return out
+
+
+# class DeconverBlock(nn.Module):
+#     """Deconver Block."""
+
+#     def __init__(
+#         self, channels, norm=LayerNorm, act=nn.ReLU, mlp_ratio=4, dropout=0.0, **kwargs
+#     ):
+#         super().__init__()
+
+#         self.norm = partialize(norm)(channels)
+#         self.act = partialize(act)()
+#         self.deconv = Deconv(channels, **kwargs)
+#         deconv_out_channels = self.deconv.groups * self.deconv.source_channels
+#         self.mlp = MLP(deconv_out_channels, channels, ratio=mlp_ratio, dropout=dropout)
+
+#     def forward(self, x):
+#         out = self.norm(x)
+#         out = self.act(out)
+#         out = self.deconv(out)
+#         out = self.mlp(out)
+#         out = x + out
+#         return out
 
 
 class DeconverStage(nn.Module):

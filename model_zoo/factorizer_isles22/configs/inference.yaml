@@ -95,7 +95,7 @@ dataloader:
 inferer:
     _target_: SlidingWindowInfererAdapt
     roi_size: "@roi_size"
-    sw_batch_size: 2
+    sw_batch_size: "@batch_size"
     overlap: 0.5
     mode: gaussian
     cache_roi_weight_map: true

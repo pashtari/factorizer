@@ -7,10 +7,10 @@
 #SBATCH --clusters=wice
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=18
+#SBATCH --cpus-per-task=16
 #SBATCH --gres=gpu:1
 #SBATCH --time=00:30:00
-#SBATCH --partition=gpu_a100
+#SBATCH --partition=gpu_h100
 
 set -euo pipefail
 

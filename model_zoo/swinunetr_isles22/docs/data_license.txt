@@ -1,0 +1,16 @@
+Third Party Licenses
+-----------------------------------------------------------------------
+
+/*********************************************************************/
+i. Ischemic Stroke Lesion Segmentation (ISLES) 2022
+    https://www.isles-challenge.org
+    https://isles22.grand-challenge.org
+/*********************************************************************/
+
+Data Usage Agreement / Citations
+
+If you are using the ISLES'22 data, or if you are testing algorithms using the Grand Challenge platform (https://isles22.grand-challenge.org), please cite the following manuscripts:
+
+[1] de la Rosa, E., Reyes, M., Liew, S. L., Hutton, A., Wiest, R., Kaesmacher, J., ... & Wiestler, B. (2024). A Robust Ensemble Algorithm for Ischemic Stroke Lesion Segmentation: Generalizability and Clinical Utility Beyond the ISLES Challenge. arXiv preprint arXiv:2403.19425.
+
+[2] Hernandez Petzsche, M. R., de la Rosa, E., Hanning, U., Wiest, R., Valenzuela, W., Reyes, M., ... & Kirschke, J. S. (2022). ISLES 2022: A multi-center magnetic resonance imaging stroke lesion segmentation dataset. Scientific data, 9(1), 762.

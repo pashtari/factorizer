@@ -254,7 +254,7 @@ class UNet(nn.Module):
         else:
             self.num_deep_supr = 3 if num_deep_supr == True else num_deep_supr
             self.heads = nn.ModuleList()
-            for j in range(num_deep_supr):
+            for j in range(self.num_deep_supr):
                 self.heads.append(head(encoder_width[j], out_channels))
 
     def forward_features(self, x):
